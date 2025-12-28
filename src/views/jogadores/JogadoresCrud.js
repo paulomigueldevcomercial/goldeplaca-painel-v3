@@ -38,6 +38,7 @@ const JogadoresCrud = () => {
   const [selectedPlayerId, setSelectedPlayerId] = useState(null)
   const [formData, setFormData] = useState(createEmptyPlayer())
   const [feedback, setFeedback] = useState(null)
+  const [playerSearch, setPlayerSearch] = useState('')
 
   const selectedCompetition = useMemo(
     () => competitions.find((competition) => competition.id === selectedCompetitionId) ?? null,
@@ -112,10 +113,22 @@ const JogadoresCrud = () => {
     () => players.filter((player) => player.competitionId === selectedCompetitionId),
     [players, selectedCompetitionId],
   )
+  const visiblePlayers = useMemo(() => {
+    const searchTerm = playerSearch.trim().toLowerCase()
+    if (!searchTerm) return filteredPlayers
+
+    return filteredPlayers.filter(({ name, registration }) =>
+      [name, registration].some((field) => {
+        const normalizedField = field?.toLowerCase() ?? ''
+        return normalizedField.includes(searchTerm)
+      }),
+    )
+  }, [filteredPlayers, playerSearch])
 
   const handleCompetitionFilterChange = ({ target }) => {
     setSelectedCompetitionId(target.value)
     setSelectedPlayerId(null)
+    setPlayerSearch('')
     setFeedback(null)
   }
 
@@ -221,7 +234,7 @@ const JogadoresCrud = () => {
           <CCardBody className="d-flex align-items-center gap-3">
             <CIcon icon={cilUser} size="xl" className="text-primary" />
             <div>
-              <h4 className="mb-1">Cadastro de Jogadores</h4>
+              <h4 className="mb-1">Jogadores</h4>
               <div className="text-medium-emphasis">
                 Gerencie o registro de atletas por competição. Os dados são mantidos apenas em memória para demonstrar o fluxo do CRUD.
               </div>
@@ -252,11 +265,22 @@ const JogadoresCrud = () => {
             </CFormSelect>
           </CCardHeader>
           <CCardBody className="p-0">
+            <div className="p-3 border-bottom">
+              <CFormInput
+                type="search"
+                value={playerSearch}
+                onChange={({ target }) => setPlayerSearch(target.value)}
+                placeholder="Pesquisar por nome ou matrícula"
+                aria-label="Pesquisar jogadores"
+              />
+            </div>
             {filteredPlayers.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhum jogador cadastrado para esta competição.</div>
+            ) : visiblePlayers.length === 0 ? (
+              <div className="p-3 text-medium-emphasis">Nenhum jogador encontrado para o termo buscado.</div>
             ) : (
               <CListGroup flush>
-                {filteredPlayers.map((player) => (
+                {visiblePlayers.map((player) => (
                   <CListGroupItem
                     key={player.id}
                     action

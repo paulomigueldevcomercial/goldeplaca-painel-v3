@@ -21,16 +21,10 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento/upload-sumula',
       },
       {
-        label: 'Cadastro Jogadores',
+        label: 'Jogadores',
         route: 'painel/criarjogadores',
         visibility: 'Disponível exceto para competições 29, 45, 53 e 38',
         path: '/painel/gerenciamento/cadastro-jogadores',
-      },
-      {
-        label: 'Consulta Jogadores',
-        route: 'painel/consultajogadores',
-        visibility: 'Disponível exceto para competições 29, 45 e 38',
-        path: '/painel/gerenciamento/consulta-jogadores',
       },
       {
         label: 'Súmula',
