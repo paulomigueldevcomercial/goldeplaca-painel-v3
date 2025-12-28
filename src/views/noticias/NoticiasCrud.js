@@ -200,9 +200,6 @@ const NoticiasCrud = () => {
                       {competition.season} • {competition.category}
                     </small>
                   </div>
-                  <CBadge color="primary" shape="rounded-pill">
-                    {competition.news.length}
-                  </CBadge>
                 </CListGroupItem>
               ))}
             </CListGroup>

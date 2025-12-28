@@ -178,9 +178,6 @@ const GaleriaCrud = () => {
                       {competition.season} • {competition.category}
                     </small>
                   </div>
-                  <CBadge color="primary" shape="rounded-pill">
-                    {competition.galleries.length}
-                  </CBadge>
                 </CListGroupItem>
               ))}
             </CListGroup>
