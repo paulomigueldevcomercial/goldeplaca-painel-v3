@@ -6,6 +6,7 @@ const LegacyMenuItem = React.lazy(() => import('./views/painel/LegacyMenuItem'))
 const GaleriaCrud = React.lazy(() => import('./views/galeria/GaleriaCrud'))
 const NoticiasCrud = React.lazy(() => import('./views/noticias/NoticiasCrud'))
 const UploadSumulaCrud = React.lazy(() => import('./views/uploadSumula/UploadSumulaCrud'))
+const JogadoresCrud = React.lazy(() => import('./views/jogadores/JogadoresCrud'))
 
 const legacyItems = legacyMenuSections.flatMap((section) => section.items)
 
@@ -22,9 +23,11 @@ const routes = [
         ? GaleriaCrud
         : item.route === 'painel/noticiascompeticao'
           ? NoticiasCrud
-          : item.route === 'painel/viewuploadsumula'
-            ? UploadSumulaCrud
-            : buildLegacyRoute(item),
+          : item.route === 'painel/criarjogadores'
+            ? JogadoresCrud
+            : item.route === 'painel/viewuploadsumula'
+              ? UploadSumulaCrud
+              : buildLegacyRoute(item),
   })),
 ]
 
