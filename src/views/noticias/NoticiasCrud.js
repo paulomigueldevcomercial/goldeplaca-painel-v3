@@ -30,6 +30,8 @@ const emptyArticle = {
   status: 'publicada',
   publishedAt: '',
   author: '',
+  imageUrl: '',
+  imageFileName: '',
   highlight: false,
 }
 
@@ -72,7 +74,7 @@ const NoticiasCrud = () => {
 
     const article = selectedCompetition?.news.find((item) => item.id === selectedNewsId)
     if (article) {
-      setFormData({ ...article })
+      setFormData({ ...emptyArticle, ...article, imageFileName: article.imageFileName ?? '' })
     }
   }, [selectedCompetition, selectedNewsId])
 
@@ -101,6 +103,7 @@ const NoticiasCrud = () => {
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
+      ...(name === 'imageUrl' ? { imageFileName: '' } : null),
     }))
   }
 
@@ -162,6 +165,17 @@ const NoticiasCrud = () => {
   }
 
   const articles = selectedCompetition?.news ?? []
+  const handleNewsFileChange = ({ target }) => {
+    const file = target.files?.[0]
+    if (!file) return
+
+    const objectUrl = URL.createObjectURL(file)
+    setFormData((previous) => ({
+      ...previous,
+      imageUrl: objectUrl,
+      imageFileName: file.name,
+    }))
+  }
 
   return (
     <CRow className="g-4">
@@ -311,6 +325,19 @@ const NoticiasCrud = () => {
                       onChange={handleInputChange}
                       required
                     />
+                  </div>
+
+                  <div>
+                    <CFormLabel htmlFor="news-image-upload">Upload de imagem da notícia</CFormLabel>
+                    <CFormInput
+                      id="news-image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleNewsFileChange}
+                    />
+                    {formData.imageFileName && (
+                      <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
+                    )}
                   </div>
 
                   <div className="d-flex gap-3 align-items-center">
