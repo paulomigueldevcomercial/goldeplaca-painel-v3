@@ -26,6 +26,7 @@ const emptyGallery = {
   title: '',
   description: '',
   coverUrl: '',
+  coverFileName: '',
   status: 'ativa',
   updatedAt: '',
 }
@@ -61,7 +62,7 @@ const GaleriaCrud = () => {
 
     const gallery = selectedCompetition?.galleries.find((item) => item.id === selectedGalleryId)
     if (gallery) {
-      setFormData({ ...gallery })
+      setFormData({ ...emptyGallery, ...gallery, coverFileName: gallery.coverFileName ?? '' })
     }
   }, [selectedCompetition, selectedGalleryId])
 
@@ -90,6 +91,7 @@ const GaleriaCrud = () => {
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
+      ...(name === 'coverUrl' ? { coverFileName: '' } : null),
     }))
   }
 
@@ -141,6 +143,17 @@ const GaleriaCrud = () => {
   }
 
   const galleries = selectedCompetition?.galleries ?? []
+  const handleGalleryFileChange = ({ target }) => {
+    const file = target.files?.[0]
+    if (!file) return
+
+    const objectUrl = URL.createObjectURL(file)
+    setFormData((previous) => ({
+      ...previous,
+      coverUrl: objectUrl,
+      coverFileName: file.name,
+    }))
+  }
 
   return (
     <CRow className="g-4">
@@ -265,6 +278,19 @@ const GaleriaCrud = () => {
                       value={formData.description}
                       onChange={handleInputChange}
                     />
+                  </div>
+
+                  <div>
+                    <CFormLabel htmlFor="gallery-cover-upload">Upload da imagem de capa</CFormLabel>
+                    <CFormInput
+                      id="gallery-cover-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleGalleryFileChange}
+                    />
+                    {formData.coverFileName && (
+                      <div className="form-text">Arquivo selecionado: {formData.coverFileName}</div>
+                    )}
                   </div>
 
                   <div>
