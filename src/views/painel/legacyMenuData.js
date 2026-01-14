@@ -27,6 +27,12 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento/cadastro-jogadores',
       },
       {
+        label: 'Equipes',
+        route: 'painel/criarequipes',
+        visibility: 'Disponível exceto para competições 29, 45, 53 e 38',
+        path: '/painel/gerenciamento/cadastro-equipes',
+      },
+      {
         label: 'Súmula',
         route: 'sumula/selecao',
         visibility: 'Disponível exceto para competições 32, 45 e 38',
