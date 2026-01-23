@@ -19,6 +19,8 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilGroup, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import CategorySelect from '../../components/forms/CategorySelect'
+import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import { listCategorias } from '../../services/categoriaApi'
 import { listCompeticoes } from '../../services/competicaoApi'
 import { createEquipe, deleteEquipe, listEquipes, updateEquipe } from '../../services/equipeApi'
@@ -69,7 +71,6 @@ const parseNumber = (value) => {
 const EquipesCrud = () => {
   const [competitions, setCompetitions] = useState([])
   const [filterCategories, setFilterCategories] = useState([])
-  const [formCategories, setFormCategories] = useState([])
   const [teams, setTeams] = useState([])
   const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
@@ -86,15 +87,6 @@ const EquipesCrud = () => {
         label: category.valor ?? category.chave,
       })),
     [filterCategories],
-  )
-
-  const formCategoryOptions = useMemo(
-    () =>
-      formCategories.map((category) => ({
-        value: category.chave ?? category.valor,
-        label: category.valor ?? category.chave,
-      })),
-    [formCategories],
   )
 
   const ensureCategorySelection = (categoriesList, fallbackValue, setter) => {
@@ -185,35 +177,6 @@ const EquipesCrud = () => {
   }, [selectedCompetitionId, selectedCategoryId])
 
   useEffect(() => {
-    const loadFormCategories = async () => {
-      if (!formData.competicao) {
-        setFormCategories([])
-        setFormData((previous) => ({ ...previous, categoria: '' }))
-        return
-      }
-
-      try {
-        const categoryData = await listCategorias({ competicao: formData.competicao })
-        const normalizedData = Array.isArray(categoryData) ? categoryData : []
-        setFormCategories(normalizedData)
-        const firstCategoryId = normalizedData?.[0]?.chave ?? normalizedData?.[0]?.valor ?? ''
-        setFormData((previous) => {
-          const hasSelection = normalizedData.some(
-            (category) => String(category.chave ?? category.valor) === String(previous.categoria),
-          )
-          const nextCategory = hasSelection ? previous.categoria : firstCategoryId
-          return nextCategory === previous.categoria ? previous : { ...previous, categoria: nextCategory }
-        })
-      } catch (error) {
-        setFormCategories([])
-        setFeedback({ type: 'danger', message: 'Não foi possível carregar categorias da competição.' })
-      }
-    }
-
-    loadFormCategories()
-  }, [formData.competicao])
-
-  useEffect(() => {
     if (!selectedCompetitionId) return
     loadTeams()
   }, [selectedCompetitionId, selectedCategoryId, loadTeams])
@@ -282,16 +245,15 @@ const EquipesCrud = () => {
     }))
   }
 
-  const handleCompetitionChange = ({ target }) => {
-    const newCompetitionId = target.value
+  const handleCompetitionChange = (newCompetitionId) => {
     setFormData((previous) => ({
       ...previous,
       competicao: newCompetitionId,
     }))
   }
 
-  const handleCategoryChange = ({ target }) => {
-    setFormData((previous) => ({ ...previous, categoria: target.value }))
+  const handleCategoryChange = (newCategoryId) => {
+    setFormData((previous) => ({ ...previous, categoria: newCategoryId }))
   }
 
   const handleSubmit = async (event) => {
@@ -536,38 +498,25 @@ const EquipesCrud = () => {
 
               <CRow className="g-3">
                 <CCol md={4}>
-                  <CFormLabel htmlFor="team-competition">Competição</CFormLabel>
-                  <CFormSelect
+                  <CompetitionSelect
                     id="team-competition"
                     name="competicao"
                     value={formData.competicao}
-                    onChange={handleCompetitionChange}
+                    onValueChange={handleCompetitionChange}
+                    onError={(message) => setFeedback({ type: 'danger', message })}
                     required
-                  >
-                    <option value="">Selecione</option>
-                    {competitions.map((competition) => (
-                      <option key={competition.id} value={competition.id}>
-                        {competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`}
-                      </option>
-                    ))}
-                  </CFormSelect>
+                  />
                 </CCol>
                 <CCol md={4}>
-                  <CFormLabel htmlFor="team-category">Categoria</CFormLabel>
-                  <CFormSelect
+                  <CategorySelect
                     id="team-category"
                     name="categoria"
+                    competitionId={formData.competicao}
                     value={formData.categoria}
-                    onChange={handleCategoryChange}
+                    onValueChange={handleCategoryChange}
+                    onError={(message) => setFeedback({ type: 'danger', message })}
                     required
-                  >
-                    <option value="">Selecione</option>
-                    {formCategoryOptions.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </CFormSelect>
+                  />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="team-rebaixamento">Rebaixamento</CFormLabel>
