@@ -82,15 +82,12 @@ const JogadoresCrud = () => {
     [filterCategories],
   )
 
-  const ensureCategorySelection = (categoriesList, fallbackValue, setter) => {
+  const ensureCategorySelection = (categoriesList, fallbackValue) => {
     const firstCategoryId = categoriesList?.[0]?.chave ?? categoriesList?.[0]?.valor ?? ''
     const hasSelection = categoriesList.some(
       (category) => String(category.chave ?? category.valor) === String(fallbackValue),
     )
-    const nextValue = hasSelection ? fallbackValue : firstCategoryId
-    if (nextValue !== fallbackValue) {
-      setter(nextValue)
-    }
+    return hasSelection ? fallbackValue : firstCategoryId
   }
 
   const selectedCompetition = useMemo(
@@ -182,7 +179,7 @@ const JogadoresCrud = () => {
         const categoryData = await listCategorias({ competicao: selectedCompetitionId })
         const normalizedData = Array.isArray(categoryData) ? categoryData : []
         setFilterCategories(normalizedData)
-        ensureCategorySelection(normalizedData, selectedCategoryId, (value) => setSelectedCategoryId(value))
+        setSelectedCategoryId((previous) => ensureCategorySelection(normalizedData, previous))
       } catch (error) {
         setFilterCategories([])
         setSelectedCategoryId('')
@@ -191,7 +188,7 @@ const JogadoresCrud = () => {
     }
 
     loadFilterCategories()
-  }, [selectedCompetitionId, selectedCategoryId])
+  }, [selectedCompetitionId])
 
   useEffect(() => {
     if (!selectedCompetitionId) return
