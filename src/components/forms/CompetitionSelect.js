@@ -8,6 +8,9 @@ const CompetitionSelect = ({
   label = 'Competição',
   placeholder = 'Selecione',
   value,
+  size,
+  className,
+  ariaLabel,
   required = false,
   disabled = false,
   autoSelectFirst = true,
@@ -77,6 +80,9 @@ const CompetitionSelect = ({
         onChange={(event) => onValueChange?.(event.target.value)}
         required={required}
         disabled={disabled}
+        size={size}
+        className={className}
+        aria-label={ariaLabel}
       >
         <option value="">{placeholder}</option>
         {competitionOptions.map((competition) => (

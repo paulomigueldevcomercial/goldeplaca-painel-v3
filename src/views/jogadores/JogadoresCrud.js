@@ -20,8 +20,6 @@ import CIcon from '@coreui/icons-react'
 import { cilArrowRight, cilPlus, cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
 import CategorySelect from '../../components/forms/CategorySelect'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
-import { listCategorias } from '../../services/categoriaApi'
-import { listCompeticoes } from '../../services/competicaoApi'
 import { listEquipes } from '../../services/equipeApi'
 import { createJogador, deleteJogador, listJogadores, updateJogador } from '../../services/jogadorApi'
 
@@ -61,8 +59,6 @@ const parseNumber = (value) => {
 }
 
 const JogadoresCrud = () => {
-  const [competitions, setCompetitions] = useState([])
-  const [filterCategories, setFilterCategories] = useState([])
   const [teams, setTeams] = useState([])
   const [players, setPlayers] = useState([])
   const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
@@ -72,28 +68,6 @@ const JogadoresCrud = () => {
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [playerSearch, setPlayerSearch] = useState('')
-
-  const filterCategoryOptions = useMemo(
-    () =>
-      filterCategories.map((category) => ({
-        value: category.chave ?? category.valor,
-        label: category.valor ?? category.chave,
-      })),
-    [filterCategories],
-  )
-
-  const ensureCategorySelection = (categoriesList, fallbackValue) => {
-    const firstCategoryId = categoriesList?.[0]?.chave ?? categoriesList?.[0]?.valor ?? ''
-    const hasSelection = categoriesList.some(
-      (category) => String(category.chave ?? category.valor) === String(fallbackValue),
-    )
-    return hasSelection ? fallbackValue : firstCategoryId
-  }
-
-  const selectedCompetition = useMemo(
-    () => competitions.find((competition) => String(competition.id) === String(selectedCompetitionId)) ?? null,
-    [competitions, selectedCompetitionId],
-  )
 
   const loadPlayers = useCallback(async () => {
     if (!selectedCompetitionId) return
@@ -129,66 +103,6 @@ const JogadoresCrud = () => {
       setTeams([])
     }
   }, [formData.competicao, formData.categoria])
-
-  useEffect(() => {
-    const loadSetup = async () => {
-      try {
-        const competitionData = await listCompeticoes()
-        setCompetitions(Array.isArray(competitionData) ? competitionData : [])
-
-        const firstCompetitionId = competitionData?.[0]?.id ? String(competitionData[0].id) : ''
-
-        setSelectedCompetitionId((previous) => previous || firstCompetitionId)
-
-        setFormData((previous) => ({
-          ...createEmptyPlayer(),
-          competicao: previous.competicao || firstCompetitionId,
-          categoria: previous.categoria,
-          matricula: previous.matricula,
-          nomeJogador: previous.nomeJogador,
-          dataNascimento: previous.dataNascimento,
-          gols: previous.gols,
-          amarelo: previous.amarelo,
-          vermelho: previous.vermelho,
-          cartao: previous.cartao,
-          situacaoAtleta: previous.situacaoAtleta,
-          representante: previous.representante,
-          tecnico: previous.tecnico,
-          img: previous.img,
-          imgPerfil: previous.imgPerfil,
-          imgFileName: previous.imgFileName,
-          imgPerfilFileName: previous.imgPerfilFileName,
-        }))
-      } catch (error) {
-        setFeedback({ type: 'danger', message: 'Não foi possível carregar competições.' })
-      }
-    }
-
-    loadSetup()
-  }, [])
-
-  useEffect(() => {
-    const loadFilterCategories = async () => {
-      if (!selectedCompetitionId) {
-        setFilterCategories([])
-        setSelectedCategoryId('')
-        return
-      }
-
-      try {
-        const categoryData = await listCategorias({ competicao: selectedCompetitionId })
-        const normalizedData = Array.isArray(categoryData) ? categoryData : []
-        setFilterCategories(normalizedData)
-        setSelectedCategoryId((previous) => ensureCategorySelection(normalizedData, previous))
-      } catch (error) {
-        setFilterCategories([])
-        setSelectedCategoryId('')
-        setFeedback({ type: 'danger', message: 'Não foi possível carregar categorias da competição.' })
-      }
-    }
-
-    loadFilterCategories()
-  }, [selectedCompetitionId])
 
   useEffect(() => {
     if (!selectedCompetitionId) return
@@ -239,15 +153,16 @@ const JogadoresCrud = () => {
     )
   }, [filteredPlayers, playerSearch])
 
-  const handleCompetitionFilterChange = ({ target }) => {
-    setSelectedCompetitionId(target.value)
+  const handleCompetitionFilterChange = (competitionId) => {
+    setSelectedCompetitionId(competitionId)
+    setSelectedCategoryId('')
     setSelectedPlayerId(null)
     setPlayerSearch('')
     setFeedback(null)
   }
 
-  const handleCategoryFilterChange = ({ target }) => {
-    setSelectedCategoryId(target.value)
+  const handleCategoryFilterChange = (categoryId) => {
+    setSelectedCategoryId(categoryId)
     setSelectedPlayerId(null)
     setPlayerSearch('')
     setFeedback(null)
@@ -390,30 +305,25 @@ const JogadoresCrud = () => {
               </div>
             </div>
             <div className="d-flex gap-2">
-              <CFormSelect
-                size="sm"
+              <CompetitionSelect
+                label={null}
+                placeholder="Competição"
                 value={selectedCompetitionId}
-                onChange={handleCompetitionFilterChange}
-                aria-label="Selecionar competição para filtrar"
-              >
-                {competitions.map((competition) => (
-                  <option key={competition.id} value={competition.id}>
-                    {competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`}
-                  </option>
-                ))}
-              </CFormSelect>
-              <CFormSelect
+                onValueChange={handleCompetitionFilterChange}
                 size="sm"
+                ariaLabel="Selecionar competição para filtrar"
+                onError={(message) => setFeedback({ type: 'danger', message })}
+              />
+              <CategorySelect
+                label={null}
+                placeholder="Categoria"
+                competitionId={selectedCompetitionId}
                 value={selectedCategoryId}
-                onChange={handleCategoryFilterChange}
-                aria-label="Selecionar categoria para filtrar"
-              >
-                {filterCategoryOptions.map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
-                  </option>
-                ))}
-              </CFormSelect>
+                onValueChange={handleCategoryFilterChange}
+                size="sm"
+                ariaLabel="Selecionar categoria para filtrar"
+                onError={(message) => setFeedback({ type: 'danger', message })}
+              />
             </div>
           </CCardHeader>
           <CCardBody className="p-0">
