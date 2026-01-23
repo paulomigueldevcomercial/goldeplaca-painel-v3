@@ -68,7 +68,8 @@ const parseNumber = (value) => {
 
 const EquipesCrud = () => {
   const [competitions, setCompetitions] = useState([])
-  const [categories, setCategories] = useState([])
+  const [filterCategories, setFilterCategories] = useState([])
+  const [formCategories, setFormCategories] = useState([])
   const [teams, setTeams] = useState([])
   const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
@@ -78,14 +79,34 @@ const EquipesCrud = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [teamSearch, setTeamSearch] = useState('')
 
-  const categoryOptions = useMemo(
+  const filterCategoryOptions = useMemo(
     () =>
-      categories.map((category) => ({
+      filterCategories.map((category) => ({
         value: category.chave ?? category.valor,
         label: category.valor ?? category.chave,
       })),
-    [categories],
+    [filterCategories],
   )
+
+  const formCategoryOptions = useMemo(
+    () =>
+      formCategories.map((category) => ({
+        value: category.chave ?? category.valor,
+        label: category.valor ?? category.chave,
+      })),
+    [formCategories],
+  )
+
+  const ensureCategorySelection = (categoriesList, fallbackValue, setter) => {
+    const firstCategoryId = categoriesList?.[0]?.chave ?? categoriesList?.[0]?.valor ?? ''
+    const hasSelection = categoriesList.some(
+      (category) => String(category.chave ?? category.valor) === String(fallbackValue),
+    )
+    const nextValue = hasSelection ? fallbackValue : firstCategoryId
+    if (nextValue !== fallbackValue) {
+      setter(nextValue)
+    }
+  }
 
   const loadTeams = useCallback(async () => {
     if (!selectedCompetitionId) return
@@ -108,20 +129,17 @@ const EquipesCrud = () => {
   useEffect(() => {
     const loadSetup = async () => {
       try {
-        const [competitionData, categoryData] = await Promise.all([listCompeticoes(), listCategorias()])
+        const competitionData = await listCompeticoes()
         setCompetitions(Array.isArray(competitionData) ? competitionData : [])
-        setCategories(Array.isArray(categoryData) ? categoryData : [])
 
         const firstCompetitionId = competitionData?.[0]?.id ? String(competitionData[0].id) : ''
-        const firstCategoryId = categoryData?.[0]?.chave ?? categoryData?.[0]?.valor ?? ''
 
         setSelectedCompetitionId((previous) => previous || firstCompetitionId)
-        setSelectedCategoryId((previous) => previous || firstCategoryId)
 
         setFormData((previous) => ({
           ...createEmptyTeam(),
           competicao: previous.competicao || firstCompetitionId,
-          categoria: previous.categoria || firstCategoryId,
+          categoria: previous.categoria,
           equipe: previous.equipe,
           id: previous.id,
           representante1: previous.representante1,
@@ -136,12 +154,64 @@ const EquipesCrud = () => {
           rebaixamento: previous.rebaixamento,
         }))
       } catch (error) {
-        setFeedback({ type: 'danger', message: 'Não foi possível carregar competições e categorias.' })
+        setFeedback({ type: 'danger', message: 'Não foi possível carregar competições.' })
       }
     }
 
     loadSetup()
   }, [])
+
+  useEffect(() => {
+    const loadFilterCategories = async () => {
+      if (!selectedCompetitionId) {
+        setFilterCategories([])
+        setSelectedCategoryId('')
+        return
+      }
+
+      try {
+        const categoryData = await listCategorias({ competicao: selectedCompetitionId })
+        const normalizedData = Array.isArray(categoryData) ? categoryData : []
+        setFilterCategories(normalizedData)
+        ensureCategorySelection(normalizedData, selectedCategoryId, (value) => setSelectedCategoryId(value))
+      } catch (error) {
+        setFilterCategories([])
+        setSelectedCategoryId('')
+        setFeedback({ type: 'danger', message: 'Não foi possível carregar categorias da competição.' })
+      }
+    }
+
+    loadFilterCategories()
+  }, [selectedCompetitionId, selectedCategoryId])
+
+  useEffect(() => {
+    const loadFormCategories = async () => {
+      if (!formData.competicao) {
+        setFormCategories([])
+        setFormData((previous) => ({ ...previous, categoria: '' }))
+        return
+      }
+
+      try {
+        const categoryData = await listCategorias({ competicao: formData.competicao })
+        const normalizedData = Array.isArray(categoryData) ? categoryData : []
+        setFormCategories(normalizedData)
+        const firstCategoryId = normalizedData?.[0]?.chave ?? normalizedData?.[0]?.valor ?? ''
+        setFormData((previous) => {
+          const hasSelection = normalizedData.some(
+            (category) => String(category.chave ?? category.valor) === String(previous.categoria),
+          )
+          const nextCategory = hasSelection ? previous.categoria : firstCategoryId
+          return nextCategory === previous.categoria ? previous : { ...previous, categoria: nextCategory }
+        })
+      } catch (error) {
+        setFormCategories([])
+        setFeedback({ type: 'danger', message: 'Não foi possível carregar categorias da competição.' })
+      }
+    }
+
+    loadFormCategories()
+  }, [formData.competicao])
 
   useEffect(() => {
     if (!selectedCompetitionId) return
@@ -305,7 +375,7 @@ const EquipesCrud = () => {
   }
 
   const getCategoryName = (team) =>
-    categoryOptions.find((category) => String(category.value) === String(team.categoria))?.label ??
+    formCategoryOptions.find((category) => String(category.value) === String(team.categoria))?.label ??
     team.categoria ??
     'Categoria não informada'
 
@@ -351,7 +421,7 @@ const EquipesCrud = () => {
                 onChange={handleCategoryFilterChange}
                 aria-label="Selecionar categoria para filtrar"
               >
-                {categoryOptions.map((category) => (
+                {filterCategoryOptions.map((category) => (
                   <option key={category.value} value={category.value}>
                     {category.label}
                   </option>
@@ -492,7 +562,7 @@ const EquipesCrud = () => {
                     required
                   >
                     <option value="">Selecione</option>
-                    {categoryOptions.map((category) => (
+                    {formCategoryOptions.map((category) => (
                       <option key={category.value} value={category.value}>
                         {category.label}
                       </option>
