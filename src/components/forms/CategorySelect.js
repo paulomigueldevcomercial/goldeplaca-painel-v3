@@ -9,6 +9,9 @@ const CategorySelect = ({
   placeholder = 'Selecione',
   competitionId,
   value,
+  size,
+  className,
+  ariaLabel,
   required = false,
   disabled = false,
   autoSelectFirst = true,
@@ -91,6 +94,9 @@ const CategorySelect = ({
         onChange={(event) => onValueChange?.(event.target.value)}
         required={required}
         disabled={disabled || !competitionId}
+        size={size}
+        className={className}
+        aria-label={ariaLabel}
       >
         <option value="">{placeholder}</option>
         {categoryOptions.map((category) => (
