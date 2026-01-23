@@ -33,6 +33,12 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento/cadastro-equipes',
       },
       {
+        label: 'Categorias',
+        route: 'painel/categorias',
+        visibility: 'Disponível para todas as competições',
+        path: '/painel/gerenciamento/categorias',
+      },
+      {
         label: 'Súmula',
         route: 'sumula/selecao',
         visibility: 'Disponível exceto para competições 32, 45 e 38',

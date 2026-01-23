@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CAlert,
   CBadge,
@@ -15,37 +15,40 @@ import {
   CListGroup,
   CListGroupItem,
   CRow,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilGroup, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
-import { fetchTeamSetup } from '../../services/teamApi'
+import { listCategorias } from '../../services/categoriaApi'
+import { listCompeticoes } from '../../services/competicaoApi'
+import { createEquipe, deleteEquipe, listEquipes, updateEquipe } from '../../services/equipeApi'
 
-const createEmptyTeam = (competitionId = '', categoryId = '') => ({
-  equipe: '',
-  categoria: categoryId,
+const createEmptyTeam = () => ({
   id: '',
-  V: '',
-  D: '',
-  E: '',
-  GP: '',
-  GC: '',
-  SG: '',
-  part: '',
-  PTS: '',
-  class: '',
+  equipe: '',
+  categoria: '',
+  competicao: '',
+  vitorias: '',
+  derrotas: '',
+  empates: '',
+  golsPro: '',
+  golsContra: '',
+  saldoGols: '',
+  partidas: '',
+  pontos: '',
+  classificacao: '',
   porcentagem: '',
   legenda: '',
   wo: '',
-  qtdAmarelo: '',
-  qtdVermelho: '',
-  ptAmarelo: '',
-  ptVermelho: '',
+  amarelos: '',
+  vermelhos: '',
+  pontosAmarelo: '',
+  pontosVermelho: '',
   pontuacaoCartoes: '',
-  classificacao_disciplinar: '',
-  id_competicao: competitionId,
+  classificacaoDisciplinar: '',
   chave: '',
-  pp: '',
-  pg: '',
+  pontosPerdidos: '',
+  pontosGanho: '',
   representante1: '',
   representante2: '',
   email_rp1: '',
@@ -57,40 +60,70 @@ const createEmptyTeam = (competitionId = '', categoryId = '') => ({
   rebaixamento: '',
 })
 
+const parseNumber = (value) => {
+  if (value === '' || value === null || value === undefined) return null
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
 const EquipesCrud = () => {
   const [competitions, setCompetitions] = useState([])
+  const [categories, setCategories] = useState([])
   const [teams, setTeams] = useState([])
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState(null)
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedTeamId, setSelectedTeamId] = useState(null)
   const [formData, setFormData] = useState(createEmptyTeam())
   const [feedback, setFeedback] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [teamSearch, setTeamSearch] = useState('')
 
-  const selectedCompetition = useMemo(
-    () => competitions.find((competition) => competition.id === selectedCompetitionId) ?? null,
-    [competitions, selectedCompetitionId],
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((category) => ({
+        value: category.chave ?? category.valor,
+        label: category.valor ?? category.chave,
+      })),
+    [categories],
   )
 
-  const categories = selectedCompetition?.categories ?? []
+  const loadTeams = useCallback(async () => {
+    if (!selectedCompetitionId) return
+
+    setIsLoading(true)
+    try {
+      const teamData = await listEquipes({
+        competicaoId: selectedCompetitionId,
+        categoria: selectedCategoryId || undefined,
+      })
+      setTeams(Array.isArray(teamData) ? teamData : [])
+    } catch (error) {
+      setTeams([])
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar as equipes.' })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [selectedCompetitionId, selectedCategoryId])
 
   useEffect(() => {
-    fetchTeamSetup().then(({ competitions: competitionData, teams: teamsData }) => {
-      setCompetitions(competitionData)
-      setTeams(teamsData)
+    const loadSetup = async () => {
+      try {
+        const [competitionData, categoryData] = await Promise.all([listCompeticoes(), listCategorias()])
+        setCompetitions(Array.isArray(competitionData) ? competitionData : [])
+        setCategories(Array.isArray(categoryData) ? categoryData : [])
 
-      if (!competitionData.length) return
+        const firstCompetitionId = competitionData?.[0]?.id ? String(competitionData[0].id) : ''
+        const firstCategoryId = categoryData?.[0]?.chave ?? categoryData?.[0]?.valor ?? ''
 
-      setSelectedCompetitionId((previous) => previous ?? competitionData[0].id)
-      setFormData((previous) => {
-        const baseCompetitionId = previous.id_competicao || competitionData[0].id
-        const competition = competitionData.find((item) => item.id === baseCompetitionId) ?? competitionData[0]
-        const defaultCategoryId = competition.categories[0]?.id ?? ''
+        setSelectedCompetitionId((previous) => previous || firstCompetitionId)
+        setSelectedCategoryId((previous) => previous || firstCategoryId)
 
-        return {
-          ...createEmptyTeam(baseCompetitionId, defaultCategoryId),
+        setFormData((previous) => ({
+          ...createEmptyTeam(),
+          competicao: previous.competicao || firstCompetitionId,
+          categoria: previous.categoria || firstCategoryId,
           equipe: previous.equipe,
           id: previous.id,
-          categoria: previous.categoria || defaultCategoryId,
           representante1: previous.representante1,
           representante2: previous.representante2,
           email_rp1: previous.email_rp1,
@@ -101,48 +134,45 @@ const EquipesCrud = () => {
           auxiliartecnico: previous.auxiliartecnico,
           legenda: previous.legenda,
           rebaixamento: previous.rebaixamento,
-        }
-      })
-    })
+        }))
+      } catch (error) {
+        setFeedback({ type: 'danger', message: 'Não foi possível carregar competições e categorias.' })
+      }
+    }
+
+    loadSetup()
   }, [])
+
+  useEffect(() => {
+    if (!selectedCompetitionId) return
+    loadTeams()
+  }, [selectedCompetitionId, selectedCategoryId, loadTeams])
 
   useEffect(() => {
     if (!selectedTeamId) return
 
-    const team = teams.find((item) => item.id === selectedTeamId)
+    const team = teams.find((item) => String(item.id) === String(selectedTeamId))
     if (!team) return
 
-    setFormData({ ...createEmptyTeam(), ...team, id: team.id })
+    setFormData({
+      ...createEmptyTeam(),
+      ...team,
+      competicao: String(team.competicao ?? team.competicaoId ?? team.id_competicao ?? formData.competicao),
+      categoria: team.categoria ?? formData.categoria,
+    })
   }, [selectedTeamId, teams])
 
   useEffect(() => {
     if (selectedTeamId) return
-    if (!selectedCompetition) return
-
-    const defaultCategoryId = selectedCompetition.categories[0]?.id ?? ''
 
     setFormData((previous) => ({
-      ...createEmptyTeam(selectedCompetition.id, defaultCategoryId),
-      equipe: previous.equipe,
-      id: previous.id,
-      categoria: previous.categoria || defaultCategoryId,
-      representante1: previous.representante1,
-      representante2: previous.representante2,
-      email_rp1: previous.email_rp1,
-      email_rp2: previous.email_rp2,
-      fone_rp1: previous.fone_rp1,
-      fone_rp2: previous.fone_rp2,
-      tecnico: previous.tecnico,
-      auxiliartecnico: previous.auxiliartecnico,
-      legenda: previous.legenda,
-      rebaixamento: previous.rebaixamento,
+      ...previous,
+      competicao: previous.competicao || selectedCompetitionId,
+      categoria: previous.categoria || selectedCategoryId,
     }))
-  }, [selectedCompetition, selectedTeamId])
+  }, [selectedCompetitionId, selectedCategoryId, selectedTeamId])
 
-  const filteredTeams = useMemo(
-    () => teams.filter((team) => team.id_competicao === selectedCompetitionId),
-    [teams, selectedCompetitionId],
-  )
+  const filteredTeams = useMemo(() => teams, [teams])
   const visibleTeams = useMemo(() => {
     const searchTerm = teamSearch.trim().toLowerCase()
     if (!searchTerm) return filteredTeams
@@ -157,6 +187,13 @@ const EquipesCrud = () => {
 
   const handleCompetitionFilterChange = ({ target }) => {
     setSelectedCompetitionId(target.value)
+    setSelectedTeamId(null)
+    setTeamSearch('')
+    setFeedback(null)
+  }
+
+  const handleCategoryFilterChange = ({ target }) => {
+    setSelectedCategoryId(target.value)
     setSelectedTeamId(null)
     setTeamSearch('')
     setFeedback(null)
@@ -177,13 +214,9 @@ const EquipesCrud = () => {
 
   const handleCompetitionChange = ({ target }) => {
     const newCompetitionId = target.value
-    const competition = competitions.find((item) => item.id === newCompetitionId)
-    const newCategoryId = competition?.categories[0]?.id ?? ''
-
     setFormData((previous) => ({
       ...previous,
-      id_competicao: newCompetitionId,
-      categoria: newCategoryId,
+      competicao: newCompetitionId,
     }))
   }
 
@@ -191,47 +224,90 @@ const EquipesCrud = () => {
     setFormData((previous) => ({ ...previous, categoria: target.value }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.id_competicao || !formData.categoria || !formData.id) return
+    if (!formData.competicao || !formData.categoria || !formData.equipe) return
 
-    const teamId = selectedTeamId ?? Number(formData.id)
-    const payload = {
-      ...formData,
-      id: teamId,
+    setIsLoading(true)
+    try {
+      const payload = {
+        ...formData,
+        id: formData.id ? parseNumber(formData.id) : undefined,
+        competicao: parseNumber(formData.competicao),
+        vitorias: parseNumber(formData.vitorias),
+        derrotas: parseNumber(formData.derrotas),
+        empates: parseNumber(formData.empates),
+        golsPro: parseNumber(formData.golsPro),
+        golsContra: parseNumber(formData.golsContra),
+        saldoGols: parseNumber(formData.saldoGols),
+        partidas: parseNumber(formData.partidas),
+        pontos: parseNumber(formData.pontos),
+        classificacao: parseNumber(formData.classificacao),
+        porcentagem: parseNumber(formData.porcentagem),
+        wo: parseNumber(formData.wo),
+        amarelos: parseNumber(formData.amarelos),
+        vermelhos: parseNumber(formData.vermelhos),
+        pontosAmarelo: parseNumber(formData.pontosAmarelo),
+        pontosVermelho: parseNumber(formData.pontosVermelho),
+        pontuacaoCartoes: parseNumber(formData.pontuacaoCartoes),
+        classificacaoDisciplinar: parseNumber(formData.classificacaoDisciplinar),
+        pontosPerdidos: parseNumber(formData.pontosPerdidos),
+        pontosGanho: parseNumber(formData.pontosGanho),
+      }
+
+      if (selectedTeamId) {
+        await updateEquipe(selectedTeamId, payload)
+        setFeedback({ type: 'success', message: 'Dados da equipe atualizados com sucesso.' })
+      } else {
+        const created = await createEquipe(payload)
+        setSelectedTeamId(created?.id ?? payload.id ?? null)
+        setFeedback({ type: 'success', message: 'Equipe cadastrada com sucesso.' })
+      }
+
+      await loadTeams()
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível salvar a equipe.' })
+    } finally {
+      setIsLoading(false)
     }
-
-    setTeams((previous) => {
-      const exists = previous.some((item) => item.id === teamId)
-      return exists ? previous.map((team) => (team.id === teamId ? payload : team)) : [...previous, payload]
-    })
-
-    setSelectedTeamId(teamId)
-    setFeedback(selectedTeamId ? 'Dados da equipe atualizados com sucesso.' : 'Equipe cadastrada com sucesso.')
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedTeamId) return
 
-    setTeams((previous) => previous.filter((team) => team.id !== selectedTeamId))
-    setSelectedTeamId(null)
-    setFormData(createEmptyTeam(selectedCompetitionId ?? ''))
-    setFeedback('Equipe removida do cadastro.')
+    setIsLoading(true)
+    try {
+      await deleteEquipe(selectedTeamId)
+      setSelectedTeamId(null)
+      setFormData((previous) => ({
+        ...createEmptyTeam(),
+        competicao: previous.competicao,
+        categoria: previous.categoria,
+      }))
+      setFeedback({ type: 'success', message: 'Equipe removida do cadastro.' })
+      await loadTeams()
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível remover a equipe.' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleReset = () => {
-    const categoryId = selectedCompetition?.categories[0]?.id ?? ''
-
     setSelectedTeamId(null)
-    setFormData(createEmptyTeam(selectedCompetitionId ?? '', categoryId))
+    setFormData((previous) => ({
+      ...createEmptyTeam(),
+      competicao: previous.competicao || selectedCompetitionId,
+      categoria: previous.categoria || selectedCategoryId,
+    }))
     setFeedback(null)
   }
 
-  const getCategoryName = (team) => {
-    const competition = competitions.find((item) => item.id === team.id_competicao)
-    return competition?.categories.find((category) => category.id === team.categoria)?.name ?? 'Categoria não informada'
-  }
+  const getCategoryName = (team) =>
+    categoryOptions.find((category) => String(category.value) === String(team.categoria))?.label ??
+    team.categoria ??
+    'Categoria não informada'
 
   return (
     <CRow className="g-4">
@@ -242,7 +318,7 @@ const EquipesCrud = () => {
             <div>
               <h4 className="mb-1">Equipes</h4>
               <div className="text-medium-emphasis">
-                Gerencie os dados de equipes por competição. Os registros são mantidos em memória para simular o fluxo do CRUD.
+                Gerencie os dados de equipes usando os endpoints de equipes, competições e categorias (localhost:8080).
               </div>
             </div>
           </CCardBody>
@@ -251,24 +327,37 @@ const EquipesCrud = () => {
 
       <CCol md={4}>
         <CCard className="h-100">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
+          <CCardHeader className="d-flex flex-column gap-2">
             <div>
               <strong>Equipes</strong>
-              <div className="small text-medium-emphasis">Filtradas por competição</div>
+              <div className="small text-medium-emphasis">Filtradas por competição e categoria</div>
             </div>
-            <CFormSelect
-              size="sm"
-              value={selectedCompetitionId ?? ''}
-              onChange={handleCompetitionFilterChange}
-              aria-label="Selecionar competição para filtrar"
-              className="w-auto"
-            >
-              {competitions.map((competition) => (
-                <option key={competition.id} value={competition.id}>
-                  {competition.name}
-                </option>
-              ))}
-            </CFormSelect>
+            <div className="d-flex gap-2">
+              <CFormSelect
+                size="sm"
+                value={selectedCompetitionId}
+                onChange={handleCompetitionFilterChange}
+                aria-label="Selecionar competição para filtrar"
+              >
+                {competitions.map((competition) => (
+                  <option key={competition.id} value={competition.id}>
+                    {competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`}
+                  </option>
+                ))}
+              </CFormSelect>
+              <CFormSelect
+                size="sm"
+                value={selectedCategoryId}
+                onChange={handleCategoryFilterChange}
+                aria-label="Selecionar categoria para filtrar"
+              >
+                {categoryOptions.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
+                  </option>
+                ))}
+              </CFormSelect>
+            </div>
           </CCardHeader>
           <CCardBody className="p-0">
             <div className="p-3 border-bottom">
@@ -280,7 +369,11 @@ const EquipesCrud = () => {
                 aria-label="Pesquisar equipes"
               />
             </div>
-            {filteredTeams.length === 0 ? (
+            {isLoading ? (
+              <div className="p-3 text-center">
+                <CSpinner size="sm" /> Carregando equipes...
+              </div>
+            ) : filteredTeams.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhuma equipe cadastrada para esta competição.</div>
             ) : visibleTeams.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhuma equipe encontrada para o termo buscado.</div>
@@ -290,7 +383,7 @@ const EquipesCrud = () => {
                   <CListGroupItem
                     key={team.id}
                     action
-                    active={team.id === selectedTeamId}
+                    active={String(team.id) === String(selectedTeamId)}
                     onClick={() => handleTeamSelect(team.id)}
                   >
                     <div className="d-flex justify-content-between align-items-start gap-2">
@@ -305,7 +398,7 @@ const EquipesCrud = () => {
                           {getCategoryName(team)}
                         </CBadge>
                         <CBadge color="info" shape="rounded-pill">
-                          {team.PTS ? `${team.PTS} pts` : 'Pontuação não informada'}
+                          {team.pontos ? `${team.pontos} pts` : 'Pontuação não informada'}
                         </CBadge>
                       </div>
                     </div>
@@ -319,8 +412,8 @@ const EquipesCrud = () => {
 
       <CCol md={8}>
         {feedback && (
-          <CAlert color="success" className="mb-3">
-            {feedback}
+          <CAlert color={feedback.type} className="mb-3">
+            {feedback.message}
           </CAlert>
         )}
         <CCard className="h-100">
@@ -356,7 +449,6 @@ const EquipesCrud = () => {
                     placeholder="Código"
                     value={formData.id}
                     onChange={handleInputChange}
-                    required
                     readOnly={Boolean(selectedTeamId)}
                   />
                 </CCol>
@@ -377,15 +469,15 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-competition">Competição</CFormLabel>
                   <CFormSelect
                     id="team-competition"
-                    name="id_competicao"
-                    value={formData.id_competicao}
+                    name="competicao"
+                    value={formData.competicao}
                     onChange={handleCompetitionChange}
                     required
                   >
                     <option value="">Selecione</option>
                     {competitions.map((competition) => (
                       <option key={competition.id} value={competition.id}>
-                        {competition.name} ({competition.season})
+                        {competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`}
                       </option>
                     ))}
                   </CFormSelect>
@@ -400,9 +492,9 @@ const EquipesCrud = () => {
                     required
                   >
                     <option value="">Selecione</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
+                    {categoryOptions.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
                       </option>
                     ))}
                   </CFormSelect>
@@ -437,39 +529,39 @@ const EquipesCrud = () => {
 
               <CRow className="g-3">
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-v">Vitórias (V)</CFormLabel>
-                  <CFormInput id="team-v" name="V" type="number" value={formData.V} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-v">Vitórias</CFormLabel>
+                  <CFormInput id="team-v" name="vitorias" type="number" value={formData.vitorias} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-e">Empates (E)</CFormLabel>
-                  <CFormInput id="team-e" name="E" type="number" value={formData.E} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-e">Empates</CFormLabel>
+                  <CFormInput id="team-e" name="empates" type="number" value={formData.empates} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-d">Derrotas (D)</CFormLabel>
-                  <CFormInput id="team-d" name="D" type="number" value={formData.D} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-d">Derrotas</CFormLabel>
+                  <CFormInput id="team-d" name="derrotas" type="number" value={formData.derrotas} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-part">Partidas</CFormLabel>
-                  <CFormInput id="team-part" name="part" type="number" value={formData.part} onChange={handleInputChange} />
+                  <CFormInput id="team-part" name="partidas" type="number" value={formData.partidas} onChange={handleInputChange} />
                 </CCol>
               </CRow>
 
               <CRow className="g-3">
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-gp">GP</CFormLabel>
-                  <CFormInput id="team-gp" name="GP" type="number" value={formData.GP} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-gp">Gols pró</CFormLabel>
+                  <CFormInput id="team-gp" name="golsPro" type="number" value={formData.golsPro} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-gc">GC</CFormLabel>
-                  <CFormInput id="team-gc" name="GC" type="number" value={formData.GC} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-gc">Gols contra</CFormLabel>
+                  <CFormInput id="team-gc" name="golsContra" type="number" value={formData.golsContra} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-sg">SG</CFormLabel>
-                  <CFormInput id="team-sg" name="SG" type="number" value={formData.SG} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-sg">Saldo de gols</CFormLabel>
+                  <CFormInput id="team-sg" name="saldoGols" type="number" value={formData.saldoGols} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-pts">PTS</CFormLabel>
-                  <CFormInput id="team-pts" name="PTS" type="number" value={formData.PTS} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-pts">Pontos</CFormLabel>
+                  <CFormInput id="team-pts" name="pontos" type="number" value={formData.pontos} onChange={handleInputChange} />
                 </CCol>
               </CRow>
 
@@ -478,9 +570,9 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-class">Classificação</CFormLabel>
                   <CFormInput
                     id="team-class"
-                    name="class"
+                    name="classificacao"
                     type="number"
-                    value={formData.class}
+                    value={formData.classificacao}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -495,12 +587,12 @@ const EquipesCrud = () => {
                   />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-pp">PP</CFormLabel>
-                  <CFormInput id="team-pp" name="pp" type="number" value={formData.pp} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-pp">Pontos perdidos</CFormLabel>
+                  <CFormInput id="team-pp" name="pontosPerdidos" type="number" value={formData.pontosPerdidos} onChange={handleInputChange} />
                 </CCol>
                 <CCol md={3}>
-                  <CFormLabel htmlFor="team-pg">PG</CFormLabel>
-                  <CFormInput id="team-pg" name="pg" type="number" value={formData.pg} onChange={handleInputChange} />
+                  <CFormLabel htmlFor="team-pg">Pontos ganhos</CFormLabel>
+                  <CFormInput id="team-pg" name="pontosGanho" type="number" value={formData.pontosGanho} onChange={handleInputChange} />
                 </CCol>
               </CRow>
 
@@ -513,9 +605,9 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-pt-amarelo">Pts Amarelo</CFormLabel>
                   <CFormInput
                     id="team-pt-amarelo"
-                    name="ptAmarelo"
+                    name="pontosAmarelo"
                     type="number"
-                    value={formData.ptAmarelo}
+                    value={formData.pontosAmarelo}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -523,9 +615,9 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-pt-vermelho">Pts Vermelho</CFormLabel>
                   <CFormInput
                     id="team-pt-vermelho"
-                    name="ptVermelho"
+                    name="pontosVermelho"
                     type="number"
-                    value={formData.ptVermelho}
+                    value={formData.pontosVermelho}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -536,9 +628,9 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-qtd-amarelo">Qtd. Amarelo</CFormLabel>
                   <CFormInput
                     id="team-qtd-amarelo"
-                    name="qtdAmarelo"
+                    name="amarelos"
                     type="number"
-                    value={formData.qtdAmarelo}
+                    value={formData.amarelos}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -546,9 +638,9 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-qtd-vermelho">Qtd. Vermelho</CFormLabel>
                   <CFormInput
                     id="team-qtd-vermelho"
-                    name="qtdVermelho"
+                    name="vermelhos"
                     type="number"
-                    value={formData.qtdVermelho}
+                    value={formData.vermelhos}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -569,9 +661,9 @@ const EquipesCrud = () => {
                   <CFormLabel htmlFor="team-classificacao">Classificação disciplinar</CFormLabel>
                   <CFormInput
                     id="team-classificacao"
-                    name="classificacao_disciplinar"
+                    name="classificacaoDisciplinar"
                     type="number"
-                    value={formData.classificacao_disciplinar}
+                    value={formData.classificacaoDisciplinar}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -664,17 +756,17 @@ const EquipesCrud = () => {
               </CRow>
 
               <div className="d-flex flex-wrap gap-2">
-                <CButton color="primary" type="submit">
+                <CButton color="primary" type="submit" disabled={isLoading}>
                   <CIcon icon={cilSave} className="me-2" /> Salvar
                 </CButton>
-                <CButton color="secondary" variant="outline" type="button" onClick={handleReset}>
+                <CButton color="secondary" variant="outline" type="button" onClick={handleReset} disabled={isLoading}>
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
                 <CButton
                   color="danger"
                   variant="ghost"
                   type="button"
-                  disabled={!selectedTeamId}
+                  disabled={!selectedTeamId || isLoading}
                   onClick={handleDelete}
                 >
                   <CIcon icon={cilTrash} className="me-2" /> Remover
