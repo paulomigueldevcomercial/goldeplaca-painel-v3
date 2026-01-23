@@ -376,7 +376,7 @@ const JogadoresCrud = () => {
             <div>
               <h4 className="mb-1">Jogadores</h4>
               <div className="text-medium-emphasis">
-                Gerencie o registro de atletas utilizando a API do painel (localhost:8080).
+                Gerencie o registro de atletas utilizando a API do painel.
               </div>
             </div>
           </CCardBody>
