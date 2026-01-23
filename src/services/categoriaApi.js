@@ -1,6 +1,6 @@
 import { requestJson } from './apiClient'
 
-export const listCategorias = () => requestJson('/api/categorias')
+export const listCategorias = (filters = {}) => requestJson('/api/categorias', { params: filters })
 
 export const createCategoria = (payload) => requestJson('/api/categorias', { method: 'POST', body: payload })
 
