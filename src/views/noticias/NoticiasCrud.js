@@ -19,6 +19,8 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { fetchCompetitionsWithNews } from '../../services/competitionApi'
 
 const initialCompetitions = []
@@ -111,6 +113,13 @@ const NoticiasCrud = () => {
     setFormData((previous) => ({
       ...previous,
       highlight: target.checked,
+    }))
+  }
+
+  const handleContentChange = (value) => {
+    setFormData((previous) => ({
+      ...previous,
+      content: value,
     }))
   }
 
@@ -313,14 +322,12 @@ const NoticiasCrud = () => {
 
                   <div>
                     <CFormLabel htmlFor="news-content">Conteúdo</CFormLabel>
-                    <CFormTextarea
+                    <ReactQuill
                       id="news-content"
-                      name="content"
-                      rows={4}
-                      placeholder="Texto completo da notícia"
+                      theme="snow"
                       value={formData.content}
-                      onChange={handleInputChange}
-                      required
+                      onChange={handleContentChange}
+                      placeholder="Texto completo da notícia"
                     />
                   </div>
 
