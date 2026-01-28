@@ -34,7 +34,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.2.0",
-    "react-quill": "^2.0.0",
+    "quill": "^2.0.3",
+    "react-quilljs": "^2.0.5",
     "react-router-dom": "^7.9.5",
     "redux": "5.0.1",
     "simplebar-react": "^3.3.2"

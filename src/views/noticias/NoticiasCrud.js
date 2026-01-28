@@ -19,8 +19,8 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
+import { useQuill } from 'react-quilljs'
+import 'quill/dist/quill.snow.css'
 import { fetchCompetitionsWithNews } from '../../services/competitionApi'
 
 const initialCompetitions = []
@@ -116,12 +116,40 @@ const NoticiasCrud = () => {
     }))
   }
 
-  const handleContentChange = (value) => {
-    setFormData((previous) => ({
-      ...previous,
-      content: value,
-    }))
-  }
+  const { quill, quillRef } = useQuill({
+    theme: 'snow',
+    placeholder: 'Texto completo da notícia',
+  })
+
+  useEffect(() => {
+    if (!quill) return
+
+    const handleTextChange = () => {
+      setFormData((previous) => ({
+        ...previous,
+        content: quill.root.innerHTML,
+      }))
+    }
+
+    quill.on('text-change', handleTextChange)
+
+    return () => {
+      quill.off('text-change', handleTextChange)
+    }
+  }, [quill])
+
+  useEffect(() => {
+    if (!quill) return
+
+    const nextContent = formData.content || ''
+    if (quill.root.innerHTML === nextContent) return
+
+    const selection = quill.getSelection()
+    quill.root.innerHTML = nextContent
+    if (selection) {
+      quill.setSelection(selection)
+    }
+  }, [formData.content, quill])
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -322,13 +350,7 @@ const NoticiasCrud = () => {
 
                   <div>
                     <CFormLabel htmlFor="news-content">Conteúdo</CFormLabel>
-                    <ReactQuill
-                      id="news-content"
-                      theme="snow"
-                      value={formData.content}
-                      onChange={handleContentChange}
-                      placeholder="Texto completo da notícia"
-                    />
+                    <div id="news-content" ref={quillRef} />
                   </div>
 
                   <div>
