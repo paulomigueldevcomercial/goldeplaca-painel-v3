@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import {
   CAlert,
   CButton,
@@ -18,7 +19,6 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilList, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import { createCategoria, deleteCategoria, listCategorias, updateCategoria } from '../../services/categoriaApi'
-import { listCompeticoes } from '../../services/competicaoApi'
 import { listEquipes } from '../../services/equipeApi'
 
 const createEmptyCategory = () => ({
@@ -26,22 +26,26 @@ const createEmptyCategory = () => ({
   categoriaAtual: '',
   novaCategoria: '',
   equipeIds: [],
-  competicaoFiltro: '',
 })
 
 const CategoriasCrud = () => {
   const [categories, setCategories] = useState([])
   const [teams, setTeams] = useState([])
-  const [competitions, setCompetitions] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [formData, setFormData] = useState(createEmptyCategory())
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const loadCategories = useCallback(async () => {
+    if (!selectedCompetitionId) {
+      setCategories([])
+      return
+    }
+
     setIsLoading(true)
     try {
-      const categoryData = await listCategorias()
+      const categoryData = await listCategorias({ competicao: selectedCompetitionId })
       setCategories(Array.isArray(categoryData) ? categoryData : [])
     } catch (error) {
       setCategories([])
@@ -49,45 +53,32 @@ const CategoriasCrud = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [selectedCompetitionId])
 
-  const loadTeams = useCallback(
-    async (competitionId) => {
-      try {
-        const teamData = await listEquipes({ competicaoId: competitionId || undefined })
-        setTeams(Array.isArray(teamData) ? teamData : [])
-      } catch (error) {
-        setTeams([])
-      }
-    },
-    [],
-  )
-
-  useEffect(() => {
-    const loadSetup = async () => {
-      try {
-        const competitionData = await listCompeticoes()
-        setCompetitions(Array.isArray(competitionData) ? competitionData : [])
-        const firstCompetitionId = competitionData?.[0]?.id ? String(competitionData[0].id) : ''
-
-        setFormData((previous) => ({
-          ...previous,
-          competicaoFiltro: previous.competicaoFiltro || firstCompetitionId,
-        }))
-        await loadTeams(firstCompetitionId)
-      } catch (error) {
-        setFeedback({ type: 'danger', message: 'Não foi possível carregar competições e equipes.' })
-      }
+  const loadTeams = useCallback(async () => {
+    if (!selectedCompetitionId) {
+      setTeams([])
+      return
     }
 
-    loadSetup()
+    try {
+      const teamData = await listEquipes({ competicaoId: selectedCompetitionId })
+      setTeams(Array.isArray(teamData) ? teamData : [])
+    } catch (error) {
+      setTeams([])
+    }
+  }, [selectedCompetitionId])
+
+  useEffect(() => {
     loadCategories()
+    loadTeams()
   }, [loadCategories, loadTeams])
 
   useEffect(() => {
-    if (!formData.competicaoFiltro) return
-    loadTeams(formData.competicaoFiltro)
-  }, [formData.competicaoFiltro, loadTeams])
+    setSelectedCategory(null)
+    setFormData(createEmptyCategory())
+    setFeedback(null)
+  }, [selectedCompetitionId])
 
   const teamOptions = useMemo(
     () => teams.map((team) => ({ value: team.id, label: team.equipe })),
@@ -123,7 +114,14 @@ const CategoriasCrud = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.categoria) return
+    if (!selectedCompetitionId) {
+      setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
+      return
+    }
+    if (!formData.categoria) {
+      setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios.' })
+      return
+    }
 
     setIsLoading(true)
     try {
@@ -170,7 +168,6 @@ const CategoriasCrud = () => {
       setSelectedCategory(null)
       setFormData((previous) => ({
         ...createEmptyCategory(),
-        competicaoFiltro: previous.competicaoFiltro,
       }))
       await loadCategories()
     } catch (error) {
@@ -184,7 +181,6 @@ const CategoriasCrud = () => {
     setSelectedCategory(null)
     setFormData((previous) => ({
       ...createEmptyCategory(),
-      competicaoFiltro: previous.competicaoFiltro,
     }))
     setFeedback(null)
   }
@@ -269,23 +265,7 @@ const CategoriasCrud = () => {
               </div>
 
               <CRow className="g-3">
-                <CCol md={6}>
-                  <CFormLabel htmlFor="categoria-competicao">Competição para listar equipes</CFormLabel>
-                  <CFormSelect
-                    id="categoria-competicao"
-                    name="competicaoFiltro"
-                    value={formData.competicaoFiltro}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Selecione</option>
-                    {competitions.map((competition) => (
-                      <option key={competition.id} value={competition.id}>
-                        {competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </CCol>
-                <CCol md={6}>
+                <CCol md={12}>
                   <CFormLabel htmlFor="categoria-equipes">Equipes vinculadas</CFormLabel>
                   <CFormSelect
                     id="categoria-equipes"

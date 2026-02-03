@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import {
   CAlert,
   CBadge,
@@ -33,21 +34,18 @@ const emptyGallery = {
 
 const GaleriaCrud = () => {
   const [competitions, setCompetitions] = useState(initialCompetitions)
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState(initialCompetitions[0]?.id ?? null)
   const [selectedGalleryId, setSelectedGalleryId] = useState(null)
   const [formData, setFormData] = useState(emptyGallery)
   const [feedback, setFeedback] = useState(null)
+  const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const selectedCompetition = useMemo(
-    () => competitions.find((competition) => competition.id === selectedCompetitionId),
+    () =>
+      competitions.find(
+        (competition) => String(competition.id) === String(selectedCompetitionId),
+      ),
     [competitions, selectedCompetitionId],
   )
-
-  useEffect(() => {
-    if (!selectedCompetitionId && competitions.length) {
-      setSelectedCompetitionId(competitions[0].id)
-    }
-  }, [competitions, selectedCompetitionId])
 
   useEffect(() => {
     setSelectedGalleryId(null)
@@ -69,17 +67,8 @@ const GaleriaCrud = () => {
   useEffect(() => {
     fetchCompetitionsWithGalleries().then((data) => {
       setCompetitions(data)
-
-      if (!selectedCompetitionId && data.length) {
-        setSelectedCompetitionId(data[0].id)
-      }
     })
   }, [])
-
-  const handleCompetitionChange = (competitionId) => {
-    setSelectedCompetitionId(competitionId)
-    setFeedback(null)
-  }
 
   const handleGallerySelect = (galleryId) => {
     setSelectedGalleryId(galleryId)
@@ -98,7 +87,10 @@ const GaleriaCrud = () => {
   const handleSubmit = (event) => {
     event.preventDefault()
 
-    if (!selectedCompetition) return
+    if (!selectedCompetitionId) {
+      setFeedback('Selecione uma competição no menu lateral.')
+      return
+    }
 
     const galleryId = selectedGalleryId ?? `gal-${Date.now()}`
     const payload = {
@@ -107,17 +99,31 @@ const GaleriaCrud = () => {
       updatedAt: formData.updatedAt || new Date().toLocaleDateString('pt-BR'),
     }
 
-    setCompetitions((previous) =>
-      previous.map((competition) => {
-        if (competition.id !== selectedCompetition.id) return competition
+    setCompetitions((previous) => {
+      const targetId = String(selectedCompetitionId)
+      const existing = previous.find((competition) => String(competition.id) === targetId)
+      const baseCompetition =
+        existing ?? {
+          id: targetId,
+          name: `Competição ${targetId}`,
+          season: '',
+          category: '',
+          news: [],
+          galleries: [],
+        }
+      const galleries = selectedGalleryId
+        ? baseCompetition.galleries.map((gallery) =>
+            gallery.id === selectedGalleryId ? payload : gallery,
+          )
+        : [...baseCompetition.galleries, payload]
+      const nextCompetition = { ...baseCompetition, galleries }
 
-        const galleries = selectedGalleryId
-          ? competition.galleries.map((gallery) => (gallery.id === selectedGalleryId ? payload : gallery))
-          : [...competition.galleries, payload]
-
-        return { ...competition, galleries }
-      }),
-    )
+      return existing
+        ? previous.map((competition) =>
+            String(competition.id) === targetId ? nextCompetition : competition,
+          )
+        : [...previous, nextCompetition]
+    })
 
     setSelectedGalleryId(galleryId)
     setFeedback(selectedGalleryId ? 'Galeria atualizada com sucesso.' : 'Nova galeria criada para a competição.')
@@ -160,27 +166,21 @@ const GaleriaCrud = () => {
       <CCol md={4}>
         <CCard className="h-100">
           <CCardHeader>
-            <strong>Competições</strong>
+            <strong>Competição selecionada</strong>
           </CCardHeader>
-          <CCardBody className="p-0">
-            <CListGroup flush>
-              {competitions.map((competition) => (
-                <CListGroupItem
-                  key={competition.id}
-                  component="button"
-                  onClick={() => handleCompetitionChange(competition.id)}
-                  active={competition.id === selectedCompetitionId}
-                  className="text-start d-flex justify-content-between align-items-start"
-                >
-                  <div>
-                    <div className="fw-semibold">{competition.name}</div>
-                    <small className="text-medium-emphasis">
-                      {competition.season} • {competition.category}
-                    </small>
-                  </div>
-                </CListGroupItem>
-              ))}
-            </CListGroup>
+          <CCardBody>
+            {selectedCompetition ? (
+              <>
+                <div className="fw-semibold">{selectedCompetition.name}</div>
+                <small className="text-medium-emphasis">
+                  {selectedCompetition.season} • {selectedCompetition.category}
+                </small>
+              </>
+            ) : (
+              <div className="text-medium-emphasis">
+                Não encontrei essa competição nos dados carregados.
+              </div>
+            )}
           </CCardBody>
         </CCard>
       </CCol>

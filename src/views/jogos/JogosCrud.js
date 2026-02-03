@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import {
   CAlert,
   CBadge,
@@ -17,9 +18,8 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCalendar, cilPlus, cilReload, cilSave, cilSoccer, cilTrash } from '@coreui/icons'
+import { cilPlus, cilReload, cilSave, cilSoccer, cilTrash } from '@coreui/icons'
 import CategorySelect from '../../components/forms/CategorySelect'
-import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import { listEquipes } from '../../services/equipeApi'
 import { createJogo, deleteJogo, listJogos, updateJogo } from '../../services/jogosApi'
 
@@ -60,13 +60,13 @@ const parseNumber = (value) => {
 const JogosCrud = () => {
   const [teams, setTeams] = useState([])
   const [games, setGames] = useState([])
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedGameId, setSelectedGameId] = useState(null)
   const [formData, setFormData] = useState(createEmptyGame())
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [gameSearch, setGameSearch] = useState('')
+  const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const loadGames = useCallback(async () => {
     if (!selectedCompetitionId) return
@@ -87,21 +87,21 @@ const JogosCrud = () => {
   }, [selectedCompetitionId, selectedCategoryId])
 
   const loadTeams = useCallback(async () => {
-    if (!formData.competicaoId || !formData.categoria) {
+    if (!selectedCompetitionId || !formData.categoria) {
       setTeams([])
       return
     }
 
     try {
       const teamData = await listEquipes({
-        competicaoId: formData.competicaoId,
+        competicaoId: selectedCompetitionId,
         categoria: formData.categoria,
       })
       setTeams(Array.isArray(teamData) ? teamData : [])
     } catch (error) {
       setTeams([])
     }
-  }, [formData.competicaoId, formData.categoria])
+  }, [formData.categoria, selectedCompetitionId])
 
   useEffect(() => {
     if (!selectedCompetitionId) return
@@ -113,6 +113,13 @@ const JogosCrud = () => {
   }, [loadTeams])
 
   useEffect(() => {
+    setSelectedCategoryId('')
+    setSelectedGameId(null)
+    setGameSearch('')
+    setFeedback(null)
+  }, [selectedCompetitionId])
+
+  useEffect(() => {
     if (!selectedGameId) return
 
     const game = games.find((item) => String(item.codigo) === String(selectedGameId))
@@ -121,17 +128,17 @@ const JogosCrud = () => {
     setFormData({
       ...createEmptyGame(),
       ...game,
-      competicaoId: String(game.competicaoId ?? formData.competicaoId),
+      competicaoId: String(game.competicaoId ?? selectedCompetitionId),
       categoria: game.categoria ?? formData.categoria,
     })
-  }, [selectedGameId, games])
+  }, [selectedGameId, games, selectedCompetitionId])
 
   useEffect(() => {
     if (selectedGameId) return
 
     setFormData((previous) => ({
       ...previous,
-      competicaoId: previous.competicaoId || selectedCompetitionId,
+      competicaoId: selectedCompetitionId,
       categoria: previous.categoria || selectedCategoryId,
     }))
   }, [selectedCompetitionId, selectedCategoryId, selectedGameId])
@@ -148,14 +155,6 @@ const JogosCrud = () => {
       }),
     )
   }, [filteredGames, gameSearch])
-
-  const handleCompetitionFilterChange = (competitionId) => {
-    setSelectedCompetitionId(competitionId)
-    setSelectedCategoryId('')
-    setSelectedGameId(null)
-    setGameSearch('')
-    setFeedback(null)
-  }
 
   const handleCategoryFilterChange = (categoryId) => {
     setSelectedCategoryId(categoryId)
@@ -174,13 +173,6 @@ const JogosCrud = () => {
     setFormData((previous) => ({
       ...previous,
       [name]: value,
-    }))
-  }
-
-  const handleCompetitionChange = (newCompetitionId) => {
-    setFormData((previous) => ({
-      ...previous,
-      competicaoId: newCompetitionId,
     }))
   }
 
@@ -203,7 +195,14 @@ const JogosCrud = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.competicaoId || !formData.categoria || !formData.codigo) return
+    if (!selectedCompetitionId) {
+      setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
+      return
+    }
+    if (!formData.categoria || !formData.codigo) {
+      setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios.' })
+      return
+    }
 
     setIsLoading(true)
     try {
@@ -214,7 +213,7 @@ const JogosCrud = () => {
         equipe1Id: parseNumber(formData.equipe1Id),
         equipe2Id: parseNumber(formData.equipe2Id),
         njg: parseNumber(formData.njg),
-        competicaoId: parseNumber(formData.competicaoId),
+        competicaoId: parseNumber(selectedCompetitionId),
         penaltiEquipe1: parseNumber(formData.penaltiEquipe1),
         penaltiEquipe2: parseNumber(formData.penaltiEquipe2),
       }
@@ -245,7 +244,7 @@ const JogosCrud = () => {
       setSelectedGameId(null)
       setFormData((previous) => ({
         ...createEmptyGame(),
-        competicaoId: previous.competicaoId,
+        competicaoId: selectedCompetitionId,
         categoria: previous.categoria,
       }))
       setFeedback({ type: 'success', message: 'Jogo removido do cadastro.' })
@@ -261,7 +260,7 @@ const JogosCrud = () => {
     setSelectedGameId(null)
     setFormData((previous) => ({
       ...createEmptyGame(),
-      competicaoId: previous.competicaoId || selectedCompetitionId,
+      competicaoId: selectedCompetitionId,
       categoria: previous.categoria || selectedCategoryId,
     }))
     setFeedback(null)
@@ -288,18 +287,9 @@ const JogosCrud = () => {
           <CCardHeader className="d-flex flex-column gap-2">
             <div>
               <strong>Jogos</strong>
-              <div className="small text-medium-emphasis">Filtrados por competição e categoria</div>
+              <div className="small text-medium-emphasis">Filtrados pela competição selecionada e categoria</div>
             </div>
             <div className="d-flex gap-2">
-              <CompetitionSelect
-                label={null}
-                placeholder="Competição"
-                value={selectedCompetitionId}
-                onValueChange={handleCompetitionFilterChange}
-                size="sm"
-                ariaLabel="Selecionar competição para filtrar"
-                onError={(message) => setFeedback({ type: 'danger', message })}
-              />
               <CategorySelect
                 label={null}
                 placeholder="Categoria"
@@ -417,28 +407,18 @@ const JogosCrud = () => {
               </CRow>
 
               <CRow className="g-3">
-                <CCol md={4}>
-                  <CompetitionSelect
-                    id="game-competition"
-                    name="competicaoId"
-                    value={formData.competicaoId}
-                    onValueChange={handleCompetitionChange}
-                    onError={(message) => setFeedback({ type: 'danger', message })}
-                    required
-                  />
-                </CCol>
-                <CCol md={4}>
+                <CCol md={6}>
                   <CategorySelect
                     id="game-category"
                     name="categoria"
-                    competitionId={formData.competicaoId}
+                    competitionId={selectedCompetitionId}
                     value={formData.categoria}
                     onValueChange={handleCategoryChange}
                     onError={(message) => setFeedback({ type: 'danger', message })}
                     required
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={6}>
                   <CFormLabel htmlFor="game-time">Horário</CFormLabel>
                   <CFormInput id="game-time" name="hora" value={formData.hora} onChange={handleInputChange} />
                 </CCol>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import {
@@ -9,9 +9,9 @@ import {
   CSidebarHeader,
   CSidebarToggler,
 } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
 
 import { AppSidebarNav } from './AppSidebarNav'
+import CompetitionSelect from './forms/CompetitionSelect'
 
 // sidebar nav config
 import navigation from '../_nav'
@@ -20,6 +20,12 @@ const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('selectedCompetitionId', selectedCompetitionId || '')
+  }, [selectedCompetitionId])
 
   return (
     <CSidebar
@@ -42,6 +48,21 @@ const AppSidebar = () => {
           onClick={() => dispatch({ type: 'set', sidebarShow: false })}
         />
       </CSidebarHeader>
+      <div className="px-3 py-3 border-bottom">
+        <CompetitionSelect
+          label="Competição selecionada"
+          placeholder="Selecione"
+          value={selectedCompetitionId}
+          onValueChange={(competitionId) =>
+            dispatch({
+              type: 'set',
+              selectedCompetitionId: competitionId,
+            })
+          }
+          size="sm"
+          ariaLabel="Selecionar competição"
+        />
+      </div>
       <AppSidebarNav items={navigation} />
       <CSidebarFooter className="border-top d-none d-lg-flex">
         <CSidebarToggler

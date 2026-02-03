@@ -3,6 +3,8 @@ import { legacy_createStore as createStore } from 'redux'
 const initialState = {
   sidebarShow: true,
   theme: 'light',
+  selectedCompetitionId:
+    typeof window !== 'undefined' ? window.localStorage.getItem('selectedCompetitionId') || '' : '',
 }
 
 const changeState = (state = initialState, { type, ...rest }) => {

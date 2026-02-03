@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import {
   CAlert,
   CBadge,
@@ -19,7 +20,6 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilArrowRight, cilPlus, cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
 import CategorySelect from '../../components/forms/CategorySelect'
-import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import { listEquipes } from '../../services/equipeApi'
 import { createJogador, deleteJogador, listJogadores, updateJogador } from '../../services/jogadorApi'
 
@@ -61,13 +61,13 @@ const parseNumber = (value) => {
 const JogadoresCrud = () => {
   const [teams, setTeams] = useState([])
   const [players, setPlayers] = useState([])
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedPlayerId, setSelectedPlayerId] = useState(null)
   const [formData, setFormData] = useState(createEmptyPlayer())
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [playerSearch, setPlayerSearch] = useState('')
+  const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const loadPlayers = useCallback(async () => {
     if (!selectedCompetitionId) return
@@ -88,21 +88,21 @@ const JogadoresCrud = () => {
   }, [selectedCompetitionId, selectedCategoryId])
 
   const loadTeams = useCallback(async () => {
-    if (!formData.competicao || !formData.categoria) {
+    if (!selectedCompetitionId || !formData.categoria) {
       setTeams([])
       return
     }
 
     try {
       const teamData = await listEquipes({
-        competicaoId: formData.competicao,
+        competicaoId: selectedCompetitionId,
         categoria: formData.categoria,
       })
       setTeams(Array.isArray(teamData) ? teamData : [])
     } catch (error) {
       setTeams([])
     }
-  }, [formData.competicao, formData.categoria])
+  }, [formData.categoria, selectedCompetitionId])
 
   useEffect(() => {
     if (!selectedCompetitionId) return
@@ -114,6 +114,13 @@ const JogadoresCrud = () => {
   }, [loadTeams])
 
   useEffect(() => {
+    setSelectedCategoryId('')
+    setSelectedPlayerId(null)
+    setPlayerSearch('')
+    setFeedback(null)
+  }, [selectedCompetitionId])
+
+  useEffect(() => {
     if (!selectedPlayerId) return
     const player = players.find((item) => String(item.id) === String(selectedPlayerId))
     if (!player) return
@@ -121,20 +128,20 @@ const JogadoresCrud = () => {
     setFormData({
       ...createEmptyPlayer(),
       ...player,
-      competicao: player.competicao ?? formData.competicao,
+      competicao: player.competicao ?? selectedCompetitionId,
       categoria: player.categoria ?? formData.categoria,
       time: player.time ?? '',
       imgFileName: '',
       imgPerfilFileName: '',
     })
-  }, [selectedPlayerId, players])
+  }, [selectedPlayerId, players, selectedCompetitionId])
 
   useEffect(() => {
     if (selectedPlayerId) return
 
     setFormData((previous) => ({
       ...previous,
-      competicao: previous.competicao || selectedCompetitionId,
+      competicao: selectedCompetitionId,
       categoria: previous.categoria || selectedCategoryId,
     }))
   }, [selectedCompetitionId, selectedCategoryId, selectedPlayerId])
@@ -153,14 +160,6 @@ const JogadoresCrud = () => {
     )
   }, [filteredPlayers, playerSearch])
 
-  const handleCompetitionFilterChange = (competitionId) => {
-    setSelectedCompetitionId(competitionId)
-    setSelectedCategoryId('')
-    setSelectedPlayerId(null)
-    setPlayerSearch('')
-    setFeedback(null)
-  }
-
   const handleCategoryFilterChange = (categoryId) => {
     setSelectedCategoryId(categoryId)
     setSelectedPlayerId(null)
@@ -178,13 +177,6 @@ const JogadoresCrud = () => {
     setFormData((previous) => ({
       ...previous,
       [name]: value,
-    }))
-  }
-
-  const handleCompetitionChange = (newCompetitionId) => {
-    setFormData((previous) => ({
-      ...previous,
-      competicao: newCompetitionId,
     }))
   }
 
@@ -218,14 +210,21 @@ const JogadoresCrud = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.competicao || !formData.categoria || !formData.nomeJogador) return
+    if (!selectedCompetitionId) {
+      setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
+      return
+    }
+    if (!formData.categoria || !formData.nomeJogador) {
+      setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios.' })
+      return
+    }
 
     setIsLoading(true)
     try {
       const payload = {
         ...formData,
         id: selectedPlayerId ?? (formData.id || undefined),
-        competicao: parseNumber(formData.competicao),
+        competicao: parseNumber(selectedCompetitionId),
         gols: parseNumber(formData.gols),
         amarelo: parseNumber(formData.amarelo),
         vermelho: parseNumber(formData.vermelho),
@@ -257,7 +256,7 @@ const JogadoresCrud = () => {
       setSelectedPlayerId(null)
       setFormData((previous) => ({
         ...createEmptyPlayer(),
-        competicao: previous.competicao,
+        competicao: selectedCompetitionId,
         categoria: previous.categoria,
       }))
       setFeedback({ type: 'success', message: 'Jogador removido do cadastro.' })
@@ -273,7 +272,7 @@ const JogadoresCrud = () => {
     setSelectedPlayerId(null)
     setFormData((previous) => ({
       ...createEmptyPlayer(),
-      competicao: previous.competicao || selectedCompetitionId,
+      competicao: selectedCompetitionId,
       categoria: previous.categoria || selectedCategoryId,
     }))
     setFeedback(null)
@@ -301,19 +300,10 @@ const JogadoresCrud = () => {
             <div className="d-flex justify-content-between align-items-center">
               <div>
                 <strong>Jogadores</strong>
-                <div className="small text-medium-emphasis">Filtrados por competição e categoria</div>
+                <div className="small text-medium-emphasis">Filtrados pela competição selecionada e categoria</div>
               </div>
             </div>
             <div className="d-flex gap-2">
-              <CompetitionSelect
-                label={null}
-                placeholder="Competição"
-                value={selectedCompetitionId}
-                onValueChange={handleCompetitionFilterChange}
-                size="sm"
-                ariaLabel="Selecionar competição para filtrar"
-                onError={(message) => setFeedback({ type: 'danger', message })}
-              />
               <CategorySelect
                 label={null}
                 placeholder="Categoria"
@@ -446,28 +436,18 @@ const JogadoresCrud = () => {
               </div>
 
               <CRow className="g-3">
-                <CCol md={4}>
-                  <CompetitionSelect
-                    id="player-competition"
-                    name="competicao"
-                    value={formData.competicao}
-                    onValueChange={handleCompetitionChange}
-                    onError={(message) => setFeedback({ type: 'danger', message })}
-                    required
-                  />
-                </CCol>
-                <CCol md={4}>
+                <CCol md={6}>
                   <CategorySelect
                     id="player-category"
                     name="categoria"
-                    competitionId={formData.competicao}
+                    competitionId={selectedCompetitionId}
                     value={formData.categoria}
                     onValueChange={handleCategoryChange}
                     onError={(message) => setFeedback({ type: 'danger', message })}
                     required
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={6}>
                   <CFormLabel htmlFor="player-team">Equipe</CFormLabel>
                   <CFormSelect
                     id="player-team"

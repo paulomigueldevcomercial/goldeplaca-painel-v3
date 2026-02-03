@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import {
   CAlert,
   CBadge,
@@ -20,7 +21,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilGroup, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import CategorySelect from '../../components/forms/CategorySelect'
-import CompetitionSelect from '../../components/forms/CompetitionSelect'
+import { listCategorias } from '../../services/categoriaApi'
 import { createEquipe, deleteEquipe, listEquipes, updateEquipe } from '../../services/equipeApi'
 
 const createEmptyTeam = () => ({
@@ -68,13 +69,14 @@ const parseNumber = (value) => {
 
 const EquipesCrud = () => {
   const [teams, setTeams] = useState([])
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedTeamId, setSelectedTeamId] = useState(null)
   const [formData, setFormData] = useState(createEmptyTeam())
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [teamSearch, setTeamSearch] = useState('')
+  const [categories, setCategories] = useState([])
+  const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const loadTeams = useCallback(async () => {
     if (!selectedCompetitionId) return
@@ -100,6 +102,48 @@ const EquipesCrud = () => {
   }, [selectedCompetitionId, selectedCategoryId, loadTeams])
 
   useEffect(() => {
+    setSelectedCategoryId('')
+    setSelectedTeamId(null)
+    setTeamSearch('')
+    setFeedback(null)
+  }, [selectedCompetitionId])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadCategories = async () => {
+      if (!selectedCompetitionId) {
+        setCategories([])
+        return
+      }
+
+      try {
+        const categoryData = await listCategorias({ competicao: selectedCompetitionId })
+        if (!isMounted) return
+        setCategories(Array.isArray(categoryData) ? categoryData : [])
+      } catch (error) {
+        if (!isMounted) return
+        setCategories([])
+      }
+    }
+
+    loadCategories()
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedCompetitionId])
+
+  const formCategoryOptions = useMemo(
+    () =>
+      categories.map((category) => ({
+        value: category.chave ?? category.valor,
+        label: category.valor ?? category.chave,
+      })),
+    [categories],
+  )
+
+  useEffect(() => {
     if (!selectedTeamId) return
 
     const team = teams.find((item) => String(item.id) === String(selectedTeamId))
@@ -108,17 +152,19 @@ const EquipesCrud = () => {
     setFormData({
       ...createEmptyTeam(),
       ...team,
-      competicao: String(team.competicao ?? team.competicaoId ?? team.id_competicao ?? formData.competicao),
+      competicao: String(
+        team.competicao ?? team.competicaoId ?? team.id_competicao ?? selectedCompetitionId,
+      ),
       categoria: team.categoria ?? formData.categoria,
     })
-  }, [selectedTeamId, teams])
+  }, [selectedTeamId, teams, selectedCompetitionId])
 
   useEffect(() => {
     if (selectedTeamId) return
 
     setFormData((previous) => ({
       ...previous,
-      competicao: previous.competicao || selectedCompetitionId,
+      competicao: selectedCompetitionId,
       categoria: previous.categoria || selectedCategoryId,
     }))
   }, [selectedCompetitionId, selectedCategoryId, selectedTeamId])
@@ -135,14 +181,6 @@ const EquipesCrud = () => {
       }),
     )
   }, [filteredTeams, teamSearch])
-
-  const handleCompetitionFilterChange = (competitionId) => {
-    setSelectedCompetitionId(competitionId)
-    setSelectedCategoryId('')
-    setSelectedTeamId(null)
-    setTeamSearch('')
-    setFeedback(null)
-  }
 
   const handleCategoryFilterChange = (categoryId) => {
     setSelectedCategoryId(categoryId)
@@ -164,13 +202,6 @@ const EquipesCrud = () => {
     }))
   }
 
-  const handleCompetitionChange = (newCompetitionId) => {
-    setFormData((previous) => ({
-      ...previous,
-      competicao: newCompetitionId,
-    }))
-  }
-
   const handleCategoryChange = (newCategoryId) => {
     setFormData((previous) => ({ ...previous, categoria: newCategoryId }))
   }
@@ -178,14 +209,21 @@ const EquipesCrud = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.competicao || !formData.categoria || !formData.equipe) return
+    if (!selectedCompetitionId) {
+      setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
+      return
+    }
+    if (!formData.categoria || !formData.equipe) {
+      setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios.' })
+      return
+    }
 
     setIsLoading(true)
     try {
       const payload = {
         ...formData,
         id: formData.id ? parseNumber(formData.id) : undefined,
-        competicao: parseNumber(formData.competicao),
+        competicao: parseNumber(selectedCompetitionId),
         vitorias: parseNumber(formData.vitorias),
         derrotas: parseNumber(formData.derrotas),
         empates: parseNumber(formData.empates),
@@ -233,7 +271,7 @@ const EquipesCrud = () => {
       setSelectedTeamId(null)
       setFormData((previous) => ({
         ...createEmptyTeam(),
-        competicao: previous.competicao,
+        competicao: selectedCompetitionId,
         categoria: previous.categoria,
       }))
       setFeedback({ type: 'success', message: 'Equipe removida do cadastro.' })
@@ -249,7 +287,7 @@ const EquipesCrud = () => {
     setSelectedTeamId(null)
     setFormData((previous) => ({
       ...createEmptyTeam(),
-      competicao: previous.competicao || selectedCompetitionId,
+      competicao: selectedCompetitionId,
       categoria: previous.categoria || selectedCategoryId,
     }))
     setFeedback(null)
@@ -281,18 +319,9 @@ const EquipesCrud = () => {
           <CCardHeader className="d-flex flex-column gap-2">
             <div>
               <strong>Equipes</strong>
-              <div className="small text-medium-emphasis">Filtradas por competição e categoria</div>
+              <div className="small text-medium-emphasis">Filtradas pela competição selecionada e categoria</div>
             </div>
             <div className="d-flex gap-2">
-              <CompetitionSelect
-                label={null}
-                placeholder="Competição"
-                value={selectedCompetitionId}
-                onValueChange={handleCompetitionFilterChange}
-                size="sm"
-                ariaLabel="Selecionar competição para filtrar"
-                onError={(message) => setFeedback({ type: 'danger', message })}
-              />
               <CategorySelect
                 label={null}
                 placeholder="Categoria"
@@ -411,28 +440,18 @@ const EquipesCrud = () => {
               </CRow>
 
               <CRow className="g-3">
-                <CCol md={4}>
-                  <CompetitionSelect
-                    id="team-competition"
-                    name="competicao"
-                    value={formData.competicao}
-                    onValueChange={handleCompetitionChange}
-                    onError={(message) => setFeedback({ type: 'danger', message })}
-                    required
-                  />
-                </CCol>
-                <CCol md={4}>
+                <CCol md={6}>
                   <CategorySelect
                     id="team-category"
                     name="categoria"
-                    competitionId={formData.competicao}
+                    competitionId={selectedCompetitionId}
                     value={formData.categoria}
                     onValueChange={handleCategoryChange}
                     onError={(message) => setFeedback({ type: 'danger', message })}
                     required
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={6}>
                   <CFormLabel htmlFor="team-rebaixamento">Rebaixamento</CFormLabel>
                   <CFormSelect
                     id="team-rebaixamento"
