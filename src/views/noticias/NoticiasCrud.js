@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
   CAlert,
@@ -17,39 +17,44 @@ import {
   CListGroup,
   CListGroupItem,
   CRow,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import { useQuill } from 'react-quilljs'
 import 'quill/dist/quill.snow.css'
-import { fetchCompetitionsWithNews } from '../../services/competitionApi'
+import { listCompeticoes } from '../../services/competicaoApi'
+import { createNoticia, deleteNoticia, listNoticias, updateNoticia } from '../../services/noticiaApi'
 
-const initialCompetitions = []
-
-const emptyArticle = {
-  title: '',
-  summary: '',
-  content: '',
-  status: 'publicada',
-  publishedAt: '',
-  author: '',
-  imageUrl: '',
+const createEmptyArticle = () => ({
+  id: '',
+  titulo: '',
+  chamada: '',
+  conteudo: '',
+  data: '',
+  competicao: '',
+  destaque: false,
+  ativo: true,
+  foto: '',
+  imageFile: null,
   imageFileName: '',
-  highlight: false,
-}
-
-const statusColorMap = {
-  publicada: 'success',
-  rascunho: 'warning',
-  arquivada: 'secondary',
-}
+  imagePreviewUrl: '',
+})
 
 const NoticiasCrud = () => {
-  const [competitions, setCompetitions] = useState(initialCompetitions)
+  const [competitions, setCompetitions] = useState([])
+  const [news, setNews] = useState([])
   const [selectedNewsId, setSelectedNewsId] = useState(null)
-  const [formData, setFormData] = useState(emptyArticle)
+  const [formData, setFormData] = useState(createEmptyArticle())
   const [feedback, setFeedback] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
+
+  const parseNumber = (value) => {
+    if (value === '' || value === null || value === undefined) return null
+    const parsed = Number(value)
+    return Number.isNaN(parsed) ? null : parsed
+  }
 
   const selectedCompetition = useMemo(
     () =>
@@ -61,26 +66,66 @@ const NoticiasCrud = () => {
 
   useEffect(() => {
     setSelectedNewsId(null)
-    setFormData(emptyArticle)
+    setFormData(createEmptyArticle())
+    setFeedback(null)
   }, [selectedCompetitionId])
 
   useEffect(() => {
-    if (!selectedNewsId) {
-      setFormData(emptyArticle)
+    if (!selectedNewsId) return
+
+    const article = news.find((item) => String(item.id) === String(selectedNewsId))
+    if (!article) return
+    setFormData({
+      ...createEmptyArticle(),
+      ...article,
+      competicao: article.competicao ?? selectedCompetitionId ?? '',
+      destaque: Boolean(article.destaque),
+      ativo: article.ativo ?? true,
+      imageFile: null,
+      imageFileName: '',
+      imagePreviewUrl: article.foto ?? '',
+    })
+  }, [news, selectedNewsId, selectedCompetitionId])
+
+  useEffect(() => {
+    if (selectedNewsId) return
+    setFormData((previous) => ({
+      ...previous,
+      competicao: selectedCompetitionId ?? '',
+    }))
+  }, [selectedCompetitionId, selectedNewsId])
+
+  useEffect(() => {
+    listCompeticoes()
+      .then((data) => {
+        setCompetitions(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        setCompetitions([])
+      })
+  }, [])
+
+  const loadNews = useCallback(async () => {
+    if (!selectedCompetitionId) {
+      setNews([])
       return
     }
 
-    const article = selectedCompetition?.news.find((item) => item.id === selectedNewsId)
-    if (article) {
-      setFormData({ ...emptyArticle, ...article, imageFileName: article.imageFileName ?? '' })
+    setIsLoading(true)
+    try {
+      const data = await listNoticias({ competicaoId: selectedCompetitionId })
+      setNews(Array.isArray(data) ? data : [])
+    } catch (error) {
+      setNews([])
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar as notícias.' })
+    } finally {
+      setIsLoading(false)
     }
-  }, [selectedCompetition, selectedNewsId])
+  }, [selectedCompetitionId])
 
   useEffect(() => {
-    fetchCompetitionsWithNews().then((data) => {
-      setCompetitions(data)
-    })
-  }, [])
+    loadNews()
+  }, [loadNews])
 
   const handleNewsSelect = (newsId) => {
     setSelectedNewsId(newsId)
@@ -91,15 +136,7 @@ const NoticiasCrud = () => {
     const { name, value } = target
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value,
-      ...(name === 'imageUrl' ? { imageFileName: '' } : null),
-    }))
-  }
-
-  const handleHighlightChange = ({ target }) => {
-    setFormData((previous) => ({
-      ...previous,
-      highlight: target.checked,
+      [name]: name === 'ativo' ? value === 'true' : value,
     }))
   }
 
@@ -114,7 +151,7 @@ const NoticiasCrud = () => {
     const handleTextChange = () => {
       setFormData((previous) => ({
         ...previous,
-        content: quill.root.innerHTML,
+        conteudo: quill.root.innerHTML,
       }))
     }
 
@@ -128,7 +165,7 @@ const NoticiasCrud = () => {
   useEffect(() => {
     if (!quill) return
 
-    const nextContent = formData.content || ''
+    const nextContent = formData.conteudo || ''
     if (quill.root.innerHTML === nextContent) return
 
     const selection = quill.getSelection()
@@ -136,74 +173,82 @@ const NoticiasCrud = () => {
     if (selection) {
       quill.setSelection(selection)
     }
-  }, [formData.content, quill])
+  }, [formData.conteudo, quill])
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!selectedCompetitionId) {
-      setFeedback('Selecione uma competição no menu lateral.')
+      setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
       return
     }
 
-    const newsId = selectedNewsId ?? `news-${Date.now()}`
-    const payload = {
-      ...formData,
-      id: newsId,
-      highlight: Boolean(formData.highlight),
-      publishedAt: formData.publishedAt || new Date().toLocaleDateString('pt-BR'),
+    if (!formData.titulo || !formData.chamada) {
+      setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios da notícia.' })
+      return
     }
 
-    setCompetitions((previous) => {
-      const targetId = String(selectedCompetitionId)
-      const existing = previous.find((competition) => String(competition.id) === targetId)
-      const baseCompetition =
-        existing ?? {
-          id: targetId,
-          name: `Competição ${targetId}`,
-          season: '',
-          category: '',
-          news: [],
-          galleries: [],
-        }
-      const news = selectedNewsId
-        ? baseCompetition.news.map((article) => (article.id === selectedNewsId ? payload : article))
-        : [...baseCompetition.news, payload]
-      const nextCompetition = { ...baseCompetition, news }
+    if (!selectedNewsId && !formData.imageFile) {
+      setFeedback({ type: 'danger', message: 'Selecione uma imagem para criar a notícia.' })
+      return
+    }
 
-      return existing
-        ? previous.map((competition) =>
-            String(competition.id) === targetId ? nextCompetition : competition,
-          )
-        : [...previous, nextCompetition]
-    })
+    setIsLoading(true)
+    try {
+      const payload = {
+        id: selectedNewsId ?? undefined,
+        titulo: formData.titulo,
+        chamada: formData.chamada,
+        conteudo: formData.conteudo,
+        data: formData.data || new Date().toISOString(),
+        competicao: parseNumber(selectedCompetitionId),
+        destaque: Boolean(formData.destaque),
+        ativo: Boolean(formData.ativo),
+        foto: formData.foto || undefined,
+      }
 
-    setSelectedNewsId(newsId)
-    setFeedback(
-      selectedNewsId ? 'Notícia atualizada com sucesso.' : 'Nova notícia criada para a competição.',
-    )
+      let response = null
+      if (selectedNewsId) {
+        response = await updateNoticia(selectedNewsId, payload, formData.imageFile)
+      } else {
+        response = await createNoticia(payload, formData.imageFile)
+      }
+
+      await loadNews()
+      const nextId = response?.id ?? selectedNewsId ?? null
+      setSelectedNewsId(nextId)
+      if (!nextId) {
+        setFormData(createEmptyArticle())
+      }
+      setFeedback({
+        type: 'success',
+        message: selectedNewsId ? 'Notícia atualizada com sucesso.' : 'Notícia criada com sucesso.',
+      })
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível salvar a notícia.' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleDeleteNews = () => {
-    if (!selectedCompetition || !selectedNewsId) return
+  const handleDeleteNews = async () => {
+    if (!selectedNewsId) return
 
-    setCompetitions((previous) =>
-      previous.map((competition) => {
-        if (competition.id !== selectedCompetition.id) return competition
-
-        return {
-          ...competition,
-          news: competition.news.filter((article) => article.id !== selectedNewsId),
-        }
-      }),
-    )
-
-    setSelectedNewsId(null)
-    setFormData(emptyArticle)
-    setFeedback('Notícia removida da competição.')
+    setIsLoading(true)
+    try {
+      await deleteNoticia(selectedNewsId)
+      await loadNews()
+      setSelectedNewsId(null)
+      setFormData(createEmptyArticle())
+      setFeedback({ type: 'success', message: 'Notícia removida com sucesso.' })
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível remover a notícia.' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const articles = selectedCompetition?.news ?? []
+  const articles = news ?? []
   const handleNewsFileChange = ({ target }) => {
     const file = target.files?.[0]
     if (!file) return
@@ -211,7 +256,8 @@ const NoticiasCrud = () => {
     const objectUrl = URL.createObjectURL(file)
     setFormData((previous) => ({
       ...previous,
-      imageUrl: objectUrl,
+      imagePreviewUrl: objectUrl,
+      imageFile: file,
       imageFileName: file.name,
     }))
   }
@@ -226,9 +272,11 @@ const NoticiasCrud = () => {
           <CCardBody>
             {selectedCompetition ? (
               <>
-                <div className="fw-semibold">{selectedCompetition.name}</div>
+                <div className="fw-semibold">
+                  {selectedCompetition.nomeCompeticao || selectedCompetition.descricao || selectedCompetition.id}
+                </div>
                 <small className="text-medium-emphasis">
-                  {selectedCompetition.season} • {selectedCompetition.category}
+                  {selectedCompetition.temporada ? `Temporada ${selectedCompetition.temporada}` : 'Sem temporada definida'}
                 </small>
               </>
             ) : (
@@ -242,8 +290,8 @@ const NoticiasCrud = () => {
 
       <CCol md={8}>
         {feedback && (
-          <CAlert color="success" className="mb-3">
-            {feedback}
+          <CAlert color={feedback.type ?? 'success'} className="mb-3">
+            {feedback.message}
           </CAlert>
         )}
         <CRow className="g-4">
@@ -253,7 +301,9 @@ const NoticiasCrud = () => {
                 <div>
                   <strong>Notícias</strong>
                   <div className="small text-medium-emphasis">
-                    {selectedCompetition ? selectedCompetition.name : 'Selecione uma competição'}
+                    {selectedCompetition
+                      ? selectedCompetition.nomeCompeticao || selectedCompetition.descricao
+                      : 'Selecione uma competição'}
                   </div>
                 </div>
                 <CButton
@@ -262,7 +312,7 @@ const NoticiasCrud = () => {
                   variant="outline"
                   onClick={() => {
                     setSelectedNewsId(null)
-                    setFormData(emptyArticle)
+                    setFormData(createEmptyArticle())
                     setFeedback(null)
                   }}
                 >
@@ -270,7 +320,11 @@ const NoticiasCrud = () => {
                 </CButton>
               </CCardHeader>
               <CCardBody className="p-0">
-                {articles.length === 0 ? (
+                {isLoading ? (
+                  <div className="p-3">
+                    <CSpinner size="sm" className="me-2" /> Carregando notícias...
+                  </div>
+                ) : articles.length === 0 ? (
                   <div className="p-3 text-medium-emphasis">
                     Nenhuma notícia cadastrada para esta competição.
                   </div>
@@ -280,24 +334,24 @@ const NoticiasCrud = () => {
                       <CListGroupItem
                         key={article.id}
                         action
-                        active={article.id === selectedNewsId}
+                        active={String(article.id) === String(selectedNewsId)}
                         onClick={() => handleNewsSelect(article.id)}
                       >
                         <div className="d-flex justify-content-between align-items-start gap-2">
                           <div className="me-2">
-                            <div className="fw-semibold">{article.title}</div>
+                            <div className="fw-semibold">{article.titulo}</div>
                             <small className="text-medium-emphasis">
-                              Publicada em {article.publishedAt}
+                              Publicada em {article.data}
                             </small>
                           </div>
                           <div className="d-flex flex-column align-items-end gap-1">
-                            {article.highlight && (
+                            {article.destaque && (
                               <CBadge color="info" shape="rounded-pill">
                                 Destaque
                               </CBadge>
                             )}
-                            <CBadge color={statusColorMap[article.status] ?? 'secondary'}>
-                              {article.status}
+                            <CBadge color={article.ativo ? 'success' : 'secondary'}>
+                              {article.ativo ? 'Ativa' : 'Inativa'}
                             </CBadge>
                           </div>
                         </div>
@@ -314,7 +368,7 @@ const NoticiasCrud = () => {
               <CCardHeader>
                 <strong>{selectedNewsId ? 'Editar notícia' : 'Nova notícia'}</strong>
                 <div className="small text-medium-emphasis">
-                  Os dados são salvos localmente apenas para demonstrar o fluxo do CRUD.
+                  A notícia será enviada para a API oficial, incluindo a imagem enviada.
                 </div>
               </CCardHeader>
               <CCardBody>
@@ -323,9 +377,9 @@ const NoticiasCrud = () => {
                     <CFormLabel htmlFor="news-title">Título</CFormLabel>
                     <CFormInput
                       id="news-title"
-                      name="title"
+                      name="titulo"
                       placeholder="Ex.: Equipe garante vitória na estreia"
-                      value={formData.title}
+                      value={formData.titulo}
                       onChange={handleInputChange}
                       required
                     />
@@ -335,10 +389,10 @@ const NoticiasCrud = () => {
                     <CFormLabel htmlFor="news-summary">Resumo</CFormLabel>
                     <CFormTextarea
                       id="news-summary"
-                      name="summary"
+                      name="chamada"
                       rows={2}
                       placeholder="Resumo curto exibido na lista"
-                      value={formData.summary}
+                      value={formData.chamada}
                       onChange={handleInputChange}
                       required
                     />
@@ -356,9 +410,19 @@ const NoticiasCrud = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleNewsFileChange}
+                      required={!selectedNewsId}
                     />
                     {formData.imageFileName && (
                       <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
+                    )}
+                    {formData.imagePreviewUrl && (
+                      <div className="mt-2">
+                        <img
+                          src={formData.imagePreviewUrl}
+                          alt="Prévia da notícia"
+                          className="img-fluid rounded border"
+                        />
+                      </div>
                     )}
                   </div>
 
@@ -366,8 +430,13 @@ const NoticiasCrud = () => {
                     <CFormSwitch
                       id="news-highlight"
                       label="Destacar notícia"
-                      checked={formData.highlight}
-                      onChange={handleHighlightChange}
+                      checked={formData.destaque}
+                      onChange={({ target }) => {
+                        setFormData((previous) => ({
+                          ...previous,
+                          destaque: target.checked,
+                        }))
+                      }}
                     />
                     <div className="text-medium-emphasis small">
                       Aparece com selo de destaque na lista.
@@ -376,40 +445,23 @@ const NoticiasCrud = () => {
 
                   <CRow className="g-3">
                     <CCol sm={6}>
-                      <CFormLabel htmlFor="news-status">Status</CFormLabel>
-                      <CFormSelect
-                        id="news-status"
-                        name="status"
-                        value={formData.status}
-                        onChange={handleInputChange}
-                      >
-                        <option value="publicada">Publicada</option>
-                        <option value="rascunho">Rascunho</option>
-                        <option value="arquivada">Arquivada</option>
+                      <CFormLabel htmlFor="news-status">Status ativo</CFormLabel>
+                      <CFormSelect id="news-status" name="ativo" value={String(formData.ativo)} onChange={handleInputChange}>
+                        <option value="true">Ativa</option>
+                        <option value="false">Inativa</option>
                       </CFormSelect>
                     </CCol>
                     <CCol sm={6}>
                       <CFormLabel htmlFor="news-published">Data de publicação</CFormLabel>
                       <CFormInput
                         id="news-published"
-                        name="publishedAt"
-                        placeholder="dd/mm/aaaa"
-                        value={formData.publishedAt}
+                        name="data"
+                        placeholder="yyyy-mm-ddThh:mm"
+                        value={formData.data}
                         onChange={handleInputChange}
                       />
                     </CCol>
                   </CRow>
-
-                  <div>
-                    <CFormLabel htmlFor="news-author">Autor / Fonte</CFormLabel>
-                    <CFormInput
-                      id="news-author"
-                      name="author"
-                      placeholder="Responsável pela notícia"
-                      value={formData.author}
-                      onChange={handleInputChange}
-                    />
-                  </div>
 
                   <div className="d-flex flex-wrap gap-2">
                     <CButton color="primary" type="submit">
@@ -421,7 +473,7 @@ const NoticiasCrud = () => {
                       type="button"
                       onClick={() => {
                         setSelectedNewsId(null)
-                        setFormData(emptyArticle)
+                        setFormData(createEmptyArticle())
                         setFeedback(null)
                       }}
                     >
@@ -431,7 +483,7 @@ const NoticiasCrud = () => {
                       color="danger"
                       variant="ghost"
                       type="button"
-                      disabled={!selectedNewsId}
+                      disabled={!selectedNewsId || isLoading}
                       onClick={handleDeleteNews}
                     >
                       <CIcon icon={cilTrash} className="me-2" /> Remover
