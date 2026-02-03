@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CAlert,
   CBadge,
@@ -16,14 +16,14 @@ import {
   CListGroup,
   CListGroupItem,
   CRow,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import { useQuill } from 'react-quilljs'
 import 'quill/dist/quill.snow.css'
-import { fetchCompetitionsWithNews } from '../../services/competitionApi'
-
-const initialCompetitions = []
+import { listCompeticoes } from '../../services/competicaoApi'
+import { createNoticia, deleteNoticia, listNoticias, updateNoticia } from '../../services/noticiaApi'
 
 const emptyArticle = {
   title: '',
@@ -34,6 +34,7 @@ const emptyArticle = {
   author: '',
   imageUrl: '',
   imageFileName: '',
+  imageFile: null,
   highlight: false,
 }
 
@@ -43,14 +44,66 @@ const statusColorMap = {
   arquivada: 'secondary',
 }
 
+const parseDateToIso = (value) => {
+  if (!value) return new Date().toISOString()
+  const direct = Date.parse(value)
+  if (!Number.isNaN(direct)) {
+    return new Date(direct).toISOString()
+  }
+
+  const [day, month, year] = value.split('/')
+  if (day && month && year) {
+    const parsed = new Date(Number(year), Number(month) - 1, Number(day))
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString()
+    }
+  }
+
+  return new Date().toISOString()
+}
+
+const toPtBrDate = (value) => {
+  if (!value) return ''
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return parsed.toLocaleDateString('pt-BR')
+}
+
+const parseNumber = (value) => {
+  if (value === '' || value === null || value === undefined) return null
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+const mapCompetition = (competition) => ({
+  id: competition.id,
+  name: competition.nomeCompeticao ?? competition.descricao ?? 'Competição',
+  season: competition.temporada ?? '',
+  category: competition.abrev ?? '',
+})
+
+const mapNoticiaToArticle = (noticia) => ({
+  id: noticia.id,
+  title: noticia.titulo ?? '',
+  summary: noticia.chamada ?? '',
+  content: noticia.conteudo ?? '',
+  status: noticia.ativo ? 'publicada' : 'rascunho',
+  publishedAt: toPtBrDate(noticia.data),
+  author: '',
+  imageUrl: noticia.foto ?? '',
+  imageFileName: '',
+  imageFile: null,
+  highlight: Boolean(noticia.destaque),
+})
+
 const NoticiasCrud = () => {
-  const [competitions, setCompetitions] = useState(initialCompetitions)
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState(
-    initialCompetitions[0]?.id ?? null,
-  )
+  const [competitions, setCompetitions] = useState([])
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState(null)
   const [selectedNewsId, setSelectedNewsId] = useState(null)
   const [formData, setFormData] = useState(emptyArticle)
+  const [news, setNews] = useState([])
   const [feedback, setFeedback] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const selectedCompetition = useMemo(
     () => competitions.find((competition) => competition.id === selectedCompetitionId),
@@ -64,31 +117,70 @@ const NoticiasCrud = () => {
   }, [competitions, selectedCompetitionId])
 
   useEffect(() => {
-    setSelectedNewsId(null)
-    setFormData(emptyArticle)
-  }, [selectedCompetitionId])
-
-  useEffect(() => {
     if (!selectedNewsId) {
       setFormData(emptyArticle)
       return
     }
 
-    const article = selectedCompetition?.news.find((item) => item.id === selectedNewsId)
+    const article = news.find((item) => String(item.id) === String(selectedNewsId))
     if (article) {
-      setFormData({ ...emptyArticle, ...article, imageFileName: article.imageFileName ?? '' })
+      setFormData({
+        ...emptyArticle,
+        ...article,
+        imageFileName: article.imageFileName ?? '',
+        imageFile: null,
+      })
     }
-  }, [selectedCompetition, selectedNewsId])
+  }, [news, selectedNewsId])
+
+  const loadCompetitions = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await listCompeticoes()
+      const mapped = Array.isArray(data) ? data.map(mapCompetition) : []
+      setCompetitions(mapped)
+      if (!selectedCompetitionId && mapped.length) {
+        setSelectedCompetitionId(mapped[0].id)
+      }
+    } catch (error) {
+      setCompetitions([])
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar as competições.' })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [selectedCompetitionId])
+
+  const loadNews = useCallback(
+    async (competitionId) => {
+      if (!competitionId) {
+        setNews([])
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const data = await listNoticias(competitionId)
+        const mapped = Array.isArray(data) ? data.map(mapNoticiaToArticle) : []
+        setNews(mapped)
+      } catch (error) {
+        setNews([])
+        setFeedback({ type: 'danger', message: 'Não foi possível carregar as notícias.' })
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [setNews],
+  )
 
   useEffect(() => {
-    fetchCompetitionsWithNews().then((data) => {
-      setCompetitions(data)
+    loadCompetitions()
+  }, [loadCompetitions])
 
-      if (!selectedCompetitionId && data.length) {
-        setSelectedCompetitionId(data[0].id)
-      }
-    })
-  }, [])
+  useEffect(() => {
+    setSelectedNewsId(null)
+    setFormData(emptyArticle)
+    loadNews(selectedCompetitionId)
+  }, [selectedCompetitionId, loadNews])
 
   const handleCompetitionChange = (competitionId) => {
     setSelectedCompetitionId(competitionId)
@@ -151,57 +243,68 @@ const NoticiasCrud = () => {
     }
   }, [formData.content, quill])
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!selectedCompetition) return
 
-    const newsId = selectedNewsId ?? `news-${Date.now()}`
-    const payload = {
-      ...formData,
-      id: newsId,
-      highlight: Boolean(formData.highlight),
-      publishedAt: formData.publishedAt || new Date().toLocaleDateString('pt-BR'),
+    if (!formData.imageFile) {
+      setFeedback({
+        type: 'danger',
+        message: 'Selecione uma imagem para enviar junto da notícia.',
+      })
+      return
     }
 
-    setCompetitions((previous) =>
-      previous.map((competition) => {
-        if (competition.id !== selectedCompetition.id) return competition
+    setIsLoading(true)
+    try {
+      const payload = {
+        id: selectedNewsId ? parseNumber(selectedNewsId) : undefined,
+        titulo: formData.title,
+        conteudo: formData.content,
+        data: parseDateToIso(formData.publishedAt),
+        competicao: parseNumber(selectedCompetitionId),
+        destaque: Boolean(formData.highlight),
+        chamada: formData.summary,
+        ativo: formData.status === 'publicada',
+        foto: formData.imageUrl || undefined,
+      }
 
-        const news = selectedNewsId
-          ? competition.news.map((article) => (article.id === selectedNewsId ? payload : article))
-          : [...competition.news, payload]
+      if (selectedNewsId) {
+        await updateNoticia(selectedNewsId, payload, formData.imageFile)
+        setFeedback({ type: 'success', message: 'Notícia atualizada com sucesso.' })
+      } else {
+        const created = await createNoticia(payload, formData.imageFile)
+        setSelectedNewsId(created?.id ?? null)
+        setFeedback({ type: 'success', message: 'Nova notícia criada para a competição.' })
+      }
 
-        return { ...competition, news }
-      }),
-    )
-
-    setSelectedNewsId(newsId)
-    setFeedback(
-      selectedNewsId ? 'Notícia atualizada com sucesso.' : 'Nova notícia criada para a competição.',
-    )
+      await loadNews(selectedCompetitionId)
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível salvar a notícia.' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleDeleteNews = () => {
+  const handleDeleteNews = async () => {
     if (!selectedCompetition || !selectedNewsId) return
 
-    setCompetitions((previous) =>
-      previous.map((competition) => {
-        if (competition.id !== selectedCompetition.id) return competition
-
-        return {
-          ...competition,
-          news: competition.news.filter((article) => article.id !== selectedNewsId),
-        }
-      }),
-    )
-
-    setSelectedNewsId(null)
-    setFormData(emptyArticle)
-    setFeedback('Notícia removida da competição.')
+    setIsLoading(true)
+    try {
+      await deleteNoticia(selectedNewsId)
+      setSelectedNewsId(null)
+      setFormData(emptyArticle)
+      setFeedback({ type: 'success', message: 'Notícia removida da competição.' })
+      await loadNews(selectedCompetitionId)
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível remover a notícia.' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const articles = selectedCompetition?.news ?? []
+  const articles = news
   const handleNewsFileChange = ({ target }) => {
     const file = target.files?.[0]
     if (!file) return
@@ -211,6 +314,7 @@ const NoticiasCrud = () => {
       ...previous,
       imageUrl: objectUrl,
       imageFileName: file.name,
+      imageFile: file,
     }))
   }
 
@@ -246,8 +350,8 @@ const NoticiasCrud = () => {
 
       <CCol md={8}>
         {feedback && (
-          <CAlert color="success" className="mb-3">
-            {feedback}
+          <CAlert color={feedback.type} className="mb-3">
+            {feedback.message}
           </CAlert>
         )}
         <CRow className="g-4">
@@ -260,6 +364,7 @@ const NoticiasCrud = () => {
                     {selectedCompetition ? selectedCompetition.name : 'Selecione uma competição'}
                   </div>
                 </div>
+                {isLoading && <CSpinner size="sm" color="primary" />}
                 <CButton
                   color="primary"
                   size="sm"
@@ -318,7 +423,7 @@ const NoticiasCrud = () => {
               <CCardHeader>
                 <strong>{selectedNewsId ? 'Editar notícia' : 'Nova notícia'}</strong>
                 <div className="small text-medium-emphasis">
-                  Os dados são salvos localmente apenas para demonstrar o fluxo do CRUD.
+                  Os dados são enviados para a API de notícias.
                 </div>
               </CCardHeader>
               <CCardBody>
@@ -360,9 +465,13 @@ const NoticiasCrud = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleNewsFileChange}
+                      required
                     />
                     {formData.imageFileName && (
                       <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
+                    )}
+                    {!formData.imageFileName && formData.imageUrl && (
+                      <div className="form-text">Imagem atual registrada na API.</div>
                     )}
                   </div>
 
@@ -416,13 +525,14 @@ const NoticiasCrud = () => {
                   </div>
 
                   <div className="d-flex flex-wrap gap-2">
-                    <CButton color="primary" type="submit">
+                    <CButton color="primary" type="submit" disabled={isLoading}>
                       <CIcon icon={cilSave} className="me-2" /> Salvar
                     </CButton>
                     <CButton
                       color="secondary"
                       variant="outline"
                       type="button"
+                      disabled={isLoading}
                       onClick={() => {
                         setSelectedNewsId(null)
                         setFormData(emptyArticle)
@@ -435,7 +545,7 @@ const NoticiasCrud = () => {
                       color="danger"
                       variant="ghost"
                       type="button"
-                      disabled={!selectedNewsId}
+                      disabled={!selectedNewsId || isLoading}
                       onClick={handleDeleteNews}
                     >
                       <CIcon icon={cilTrash} className="me-2" /> Remover
