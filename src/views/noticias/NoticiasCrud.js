@@ -31,7 +31,6 @@ const createEmptyArticle = () => ({
   titulo: '',
   chamada: '',
   conteudo: '',
-  data: '',
   competicao: '',
   destaque: false,
   ativo: true,
@@ -200,7 +199,6 @@ const NoticiasCrud = () => {
         titulo: formData.titulo,
         chamada: formData.chamada,
         conteudo: formData.conteudo,
-        data: formData.data || new Date().toISOString(),
         competicao: parseNumber(selectedCompetitionId),
         destaque: Boolean(formData.destaque),
         ativo: Boolean(formData.ativo),
@@ -450,16 +448,6 @@ const NoticiasCrud = () => {
                         <option value="true">Ativa</option>
                         <option value="false">Inativa</option>
                       </CFormSelect>
-                    </CCol>
-                    <CCol sm={6}>
-                      <CFormLabel htmlFor="news-published">Data de publicação</CFormLabel>
-                      <CFormInput
-                        id="news-published"
-                        name="data"
-                        placeholder="yyyy-mm-ddThh:mm"
-                        value={formData.data}
-                        onChange={handleInputChange}
-                      />
                     </CCol>
                   </CRow>
 
