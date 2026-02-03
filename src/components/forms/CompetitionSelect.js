@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { CFormLabel, CFormSelect } from '@coreui/react'
+import { CFormInput, CFormLabel, CFormSelect } from '@coreui/react'
 import { listCompeticoes } from '../../services/competicaoApi'
 
 const CompetitionSelect = ({
@@ -57,6 +57,8 @@ const CompetitionSelect = ({
     [competitions],
   )
 
+  const [filterValue, setFilterValue] = useState('')
+
   useEffect(() => {
     if (!autoSelectFirst || !onValueChange) return
     const currentValue = value ?? ''
@@ -70,9 +72,30 @@ const CompetitionSelect = ({
     }
   }, [autoSelectFirst, competitionOptions, onValueChange, value])
 
+  const filteredOptions = useMemo(() => {
+    if (!filterValue) return competitionOptions
+    const search = filterValue.trim().toLowerCase()
+    if (!search) return competitionOptions
+    return competitionOptions.filter((competition) =>
+      String(competition.label).toLowerCase().includes(search),
+    )
+  }, [competitionOptions, filterValue])
+
   return (
     <>
       {label ? <CFormLabel htmlFor={id}>{label}</CFormLabel> : null}
+      <CFormInput
+        id={id ? `${id}-filter` : `${name}-filter`}
+        name={`${name}-filter`}
+        value={filterValue}
+        onChange={(event) => setFilterValue(event.target.value)}
+        placeholder={`Buscar ${label?.toLowerCase() || 'competição'}`}
+        required={required}
+        disabled={disabled}
+        size={size}
+        className={className}
+        aria-label={ariaLabel}
+      />
       <CFormSelect
         id={id}
         name={name}
@@ -85,7 +108,7 @@ const CompetitionSelect = ({
         aria-label={ariaLabel}
       >
         <option value="">{placeholder}</option>
-        {competitionOptions.map((competition) => (
+        {filteredOptions.map((competition) => (
           <option key={competition.value} value={competition.value}>
             {competition.label}
           </option>
