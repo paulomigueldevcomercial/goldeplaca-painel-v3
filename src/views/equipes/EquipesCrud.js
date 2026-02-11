@@ -59,6 +59,12 @@ const createEmptyTeam = () => ({
   tecnico: '',
   auxiliartecnico: '',
   rebaixamento: '',
+  logoFile: null,
+  logoFileName: '',
+  logoPreviewUrl: '',
+  fotoFile: null,
+  fotoFileName: '',
+  fotoPreviewUrl: '',
 })
 
 const parseNumber = (value) => {
@@ -156,6 +162,12 @@ const EquipesCrud = () => {
         team.competicao ?? team.competicaoId ?? team.id_competicao ?? selectedCompetitionId,
       ),
       categoria: team.categoria ?? formData.categoria,
+      logoFile: null,
+      logoFileName: '',
+      logoPreviewUrl: '',
+      fotoFile: null,
+      fotoFileName: '',
+      fotoPreviewUrl: '',
     })
   }, [selectedTeamId, teams, selectedCompetitionId])
 
@@ -220,36 +232,43 @@ const EquipesCrud = () => {
 
     setIsLoading(true)
     try {
+      const teamData = { ...formData }
+      delete teamData.logoFile
+      delete teamData.logoFileName
+      delete teamData.logoPreviewUrl
+      delete teamData.fotoFile
+      delete teamData.fotoFileName
+      delete teamData.fotoPreviewUrl
       const payload = {
-        ...formData,
-        id: formData.id ? parseNumber(formData.id) : undefined,
+        ...teamData,
+        id: teamData.id ? parseNumber(teamData.id) : undefined,
         competicao: parseNumber(selectedCompetitionId),
-        vitorias: parseNumber(formData.vitorias),
-        derrotas: parseNumber(formData.derrotas),
-        empates: parseNumber(formData.empates),
-        golsPro: parseNumber(formData.golsPro),
-        golsContra: parseNumber(formData.golsContra),
-        saldoGols: parseNumber(formData.saldoGols),
-        partidas: parseNumber(formData.partidas),
-        pontos: parseNumber(formData.pontos),
-        classificacao: parseNumber(formData.classificacao),
-        porcentagem: parseNumber(formData.porcentagem),
-        wo: parseNumber(formData.wo),
-        amarelos: parseNumber(formData.amarelos),
-        vermelhos: parseNumber(formData.vermelhos),
-        pontosAmarelo: parseNumber(formData.pontosAmarelo),
-        pontosVermelho: parseNumber(formData.pontosVermelho),
-        pontuacaoCartoes: parseNumber(formData.pontuacaoCartoes),
-        classificacaoDisciplinar: parseNumber(formData.classificacaoDisciplinar),
-        pontosPerdidos: parseNumber(formData.pontosPerdidos),
-        pontosGanho: parseNumber(formData.pontosGanho),
+        vitorias: parseNumber(teamData.vitorias),
+        derrotas: parseNumber(teamData.derrotas),
+        empates: parseNumber(teamData.empates),
+        golsPro: parseNumber(teamData.golsPro),
+        golsContra: parseNumber(teamData.golsContra),
+        saldoGols: parseNumber(teamData.saldoGols),
+        partidas: parseNumber(teamData.partidas),
+        pontos: parseNumber(teamData.pontos),
+        classificacao: parseNumber(teamData.classificacao),
+        porcentagem: parseNumber(teamData.porcentagem),
+        wo: parseNumber(teamData.wo),
+        amarelos: parseNumber(teamData.amarelos),
+        vermelhos: parseNumber(teamData.vermelhos),
+        pontosAmarelo: parseNumber(teamData.pontosAmarelo),
+        pontosVermelho: parseNumber(teamData.pontosVermelho),
+        pontuacaoCartoes: parseNumber(teamData.pontuacaoCartoes),
+        classificacaoDisciplinar: parseNumber(teamData.classificacaoDisciplinar),
+        pontosPerdidos: parseNumber(teamData.pontosPerdidos),
+        pontosGanho: parseNumber(teamData.pontosGanho),
       }
 
       if (selectedTeamId) {
-        await updateEquipe(selectedTeamId, payload)
+        await updateEquipe(selectedTeamId, payload, formData.logoFile, formData.fotoFile)
         setFeedback({ type: 'success', message: 'Dados da equipe atualizados com sucesso.' })
       } else {
-        const created = await createEquipe(payload)
+        const created = await createEquipe(payload, formData.logoFile, formData.fotoFile)
         setSelectedTeamId(created?.id ?? payload.id ?? null)
         setFeedback({ type: 'success', message: 'Equipe cadastrada com sucesso.' })
       }
@@ -291,6 +310,32 @@ const EquipesCrud = () => {
       categoria: previous.categoria || selectedCategoryId,
     }))
     setFeedback(null)
+  }
+
+  const handleLogoFileChange = ({ target }) => {
+    const file = target.files?.[0]
+    if (!file) return
+
+    const objectUrl = URL.createObjectURL(file)
+    setFormData((previous) => ({
+      ...previous,
+      logoPreviewUrl: objectUrl,
+      logoFile: file,
+      logoFileName: file.name,
+    }))
+  }
+
+  const handleFotoFileChange = ({ target }) => {
+    const file = target.files?.[0]
+    if (!file) return
+
+    const objectUrl = URL.createObjectURL(file)
+    setFormData((previous) => ({
+      ...previous,
+      fotoPreviewUrl: objectUrl,
+      fotoFile: file,
+      fotoFileName: file.name,
+    }))
   }
 
   const getCategoryName = (team) =>
@@ -478,6 +523,51 @@ const EquipesCrud = () => {
                   onChange={handleInputChange}
                 />
               </div>
+
+              <CRow className="g-3">
+                <CCol md={6}>
+                  <CFormLabel htmlFor="team-logo-upload">Upload do logo</CFormLabel>
+                  <CFormInput
+                    id="team-logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoFileChange}
+                  />
+                  {formData.logoFileName && (
+                    <div className="form-text">Arquivo selecionado: {formData.logoFileName}</div>
+                  )}
+                  {formData.logoPreviewUrl && (
+                    <div className="mt-2">
+                      <img
+                        src={formData.logoPreviewUrl}
+                        alt="Prévia do logo da equipe"
+                        className="img-fluid rounded border"
+                      />
+                    </div>
+                  )}
+                </CCol>
+                <CCol md={6}>
+                  <CFormLabel htmlFor="team-foto-upload">Upload da foto da equipe</CFormLabel>
+                  <CFormInput
+                    id="team-foto-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFotoFileChange}
+                  />
+                  {formData.fotoFileName && (
+                    <div className="form-text">Arquivo selecionado: {formData.fotoFileName}</div>
+                  )}
+                  {formData.fotoPreviewUrl && (
+                    <div className="mt-2">
+                      <img
+                        src={formData.fotoPreviewUrl}
+                        alt="Prévia da foto da equipe"
+                        className="img-fluid rounded border"
+                      />
+                    </div>
+                  )}
+                </CCol>
+              </CRow>
 
               <CRow className="g-3">
                 <CCol md={3}>
