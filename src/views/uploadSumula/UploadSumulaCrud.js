@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import {
   CAlert,
-  CBadge,
   CButton,
   CCard,
   CCardBody,
@@ -10,72 +9,29 @@ import {
   CForm,
   CFormInput,
   CFormLabel,
-  CListGroup,
-  CListGroupItem,
   CRow,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCloudUpload, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import { cilCloudUpload, cilReload, cilSave } from '@coreui/icons'
+import { uploadSumula } from '../../services/sumulaApi'
 
 const emptyUpload = {
-  gameId: '',
-  imageUrl: '',
-  imageFileName: '',
-  uploadedAt: '',
+  codigo: '',
+  pdfFile: null,
+  pdfFileName: '',
 }
 
-const initialUploads = [
-  {
-    id: 'sum-1201',
-    gameId: 'JOGO-1201',
-    imageUrl: 'https://via.placeholder.com/320x200?text=Sumula+JOGO-1201',
-    uploadedAt: '05/02/2025',
-  },
-  {
-    id: 'sum-1202',
-    gameId: 'JOGO-1202',
-    imageUrl: 'https://via.placeholder.com/320x200?text=Sumula+JOGO-1202',
-    uploadedAt: '06/02/2025',
-  },
-]
-
 const UploadSumulaCrud = () => {
-  const [uploads, setUploads] = useState(initialUploads)
-  const [selectedUploadId, setSelectedUploadId] = useState(initialUploads[0]?.id ?? null)
   const [formData, setFormData] = useState(emptyUpload)
   const [feedback, setFeedback] = useState(null)
-
-  const selectedUpload = useMemo(
-    () => uploads.find((upload) => upload.id === selectedUploadId) ?? null,
-    [uploads, selectedUploadId],
-  )
-
-  useEffect(() => {
-    if (!selectedUploadId && uploads.length) {
-      setSelectedUploadId(uploads[0].id)
-    }
-  }, [uploads, selectedUploadId])
-
-  useEffect(() => {
-    if (!selectedUpload) {
-      setFormData(emptyUpload)
-      return
-    }
-
-    setFormData({ ...emptyUpload, ...selectedUpload, imageFileName: selectedUpload.imageFileName ?? '' })
-  }, [selectedUpload])
-
-  const handleUploadSelect = (uploadId) => {
-    setSelectedUploadId(uploadId)
-    setFeedback(null)
-  }
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleInputChange = ({ target }) => {
     const { name, value } = target
     setFormData((previous) => ({
       ...previous,
       [name]: value,
-      ...(name === 'imageUrl' ? { imageFileName: '' } : null),
     }))
   }
 
@@ -83,46 +39,35 @@ const UploadSumulaCrud = () => {
     const file = target.files?.[0]
     if (!file) return
 
-    const objectUrl = URL.createObjectURL(file)
     setFormData((previous) => ({
       ...previous,
-      imageUrl: objectUrl,
-      imageFileName: file.name,
+      pdfFile: file,
+      pdfFileName: file.name,
     }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    setFeedback(null)
 
-    const uploadId = selectedUploadId ?? `sum-${Date.now()}`
-    const payload = {
-      ...formData,
-      id: uploadId,
-      uploadedAt: formData.uploadedAt || new Date().toLocaleDateString('pt-BR'),
+    if (!formData.codigo || !formData.pdfFile) {
+      setFeedback({ type: 'danger', message: 'Informe o número do jogo e selecione o PDF da súmula.' })
+      return
     }
 
-    setUploads((previous) => {
-      const exists = previous.some((item) => item.id === uploadId)
-      return exists
-        ? previous.map((item) => (item.id === uploadId ? payload : item))
-        : [...previous, payload]
-    })
-
-    setSelectedUploadId(uploadId)
-    setFeedback(selectedUploadId ? 'Súmula atualizada com sucesso.' : 'Upload de súmula criado.')
-  }
-
-  const handleDelete = () => {
-    if (!selectedUploadId) return
-
-    setUploads((previous) => previous.filter((item) => item.id !== selectedUploadId))
-    setSelectedUploadId(null)
-    setFormData(emptyUpload)
-    setFeedback('Súmula removida.')
+    setIsLoading(true)
+    try {
+      await uploadSumula(formData.codigo, formData.pdfFile)
+      setFeedback({ type: 'success', message: 'Súmula enviada com sucesso.' })
+      setFormData(emptyUpload)
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível enviar a súmula.' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleReset = () => {
-    setSelectedUploadId(null)
     setFormData(emptyUpload)
     setFeedback(null)
   }
@@ -136,128 +81,60 @@ const UploadSumulaCrud = () => {
             <div>
               <h4 className="mb-1">Upload de Súmulas</h4>
               <div className="text-medium-emphasis">
-                Cadastre, atualize ou remova súmulas informando o ID do jogo e anexando a imagem do arquivo.
-                Os dados são mantidos apenas na memória para demonstração do fluxo do CRUD.
+                Envie a súmula em PDF informando o número do jogo. Os dados serão enviados para a API oficial.
               </div>
             </div>
           </CCardBody>
         </CCard>
       </CCol>
 
-      <CCol md={4}>
-        <CCard className="h-100">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
-            <div>
-              <strong>Envios cadastrados</strong>
-              <div className="small text-medium-emphasis">ID do jogo + data do upload</div>
-            </div>
-            <CButton color="primary" size="sm" variant="outline" onClick={handleReset}>
-              <CIcon icon={cilPlus} className="me-2" /> Novo
-            </CButton>
-          </CCardHeader>
-          <CCardBody className="p-0">
-            {uploads.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhuma súmula cadastrada ainda.</div>
-            ) : (
-              <CListGroup flush>
-                {uploads.map((upload) => (
-                  <CListGroupItem
-                    key={upload.id}
-                    action
-                    active={upload.id === selectedUploadId}
-                    onClick={() => handleUploadSelect(upload.id)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-2">
-                      <div>
-                        <div className="fw-semibold">{upload.gameId}</div>
-                        <small className="text-medium-emphasis">Enviado em {upload.uploadedAt}</small>
-                      </div>
-                      <CBadge color="success" shape="rounded-pill">Súmula</CBadge>
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
-            )}
-          </CCardBody>
-        </CCard>
-      </CCol>
-
-      <CCol md={8}>
+      <CCol md={12}>
         {feedback && (
-          <CAlert color="success" className="mb-3">
-            {feedback}
+          <CAlert color={feedback.type} className="mb-3">
+            {feedback.message}
           </CAlert>
         )}
         <CCard className="h-100">
           <CCardHeader>
-            <strong>{selectedUploadId ? 'Editar súmula' : 'Nova súmula'}</strong>
-            <div className="small text-medium-emphasis">Informe o ID do jogo e faça o upload da imagem.</div>
+            <strong>Enviar súmula</strong>
+            <div className="small text-medium-emphasis">Informe o número do jogo e faça o upload do PDF.</div>
           </CCardHeader>
           <CCardBody>
             <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
               <div>
-                <CFormLabel htmlFor="sumula-game">ID do jogo</CFormLabel>
+                <CFormLabel htmlFor="sumula-codigo">Número do jogo</CFormLabel>
                 <CFormInput
-                  id="sumula-game"
-                  name="gameId"
-                  placeholder="Ex.: JOGO-1203"
-                  value={formData.gameId}
+                  id="sumula-codigo"
+                  name="codigo"
+                  placeholder="Ex.: 1203"
+                  value={formData.codigo}
                   onChange={handleInputChange}
                   required
                 />
               </div>
 
               <div>
-                <CFormLabel htmlFor="sumula-image-upload">Upload da súmula (imagem)</CFormLabel>
+                <CFormLabel htmlFor="sumula-pdf-upload">Upload da súmula (PDF)</CFormLabel>
                 <CFormInput
-                  id="sumula-image-upload"
+                  id="sumula-pdf-upload"
                   type="file"
-                  accept="image/*"
+                  accept="application/pdf"
                   onChange={handleFileChange}
+                  required
                 />
-                {formData.imageFileName && (
-                  <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
+                {formData.pdfFileName && (
+                  <div className="form-text">Arquivo selecionado: {formData.pdfFileName}</div>
                 )}
               </div>
 
-              <div>
-                <CFormLabel htmlFor="sumula-image-url">URL da imagem (opcional)</CFormLabel>
-                <CFormInput
-                  id="sumula-image-url"
-                  name="imageUrl"
-                  placeholder="https://..."
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <CFormLabel htmlFor="sumula-uploaded">Data do upload</CFormLabel>
-                <CFormInput
-                  id="sumula-uploaded"
-                  name="uploadedAt"
-                  placeholder="dd/mm/aaaa"
-                  value={formData.uploadedAt}
-                  onChange={handleInputChange}
-                />
-              </div>
-
               <div className="d-flex flex-wrap gap-2">
-                <CButton color="primary" type="submit">
-                  <CIcon icon={cilSave} className="me-2" /> Salvar
+                <CButton color="primary" type="submit" disabled={isLoading}>
+                  <CIcon icon={cilSave} className="me-2" /> {isLoading ? 'Enviando...' : 'Enviar'}
                 </CButton>
                 <CButton color="secondary" variant="outline" type="button" onClick={handleReset}>
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
-                <CButton
-                  color="danger"
-                  variant="ghost"
-                  type="button"
-                  disabled={!selectedUploadId}
-                  onClick={handleDelete}
-                >
-                  <CIcon icon={cilTrash} className="me-2" /> Remover
-                </CButton>
+                {isLoading && <CSpinner size="sm" className="ms-2" />}
               </div>
             </CForm>
           </CCardBody>
