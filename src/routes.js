@@ -12,6 +12,7 @@ const EquipesCrud = React.lazy(() => import('./views/equipes/EquipesCrud'))
 const JogosCrud = React.lazy(() => import('./views/jogos/JogosCrud'))
 const CompeticoesCrud = React.lazy(() => import('./views/competicoes/CompeticoesCrud'))
 const CategoriasCrud = React.lazy(() => import('./views/categorias/CategoriasCrud'))
+const JulgamentosCrud = React.lazy(() => import('./views/julgamentos/JulgamentosCrud'))
 
 const legacyItems = legacyMenuSections.flatMap((section) => section.items)
 
@@ -38,11 +39,13 @@ const routes = [
                   ? CompeticoesCrud
                   : item.route === 'painel/categorias'
                     ? CategoriasCrud
-                  : item.route === 'painel/viewuploadsumula'
-                    ? UploadSumulaCrud
-                    : item.route === 'sumula/selecao'
-                      ? SumulasCrud
-                    : buildLegacyRoute(item),
+                    : item.route === 'painel/julgamento'
+                      ? JulgamentosCrud
+                      : item.route === 'painel/viewuploadsumula'
+                        ? UploadSumulaCrud
+                        : item.route === 'sumula/selecao'
+                          ? SumulasCrud
+                          : buildLegacyRoute(item),
   })),
 ]
 

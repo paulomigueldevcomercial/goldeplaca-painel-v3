@@ -69,12 +69,6 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento/carteirinha',
       },
       {
-        label: 'Imagem Perfil Jogador',
-        route: 'painel/imagensjogador',
-        visibility: 'Disponível exceto para competições 32, 29, 45 e 38',
-        path: '/painel/gerenciamento/imagem-perfil-jogador',
-      },
-      {
         label: 'Imagem Artilheiros Geral',
         route: 'painel/imagensartilheiro',
         visibility: 'Disponível exceto para competições 32, 29, 45 e 38',
@@ -91,12 +85,6 @@ const legacyMenuSections = [
         route: 'gerenciador/competicao/admin',
         visibility: 'Disponível apenas para administradores',
         path: '/painel/gerenciamento/competicao',
-      },
-      {
-        label: 'Notificações',
-        route: 'https://onesignal.com/',
-        visibility: 'Disponível apenas para administradores (link externo)',
-        path: '/painel/gerenciamento/notificacoes',
       },
     ],
   },
@@ -151,12 +139,6 @@ const legacyMenuSections = [
         route: 'painel/scoutfinal',
         visibility: 'Disponível exceto para competições 53, 32, 29 e 38',
         path: '/painel/relatorios/scout-final',
-      },
-      {
-        label: 'Resultado Votação',
-        route: 'reports/votacao',
-        visibility: 'Disponível exceto para competições 53, 32, 29 e 38',
-        path: '/painel/relatorios/resultado-votacao',
       },
       {
         label: 'Julgamento',
