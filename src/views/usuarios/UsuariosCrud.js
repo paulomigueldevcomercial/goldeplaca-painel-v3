@@ -1,0 +1,362 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  CAlert,
+  CButton,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CForm,
+  CFormInput,
+  CFormLabel,
+  CListGroup,
+  CListGroupItem,
+  CRow,
+  CSpinner,
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
+import CompetitionSelect from '../../components/forms/CompetitionSelect'
+import {
+  createUsuario,
+  deleteUsuario,
+  getUsuario,
+  listUsuarios,
+  updateUsuario,
+} from '../../services/usuariosApi'
+
+const createEmptyUser = () => ({
+  id: '',
+  name: '',
+  username: '',
+  password: '',
+  roles: '',
+  competicaoId: '',
+})
+
+const parseNumber = (value) => {
+  if (value === '' || value === null || value === undefined) return null
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+const normalizeText = (value) => {
+  const text = String(value ?? '').trim()
+  return text || undefined
+}
+
+const UsuariosCrud = () => {
+  const [users, setUsers] = useState([])
+  const [selectedUserId, setSelectedUserId] = useState(null)
+  const [search, setSearch] = useState('')
+  const [formData, setFormData] = useState(createEmptyUser())
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [feedback, setFeedback] = useState(null)
+
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await listUsuarios()
+      setUsers(Array.isArray(data) ? data : [])
+    } catch (error) {
+      setUsers([])
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar os usuários.' })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadUsers()
+  }, [loadUsers])
+
+  const visibleUsers = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return users
+
+    return users.filter((user) =>
+      [user.name, user.username, user.id?.toString()].some((field) =>
+        String(field ?? '')
+          .toLowerCase()
+          .includes(term),
+      ),
+    )
+  }, [search, users])
+
+  const handleSelectUser = async (id) => {
+    if (!id) return
+    setFeedback(null)
+    setSelectedUserId(id)
+    setIsLoading(true)
+
+    try {
+      const user = await getUsuario(id)
+      setFormData({
+        id: user?.id ?? '',
+        name: user?.name ?? '',
+        username: user?.username ?? '',
+        password: '',
+        roles: user?.roles ?? '',
+        competicaoId: user?.competicaoId ?? '',
+      })
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar o usuário selecionado.' })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = ({ target }) => {
+    const { name, value } = target
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }))
+  }
+
+  const handleReset = () => {
+    setSelectedUserId(null)
+    setFormData(createEmptyUser())
+    setFeedback(null)
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    if (!formData.name || !formData.username) {
+      setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios de usuário.' })
+      return
+    }
+
+    if (!selectedUserId && !formData.password) {
+      setFeedback({ type: 'danger', message: 'Informe a senha para cadastrar um novo usuário.' })
+      return
+    }
+
+    setIsSaving(true)
+    setFeedback(null)
+
+    try {
+      const payload = {
+        id: parseNumber(formData.id),
+        name: normalizeText(formData.name),
+        username: normalizeText(formData.username),
+        roles: normalizeText(formData.roles),
+        competicaoId: parseNumber(formData.competicaoId),
+      }
+
+      const password = normalizeText(formData.password)
+      if (password) {
+        payload.password = password
+      }
+
+      if (selectedUserId) {
+        await updateUsuario(selectedUserId, payload)
+        setFeedback({ type: 'success', message: 'Usuário atualizado com sucesso.' })
+      } else {
+        const created = await createUsuario(payload)
+        setSelectedUserId(created?.id ?? null)
+        setFeedback({ type: 'success', message: 'Usuário cadastrado com sucesso.' })
+      }
+
+      await loadUsers()
+      setFormData((previous) => ({
+        ...previous,
+        password: '',
+      }))
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível salvar o usuário.' })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selectedUserId) return
+
+    setIsLoading(true)
+    try {
+      await deleteUsuario(selectedUserId)
+      setFeedback({ type: 'success', message: 'Usuário removido com sucesso.' })
+      setSelectedUserId(null)
+      setFormData(createEmptyUser())
+      await loadUsers()
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível remover o usuário.' })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <CRow className="g-4">
+      <CCol xs={12}>
+        <CCard className="mb-3">
+          <CCardBody className="d-flex align-items-center gap-3">
+            <CIcon icon={cilUser} size="xl" className="text-primary" />
+            <div>
+              <h4 className="mb-1">Usuários</h4>
+              <div className="text-medium-emphasis">Gerenciamento de usuários do painel.</div>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+      {feedback && (
+        <CCol xs={12}>
+          <CAlert color={feedback.type} className="mb-0">
+            {feedback.message}
+          </CAlert>
+        </CCol>
+      )}
+
+      <CCol lg={4}>
+        <CCard className="h-100">
+          <CCardHeader>
+            <strong>Usuários cadastrados</strong>
+          </CCardHeader>
+          <CCardBody className="p-0">
+            <div className="p-3 border-bottom">
+              <CFormInput
+                type="search"
+                value={search}
+                onChange={({ target }) => setSearch(target.value)}
+                placeholder="Pesquisar por nome, username ou ID"
+                aria-label="Pesquisar usuários"
+              />
+            </div>
+
+            {isLoading ? (
+              <div className="p-3 text-center text-medium-emphasis">
+                <CSpinner size="sm" className="me-2" />
+                Carregando usuários...
+              </div>
+            ) : visibleUsers.length === 0 ? (
+              <div className="p-3 text-medium-emphasis">Nenhum usuário cadastrado.</div>
+            ) : (
+              <CListGroup flush>
+                {visibleUsers.map((user) => (
+                  <CListGroupItem
+                    key={user.id}
+                    action
+                    active={String(user.id) === String(selectedUserId)}
+                    onClick={() => handleSelectUser(user.id)}
+                  >
+                    <div className="d-flex justify-content-between align-items-center gap-2">
+                      <div className="text-truncate">
+                        {user.name || user.username || `Usuário ${user.id}`}
+                      </div>
+                      <span className="small text-medium-emphasis">#{user.id ?? '-'}</span>
+                    </div>
+                    <div className="small text-medium-emphasis">{user.username ?? '-'}</div>
+                  </CListGroupItem>
+                ))}
+              </CListGroup>
+            )}
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+      <CCol lg={8}>
+        <CCard>
+          <CCardHeader>
+            <strong>{selectedUserId ? 'Editar usuário' : 'Novo usuário'}</strong>
+          </CCardHeader>
+          <CCardBody>
+            <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+              <CRow className="g-3">
+                <CCol md={3}>
+                  <CFormLabel htmlFor="usuario-id">ID</CFormLabel>
+                  <CFormInput id="usuario-id" name="id" value={formData.id} readOnly disabled />
+                </CCol>
+                <CCol md={9}>
+                  <CFormLabel htmlFor="usuario-name">Nome</CFormLabel>
+                  <CFormInput
+                    id="usuario-name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </CCol>
+              </CRow>
+
+              <CRow className="g-3">
+                <CCol md={6}>
+                  <CFormLabel htmlFor="usuario-username">Username</CFormLabel>
+                  <CFormInput
+                    id="usuario-username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <CFormLabel htmlFor="usuario-password">Senha</CFormLabel>
+                  <CFormInput
+                    id="usuario-password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder={selectedUserId ? 'Preencha para alterar' : ''}
+                  />
+                </CCol>
+              </CRow>
+
+              <CRow className="g-3">
+                <CCol md={6}>
+                  <CFormLabel htmlFor="usuario-roles">Roles</CFormLabel>
+                  <CFormInput
+                    id="usuario-roles"
+                    name="roles"
+                    value={formData.roles}
+                    onChange={handleInputChange}
+                    placeholder="Ex.: ROLE_ADMIN"
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <CompetitionSelect
+                    id="usuario-competicao"
+                    name="competicaoId"
+                    label="Competição"
+                    value={formData.competicaoId}
+                    onValueChange={(value) =>
+                      setFormData((previous) => ({ ...previous, competicaoId: value }))
+                    }
+                    autoSelectFirst={false}
+                  />
+                </CCol>
+              </CRow>
+
+              <div className="d-flex gap-2">
+                <CButton color="primary" type="submit" disabled={isSaving}>
+                  <CIcon icon={cilSave} className="me-2" />
+                  {isSaving ? 'Salvando...' : 'Salvar'}
+                </CButton>
+                <CButton color="secondary" variant="outline" type="button" onClick={handleReset}>
+                  <CIcon icon={cilReload} className="me-2" />
+                  Novo
+                </CButton>
+                {selectedUserId && (
+                  <CButton color="danger" variant="ghost" type="button" onClick={handleDelete}>
+                    <CIcon icon={cilTrash} className="me-2" />
+                    Excluir
+                  </CButton>
+                )}
+                <CButton color="success" variant="outline" type="button" onClick={loadUsers}>
+                  <CIcon icon={cilReload} className="me-2" />
+                  Recarregar
+                </CButton>
+              </div>
+            </CForm>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+  )
+}
+
+export default UsuariosCrud
