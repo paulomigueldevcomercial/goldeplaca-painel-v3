@@ -13,6 +13,7 @@ const JogosCrud = React.lazy(() => import('./views/jogos/JogosCrud'))
 const CompeticoesCrud = React.lazy(() => import('./views/competicoes/CompeticoesCrud'))
 const CategoriasCrud = React.lazy(() => import('./views/categorias/CategoriasCrud'))
 const JulgamentosCrud = React.lazy(() => import('./views/julgamentos/JulgamentosCrud'))
+const RodadaSemanaReport = React.lazy(() => import('./views/relatorios/RodadaSemanaReport'))
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 
 const legacyItems = legacyMenuSections.flatMap((section) => section.items)
@@ -42,13 +43,15 @@ const routes = [
                     ? CategoriasCrud
                     : item.route === 'painel/julgamento'
                       ? JulgamentosCrud
-                      : item.route === 'user/admin'
-                        ? UsuariosCrud
-                        : item.route === 'painel/viewuploadsumula'
-                          ? UploadSumulaCrud
-                          : item.route === 'sumula/selecao'
-                            ? SumulasCrud
-                            : buildLegacyRoute(item),
+                      : item.route === 'painel/tblsemana'
+                        ? RodadaSemanaReport
+                        : item.route === 'user/admin'
+                          ? UsuariosCrud
+                          : item.route === 'painel/viewuploadsumula'
+                            ? UploadSumulaCrud
+                            : item.route === 'sumula/selecao'
+                              ? SumulasCrud
+                              : buildLegacyRoute(item),
   })),
 ]
 

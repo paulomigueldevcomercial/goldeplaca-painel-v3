@@ -248,26 +248,28 @@ const JulgamentosCrud = () => {
     }
   }
 
-  const handleDownloadReport = async (convocado) => {
-    if (!selectedCompetitionId) {
-      setFeedback({ type: 'danger', message: 'Selecione uma competição para baixar o relatório.' })
+  const handleDownloadReport = async (numeroProcesso) => {
+    const normalizedNumeroProcesso = String(numeroProcesso ?? '').trim()
+    if (!normalizedNumeroProcesso) {
+      setFeedback({
+        type: 'danger',
+        message: 'Informe o número do processo para baixar o relatório.',
+      })
       return
     }
 
-    const reportKey = `report-${convocado || 'SIM'}`
+    const reportKey = `report-${normalizedNumeroProcesso}`
     setReportLoadingKey(reportKey)
 
     try {
       const reportBlob = await downloadJulgamentoReport({
-        competicao: parseNumber(selectedCompetitionId),
-        convocado: convocado || filters.convocado || 'SIM',
+        numeroProcesso: normalizedNumeroProcesso,
       })
 
       const url = window.URL.createObjectURL(reportBlob)
       const link = document.createElement('a')
-      const normalizedConvocado = String(convocado || filters.convocado || 'SIM').toLowerCase()
       link.href = url
-      link.download = `relatorio-julgamento-${selectedCompetitionId}-${normalizedConvocado}.pdf`
+      link.download = `relatorio-julgamento-${normalizedNumeroProcesso}.pdf`
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -358,10 +360,14 @@ const JulgamentosCrud = () => {
               <CButton
                 color="secondary"
                 variant="outline"
-                disabled={!selectedCompetitionId || reportLoadingKey !== null}
-                onClick={() => handleDownloadReport(filters.convocado || 'SIM')}
+                disabled={
+                  !selectedCompetitionId ||
+                  reportLoadingKey !== null ||
+                  !String(filters.search || '').trim()
+                }
+                onClick={() => handleDownloadReport(filters.search)}
               >
-                {reportLoadingKey === `report-${filters.convocado || 'SIM'}` ? (
+                {reportLoadingKey === `report-${String(filters.search || '').trim()}` ? (
                   <>
                     <CSpinner size="sm" className="me-2" />
                     Baixando...
@@ -413,19 +419,21 @@ const JulgamentosCrud = () => {
                             color="secondary"
                             size="sm"
                             variant="ghost"
-                            disabled={reportLoadingKey === `report-${julgamento.id}`}
+                            disabled={
+                              !String(julgamento.numeroProcesso || '').trim() ||
+                              reportLoadingKey === `report-${julgamento.id}`
+                            }
                             onClick={async () => {
                               const currentReportKey = `report-${julgamento.id}`
                               setReportLoadingKey(currentReportKey)
                               try {
                                 const reportBlob = await downloadJulgamentoReport({
-                                  competicao: parseNumber(selectedCompetitionId),
-                                  convocado: julgamento.convocado || 'SIM',
+                                  numeroProcesso: julgamento.numeroProcesso,
                                 })
                                 const url = window.URL.createObjectURL(reportBlob)
                                 const link = document.createElement('a')
                                 link.href = url
-                                link.download = `relatorio-julgamento-${selectedCompetitionId}-${String(julgamento.convocado || 'SIM').toLowerCase()}.pdf`
+                                link.download = `relatorio-julgamento-${julgamento.numeroProcesso}.pdf`
                                 document.body.appendChild(link)
                                 link.click()
                                 link.remove()

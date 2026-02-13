@@ -13,10 +13,13 @@ export const updateJulgamento = (id, payload) =>
 
 export const deleteJulgamento = (id) => requestJson(`/api/julgamentos/${id}`, { method: 'DELETE' })
 
-export const downloadJulgamentoReport = async ({ competicao, convocado } = {}) => {
-  const response = await fetch(buildUrl('/reports/julgamento', { competicao, convocado }), {
-    method: 'GET',
-  })
+export const downloadJulgamentoReport = async ({ numeroProcesso } = {}) => {
+  const response = await fetch(
+    buildUrl('/reports/julgamento', { numero_processo: numeroProcesso }),
+    {
+      method: 'GET',
+    },
+  )
 
   if (!response.ok) {
     const message = await response.text()
