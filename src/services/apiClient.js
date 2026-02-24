@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8080'
+export const API_BASE_URL = 'http://backend_nginx'
 
 export const buildUrl = (path, params) => {
   const url = new URL(`${API_BASE_URL}${path}`)
