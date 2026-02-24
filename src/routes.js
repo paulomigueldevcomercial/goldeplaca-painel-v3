@@ -17,15 +17,14 @@ const RodadaSemanaReport = React.lazy(() => import('./views/relatorios/RodadaSem
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 
 const legacyItems = legacyMenuSections.flatMap((section) => section.items)
-const removePainelPrefix = (path) => path.replace(/^\/painel(\/|$)/, '/')
 
 const buildLegacyRoute = (item) => () => <LegacyMenuItem item={item} />
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
-  { path: '/menu', name: 'Mapa do painel', element: PainelMenu },
+  { path: '/painel/menu', name: 'Mapa do painel', element: PainelMenu },
   ...legacyItems.map((item) => ({
-    path: removePainelPrefix(item.path),
+    path: item.path,
     name: item.label,
     element:
       item.route === 'painel/albuns'
