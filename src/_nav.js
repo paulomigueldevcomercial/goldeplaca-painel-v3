@@ -4,6 +4,8 @@ import { cilNotes } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 import legacyMenuSections from './views/painel/legacyMenuData'
 
+const removePainelPrefix = (path) => path.replace(/^\/painel(\/|$)/, '/')
+
 const _nav = legacyMenuSections.flatMap((section) => [
   {
     component: CNavTitle,
@@ -12,7 +14,7 @@ const _nav = legacyMenuSections.flatMap((section) => [
   ...section.items.map((item) => ({
     component: CNavItem,
     name: item.label,
-    to: item.path,
+    to: removePainelPrefix(item.path),
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   })),
 ])
