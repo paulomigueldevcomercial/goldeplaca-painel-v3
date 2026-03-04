@@ -1,7 +1,21 @@
-export const API_BASE_URL = ''
+export const API_BASE_URL = 'http://localhost:8080'
+
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return ''
+
+  try {
+    const stored = window.localStorage.getItem('authSession')
+    if (!stored) return ''
+    return JSON.parse(stored)?.token ?? ''
+  } catch (error) {
+    return ''
+  }
+}
 
 export const buildUrl = (path, params) => {
-  const url = new URL(`${API_BASE_URL}${path}`)
+  const baseUrl =
+    API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+  const url = new URL(`${API_BASE_URL}${path}`, baseUrl)
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -15,15 +29,29 @@ export const buildUrl = (path, params) => {
 
 export const requestJson = async (path, { method = 'GET', params, body } = {}) => {
   const url = params ? buildUrl(path, params) : `${API_BASE_URL}${path}`
+  const token = getAuthToken()
+  const headers = {}
+
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
   const response = await fetch(url, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include',
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   })
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      window.localStorage.removeItem('authSession')
+    }
+
     const message = await response.text()
     throw new Error(message || 'Falha ao processar a requisição.')
   }

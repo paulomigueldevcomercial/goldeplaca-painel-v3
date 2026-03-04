@@ -1,10 +1,21 @@
 import { legacy_createStore as createStore } from 'redux'
+import { getStoredSession } from './utils/authSession'
+
+const storedSession = getStoredSession()
 
 const initialState = {
   sidebarShow: true,
   theme: 'light',
   selectedCompetitionId:
-    typeof window !== 'undefined' ? window.localStorage.getItem('selectedCompetitionId') || '' : '',
+    storedSession?.user?.competicaoId ||
+    (typeof window !== 'undefined'
+      ? window.localStorage.getItem('selectedCompetitionId') || ''
+      : ''),
+  auth: {
+    isAuthenticated: Boolean(storedSession?.user),
+    token: storedSession?.token ?? '',
+    user: storedSession?.user ?? null,
+  },
 }
 
 const changeState = (state = initialState, { type, ...rest }) => {

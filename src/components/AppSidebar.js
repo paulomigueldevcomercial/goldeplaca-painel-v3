@@ -12,20 +12,29 @@ import {
 
 import { AppSidebarNav } from './AppSidebarNav'
 import CompetitionSelect from './forms/CompetitionSelect'
+import { hasAdminRole } from '../utils/authSession'
 
 // sidebar nav config
-import navigation from '../_nav'
+import buildNavigation from '../_nav'
 
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
+  const authUser = useSelector((state) => state.auth?.user)
+  const navigation = buildNavigation(authUser?.roleList ?? authUser?.roles)
+  const isAdmin = hasAdminRole(authUser?.roleList ?? authUser?.roles)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem('selectedCompetitionId', selectedCompetitionId || '')
   }, [selectedCompetitionId])
+
+  useEffect(() => {
+    if (!authUser?.competicaoId || selectedCompetitionId) return
+    dispatch({ type: 'set', selectedCompetitionId: authUser.competicaoId })
+  }, [authUser?.competicaoId, dispatch, selectedCompetitionId])
 
   return (
     <CSidebar
@@ -61,6 +70,7 @@ const AppSidebar = () => {
           }
           size="sm"
           ariaLabel="Selecionar competição"
+          disabled={!authUser || (!isAdmin && Boolean(authUser?.competicaoId))}
         />
       </div>
       <AppSidebarNav items={navigation} />
