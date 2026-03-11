@@ -88,7 +88,7 @@ const Login = () => {
       const message =
         response?.message ||
         response?.mensagem ||
-        'Solicitação enviada. Verifique os próximos passos com o administrador ou no e-mail cadastrado.'
+        'Solicitação enviada. Verifique os próximos passos com o administrador.'
 
       setResetFeedback({ type: 'success', message })
     } catch (error) {
@@ -112,7 +112,7 @@ const Login = () => {
                   <CForm onSubmit={handleSubmit}>
                     <h1>Autenticação</h1>
                     <p className="text-body-secondary">
-                      Acesse o painel usando o `auth-controller` do backend.
+                      Acesse o painel administrativo.
                     </p>
                     {feedback ? <CAlert color={feedback.type}>{feedback.message}</CAlert> : null}
                     {resetFeedback ? (
@@ -183,14 +183,8 @@ const Login = () => {
                     <h2>Painel administrativo</h2>
                     <p>
                       O acesso às páginas internas fica bloqueado até que a autenticação seja
-                      concluída. Itens de Usuários e Competição são liberados apenas para perfil
-                      administrador.
+                      concluída.
                     </p>
-                    <Link to="/register">
-                      <CButton color="primary" className="mt-3" active tabIndex={-1}>
-                        Cadastro padrão
-                      </CButton>
-                    </Link>
                   </div>
                 </CCardBody>
               </CCard>
