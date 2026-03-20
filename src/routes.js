@@ -5,6 +5,7 @@ const PainelMenu = React.lazy(() => import('./views/painel/PainelMenu'))
 const LegacyMenuItem = React.lazy(() => import('./views/painel/LegacyMenuItem'))
 const GaleriaCrud = React.lazy(() => import('./views/galeria/GaleriaCrud'))
 const NoticiasCrud = React.lazy(() => import('./views/noticias/NoticiasCrud'))
+const PatrocinadoresCrud = React.lazy(() => import('./views/patrocinadores/PatrocinadoresCrud'))
 const UploadSumulaCrud = React.lazy(() => import('./views/uploadSumula/UploadSumulaCrud'))
 const SumulasCrud = React.lazy(() => import('./views/sumulas/SumulasCrud'))
 const JogadoresCrud = React.lazy(() => import('./views/jogadores/JogadoresCrud'))
@@ -33,6 +34,8 @@ const routes = [
         ? GaleriaCrud
         : item.route === 'painel/noticiascompeticao'
           ? NoticiasCrud
+          : item.route === 'painel/patrocinadores'
+            ? PatrocinadoresCrud
           : item.route === 'painel/criarjogadores'
             ? JogadoresCrud
             : item.route === 'painel/criarequipes'

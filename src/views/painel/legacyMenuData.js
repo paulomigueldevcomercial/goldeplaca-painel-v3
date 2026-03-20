@@ -15,6 +15,12 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento/noticias',
       },
       {
+        label: 'Patrocinadores',
+        route: 'painel/patrocinadores',
+        visibility: 'Disponível para todas as competições',
+        path: '/painel/gerenciamento/patrocinadores',
+      },
+      {
         label: 'Upload Súmula',
         route: 'painel/viewuploadsumula',
         visibility: 'Disponível para todas as competições',
