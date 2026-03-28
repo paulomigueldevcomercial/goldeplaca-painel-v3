@@ -352,7 +352,7 @@ const EquipesCrud = () => {
             <div>
               <h4 className="mb-1">Equipes</h4>
               <div className="text-medium-emphasis">
-                Gerencie os dados de equipes usando os endpoints de equipes, competições e categorias (localhost:8080).
+                Gerencie os dados de equipes usando os endpoints de equipes, competições e categorias da API.
               </div>
             </div>
           </CCardBody>

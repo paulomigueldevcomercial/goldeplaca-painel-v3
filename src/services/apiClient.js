@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8080'
+export const API_BASE_URL = ''
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -13,8 +13,7 @@ const getAuthToken = () => {
 }
 
 export const buildUrl = (path, params) => {
-  const baseUrl =
-    API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
   const url = new URL(`${API_BASE_URL}${path}`, baseUrl)
 
   if (params) {
