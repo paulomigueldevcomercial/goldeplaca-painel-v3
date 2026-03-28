@@ -27,7 +27,7 @@ const requestMultipart = async (path, { method = 'POST', patrocinio, file } = {}
   }
 
   if (file) {
-    formData.append('imagem', file)
+    formData.append('arquivo', file)
   }
 
   if (token) {
