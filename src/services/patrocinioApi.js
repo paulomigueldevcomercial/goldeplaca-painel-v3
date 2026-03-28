@@ -21,6 +21,7 @@ const requestMultipart = async (path, { method = 'POST', patrocinio, file } = {}
   if (patrocinio) {
     Object.entries(patrocinio).forEach(([key, value]) => {
       if (value === undefined || value === null || value === '') return
+      if (key === 'imagem' && file) return
       formData.append(key, String(value))
     })
   }
