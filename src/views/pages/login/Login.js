@@ -134,8 +134,7 @@ const Login = () => {
                   <div>
                     <h2>Painel administrativo</h2>
                     <p>
-                      O acesso às páginas internas fica bloqueado até que a autenticação seja
-                      concluída.
+                      Gerenciamento do site Gol de Placa MA.
                     </p>
                   </div>
                 </CCardBody>
