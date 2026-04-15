@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
   CAlert,
@@ -21,10 +21,15 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
-import { useQuill } from 'react-quilljs'
+import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
 import { listCompeticoes } from '../../services/competicaoApi'
-import { createNoticia, deleteNoticia, listNoticias, updateNoticia } from '../../services/noticiaApi'
+import {
+  createNoticia,
+  deleteNoticia,
+  listNoticias,
+  updateNoticia,
+} from '../../services/noticiaApi'
 
 const createEmptyArticle = () => ({
   id: '',
@@ -40,6 +45,23 @@ const createEmptyArticle = () => ({
   imagePreviewUrl: '',
 })
 
+const quillModules = {
+  toolbar: [
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ align: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    [{ size: ['small', false, 'large', 'huge'] }],
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ['link', 'image', 'video'],
+    [{ color: [] }, { background: [] }],
+    ['clean'],
+  ],
+  clipboard: {
+    matchVisual: false,
+  },
+}
+
 const NoticiasCrud = () => {
   const [competitions, setCompetitions] = useState([])
   const [news, setNews] = useState([])
@@ -48,6 +70,8 @@ const NoticiasCrud = () => {
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
+  const quillContainerRef = useRef(null)
+  const quillInstanceRef = useRef(null)
 
   const parseNumber = (value) => {
     if (value === '' || value === null || value === undefined) return null
@@ -57,9 +81,7 @@ const NoticiasCrud = () => {
 
   const selectedCompetition = useMemo(
     () =>
-      competitions.find(
-        (competition) => String(competition.id) === String(selectedCompetitionId),
-      ),
+      competitions.find((competition) => String(competition.id) === String(selectedCompetitionId)),
     [competitions, selectedCompetitionId],
   )
 
@@ -139,12 +161,18 @@ const NoticiasCrud = () => {
     }))
   }
 
-  const { quill, quillRef } = useQuill({
-    theme: 'snow',
-    placeholder: 'Texto completo da notícia',
-  })
+  useEffect(() => {
+    if (quillInstanceRef.current || !quillContainerRef.current) return
+
+    quillInstanceRef.current = new Quill(quillContainerRef.current, {
+      theme: 'snow',
+      placeholder: 'Texto completo da notícia',
+      modules: quillModules,
+    })
+  }, [])
 
   useEffect(() => {
+    const quill = quillInstanceRef.current
     if (!quill) return
 
     const handleTextChange = () => {
@@ -159,9 +187,10 @@ const NoticiasCrud = () => {
     return () => {
       quill.off('text-change', handleTextChange)
     }
-  }, [quill])
+  }, [])
 
   useEffect(() => {
+    const quill = quillInstanceRef.current
     if (!quill) return
 
     const nextContent = formData.conteudo || ''
@@ -172,7 +201,7 @@ const NoticiasCrud = () => {
     if (selection) {
       quill.setSelection(selection)
     }
-  }, [formData.conteudo, quill])
+  }, [formData.conteudo])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -271,10 +300,14 @@ const NoticiasCrud = () => {
             {selectedCompetition ? (
               <>
                 <div className="fw-semibold">
-                  {selectedCompetition.nomeCompeticao || selectedCompetition.descricao || selectedCompetition.id}
+                  {selectedCompetition.nomeCompeticao ||
+                    selectedCompetition.descricao ||
+                    selectedCompetition.id}
                 </div>
                 <small className="text-medium-emphasis">
-                  {selectedCompetition.temporada ? `Temporada ${selectedCompetition.temporada}` : 'Sem temporada definida'}
+                  {selectedCompetition.temporada
+                    ? `Temporada ${selectedCompetition.temporada}`
+                    : 'Sem temporada definida'}
                 </small>
               </>
             ) : (
@@ -398,7 +431,7 @@ const NoticiasCrud = () => {
 
                   <div>
                     <CFormLabel htmlFor="news-content">Conteúdo</CFormLabel>
-                    <div id="news-content" ref={quillRef} />
+                    <div id="news-content" ref={quillContainerRef} />
                   </div>
 
                   <div>
@@ -444,7 +477,12 @@ const NoticiasCrud = () => {
                   <CRow className="g-3">
                     <CCol sm={6}>
                       <CFormLabel htmlFor="news-status">Status ativo</CFormLabel>
-                      <CFormSelect id="news-status" name="ativo" value={String(formData.ativo)} onChange={handleInputChange}>
+                      <CFormSelect
+                        id="news-status"
+                        name="ativo"
+                        value={String(formData.ativo)}
+                        onChange={handleInputChange}
+                      >
                         <option value="true">Ativa</option>
                         <option value="false">Inativa</option>
                       </CFormSelect>
