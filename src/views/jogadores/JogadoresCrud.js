@@ -21,7 +21,12 @@ import CIcon from '@coreui/icons-react'
 import { cilArrowRight, cilPlus, cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listEquipes } from '../../services/equipeApi'
-import { createJogador, deleteJogador, listJogadores, updateJogador } from '../../services/jogadorApi'
+import {
+  createJogador,
+  deleteJogador,
+  listJogadores,
+  updateJogador,
+} from '../../services/jogadorApi'
 
 const createEmptyPlayer = () => ({
   id: '',
@@ -59,9 +64,11 @@ const parseNumber = (value) => {
 }
 
 const JogadoresCrud = () => {
-  const [teams, setTeams] = useState([])
+  const [formTeams, setFormTeams] = useState([])
+  const [filterTeams, setFilterTeams] = useState([])
   const [players, setPlayers] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedTeamFilter, setSelectedTeamFilter] = useState('')
   const [selectedPlayerId, setSelectedPlayerId] = useState(null)
   const [formData, setFormData] = useState(createEmptyPlayer())
   const [feedback, setFeedback] = useState(null)
@@ -70,13 +77,17 @@ const JogadoresCrud = () => {
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const loadPlayers = useCallback(async () => {
-    if (!selectedCompetitionId) return
+    if (!selectedCompetitionId || !selectedCategoryId || !selectedTeamFilter) {
+      setPlayers([])
+      return
+    }
 
     setIsLoading(true)
     try {
       const playerData = await listJogadores({
         competicaoId: selectedCompetitionId,
-        categoria: selectedCategoryId || undefined,
+        categoria: selectedCategoryId,
+        time: selectedTeamFilter,
       })
       setPlayers(Array.isArray(playerData) ? playerData : [])
     } catch (error) {
@@ -85,11 +96,11 @@ const JogadoresCrud = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [selectedCompetitionId, selectedCategoryId])
+  }, [selectedCompetitionId, selectedCategoryId, selectedTeamFilter])
 
-  const loadTeams = useCallback(async () => {
+  const loadFormTeams = useCallback(async () => {
     if (!selectedCompetitionId || !formData.categoria) {
-      setTeams([])
+      setFormTeams([])
       return
     }
 
@@ -98,25 +109,67 @@ const JogadoresCrud = () => {
         competicaoId: selectedCompetitionId,
         categoria: formData.categoria,
       })
-      setTeams(Array.isArray(teamData) ? teamData : [])
+      setFormTeams(Array.isArray(teamData) ? teamData : [])
     } catch (error) {
-      setTeams([])
+      setFormTeams([])
     }
   }, [formData.categoria, selectedCompetitionId])
 
-  useEffect(() => {
-    if (!selectedCompetitionId) return
-    loadPlayers()
-  }, [selectedCompetitionId, selectedCategoryId, loadPlayers])
+  const loadFilterTeams = useCallback(async () => {
+    if (!selectedCompetitionId || !selectedCategoryId) {
+      setFilterTeams([])
+      return
+    }
+
+    try {
+      const teamData = await listEquipes({
+        competicaoId: selectedCompetitionId,
+        categoria: selectedCategoryId,
+      })
+      setFilterTeams(Array.isArray(teamData) ? teamData : [])
+    } catch (error) {
+      setFilterTeams([])
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar as equipes da categoria.' })
+    }
+  }, [selectedCompetitionId, selectedCategoryId])
 
   useEffect(() => {
-    loadTeams()
-  }, [loadTeams])
+    loadPlayers()
+  }, [loadPlayers])
+
+  useEffect(() => {
+    loadFormTeams()
+  }, [loadFormTeams])
+
+  useEffect(() => {
+    loadFilterTeams()
+  }, [loadFilterTeams])
+
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      setSelectedTeamFilter('')
+      return
+    }
+
+    const hasSelectedTeam = filterTeams.some(
+      (team) => String(team.equipe) === String(selectedTeamFilter),
+    )
+    if (hasSelectedTeam) return
+
+    const defaultTeam = filterTeams[0]?.equipe ?? ''
+    if (defaultTeam !== selectedTeamFilter) {
+      setSelectedTeamFilter(defaultTeam)
+    }
+  }, [filterTeams, selectedCategoryId, selectedTeamFilter])
 
   useEffect(() => {
     setSelectedCategoryId('')
+    setSelectedTeamFilter('')
     setSelectedPlayerId(null)
     setPlayerSearch('')
+    setPlayers([])
+    setFilterTeams([])
+    setFormTeams([])
     setFeedback(null)
   }, [selectedCompetitionId])
 
@@ -129,7 +182,7 @@ const JogadoresCrud = () => {
       ...createEmptyPlayer(),
       ...player,
       competicao: player.competicao ?? selectedCompetitionId,
-      categoria: player.categoria ?? formData.categoria,
+      categoria: player.categoria ?? '',
       time: player.time ?? '',
       imgFileName: '',
       imgPerfilFileName: '',
@@ -162,6 +215,15 @@ const JogadoresCrud = () => {
 
   const handleCategoryFilterChange = (categoryId) => {
     setSelectedCategoryId(categoryId)
+    setSelectedTeamFilter('')
+    setSelectedPlayerId(null)
+    setPlayerSearch('')
+    setPlayers([])
+    setFeedback(null)
+  }
+
+  const handleTeamFilterChange = ({ target }) => {
+    setSelectedTeamFilter(target.value)
     setSelectedPlayerId(null)
     setPlayerSearch('')
     setFeedback(null)
@@ -184,6 +246,7 @@ const JogadoresCrud = () => {
     setFormData((previous) => ({
       ...previous,
       categoria: newCategoryId,
+      time: '',
     }))
   }
 
@@ -300,7 +363,9 @@ const JogadoresCrud = () => {
             <div className="d-flex justify-content-between align-items-center">
               <div>
                 <strong>Jogadores</strong>
-                <div className="small text-medium-emphasis">Filtrados pela competição selecionada e categoria</div>
+                <div className="small text-medium-emphasis">
+                  Filtrados pela competição selecionada e categoria
+                </div>
               </div>
             </div>
             <div className="d-flex gap-2">
@@ -314,6 +379,20 @@ const JogadoresCrud = () => {
                 ariaLabel="Selecionar categoria para filtrar"
                 onError={(message) => setFeedback({ type: 'danger', message })}
               />
+              <CFormSelect
+                size="sm"
+                value={selectedTeamFilter}
+                onChange={handleTeamFilterChange}
+                disabled={!selectedCategoryId}
+                aria-label="Selecionar equipe para filtrar"
+              >
+                <option value="">{selectedCategoryId ? 'Equipe' : 'Selecione a categoria'}</option>
+                {filterTeams.map((team) => (
+                  <option key={team.id} value={team.equipe}>
+                    {team.equipe}
+                  </option>
+                ))}
+              </CFormSelect>
             </div>
           </CCardHeader>
           <CCardBody className="p-0">
@@ -330,10 +409,26 @@ const JogadoresCrud = () => {
               <div className="p-3 text-center">
                 <CSpinner size="sm" /> Carregando jogadores...
               </div>
+            ) : !selectedCompetitionId ? (
+              <div className="p-3 text-medium-emphasis">
+                Selecione uma competição no menu lateral.
+              </div>
+            ) : !selectedCategoryId ? (
+              <div className="p-3 text-medium-emphasis">
+                Selecione uma categoria para listar os jogadores.
+              </div>
+            ) : !selectedTeamFilter ? (
+              <div className="p-3 text-medium-emphasis">
+                Selecione uma equipe para listar os jogadores.
+              </div>
             ) : filteredPlayers.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhum jogador cadastrado para esta competição.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhum jogador cadastrado para esta competição.
+              </div>
             ) : visiblePlayers.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhum jogador encontrado para o termo buscado.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhum jogador encontrado para o termo buscado.
+              </div>
             ) : (
               <CListGroup flush>
                 {visiblePlayers.map((player) => (
@@ -346,7 +441,9 @@ const JogadoresCrud = () => {
                     <div className="d-flex justify-content-between align-items-start gap-2">
                       <div>
                         <div className="fw-semibold">{player.nomeJogador}</div>
-                        <small className="text-medium-emphasis">Matrícula {player.matricula || 'não informada'}</small>
+                        <small className="text-medium-emphasis">
+                          Matrícula {player.matricula || 'não informada'}
+                        </small>
                       </div>
                       <div className="d-flex flex-column align-items-end gap-1">
                         <CBadge color="secondary" shape="rounded-pill">
@@ -375,7 +472,9 @@ const JogadoresCrud = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <div>
               <strong>{selectedPlayerId ? 'Editar jogador' : 'Novo jogador'}</strong>
-              <div className="small text-medium-emphasis">Preencha os campos obrigatórios para salvar.</div>
+              <div className="small text-medium-emphasis">
+                Preencha os campos obrigatórios para salvar.
+              </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={handleReset}>
               <CIcon icon={cilPlus} className="me-2" /> Novo
@@ -457,7 +556,7 @@ const JogadoresCrud = () => {
                     required
                   >
                     <option value="">Selecione</option>
-                    {teams.map((team) => (
+                    {formTeams.map((team) => (
                       <option key={team.id} value={team.equipe}>
                         {team.equipe}
                       </option>
@@ -528,7 +627,9 @@ const JogadoresCrud = () => {
                   accept="image/*"
                   onChange={(event) => handleImageChange(event, 'img', 'imgFileName')}
                 />
-                {formData.imgFileName && <div className="form-text">Arquivo selecionado: {formData.imgFileName}</div>}
+                {formData.imgFileName && (
+                  <div className="form-text">Arquivo selecionado: {formData.imgFileName}</div>
+                )}
               </div>
 
               <div>
@@ -570,7 +671,13 @@ const JogadoresCrud = () => {
                 <CButton color="primary" type="submit" disabled={isLoading}>
                   <CIcon icon={cilSave} className="me-2" /> Salvar
                 </CButton>
-                <CButton color="secondary" variant="outline" type="button" onClick={handleReset} disabled={isLoading}>
+                <CButton
+                  color="secondary"
+                  variant="outline"
+                  type="button"
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
                 <CButton
@@ -596,8 +703,9 @@ const JogadoresCrud = () => {
                         className="rounded"
                       />
                       <div className="text-medium-emphasis">
-                        Pré-visualização da imagem principal. <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o
-                        arquivo ou URL para trocar.
+                        Pré-visualização da imagem principal.{' '}
+                        <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o arquivo ou URL
+                        para trocar.
                       </div>
                     </div>
                   )}
@@ -611,8 +719,9 @@ const JogadoresCrud = () => {
                         className="rounded-circle"
                       />
                       <div className="text-medium-emphasis">
-                        Pré-visualização da imagem de perfil. <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o
-                        arquivo ou URL para trocar.
+                        Pré-visualização da imagem de perfil.{' '}
+                        <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o arquivo ou URL
+                        para trocar.
                       </div>
                     </div>
                   )}
