@@ -10,6 +10,7 @@ export const uploadSumula = async (codigo, pdfFile) => {
 
   const response = await fetch(url, {
     method: 'POST',
+    credentials: 'include',
     body: formData,
   })
 
