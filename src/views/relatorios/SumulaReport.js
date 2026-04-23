@@ -14,11 +14,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilDescription, cilReload, cilSave } from '@coreui/icons'
-import {
-  downloadSumulaFutsalReport,
-  downloadSumulaReport,
-  resolveJogoReportId,
-} from '../../services/relatoriosApi'
+import { downloadSumulaFutsalReport, downloadSumulaReport } from '../../services/relatoriosApi'
 
 const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
@@ -28,23 +24,20 @@ const parseNumber = (value) => {
 
 const createEmptyForm = () => ({
   id: '',
-  codigo: '',
 })
 
 const reportConfigs = {
   campo: {
     pageTitle: 'Relatório - Súmula Campo',
     cardTitle: 'Gerar súmula campo',
-    description:
-      'Informe o ID do jogo ou o código para gerar o PDF da súmula. Se o código for informado, o sistema localizará o jogo antes de baixar o relatório.',
+    description: 'Informe o ID do jogo para gerar o PDF da súmula.',
     download: downloadSumulaReport,
     fileName: (reportId) => `sumula-campo-${reportId}.pdf`,
   },
   futsal: {
     pageTitle: 'Relatório - Súmula Futsal',
     cardTitle: 'Gerar súmula futsal',
-    description:
-      'Informe o ID do jogo ou o código para gerar o PDF da súmula futsal. Se o código for informado, o sistema localizará o jogo antes de baixar o relatório.',
+    description: 'Informe o ID do jogo para gerar o PDF da súmula futsal.',
     download: downloadSumulaFutsalReport,
     fileName: (reportId) => `sumula-futsal-${reportId}.pdf`,
   },
@@ -74,25 +67,19 @@ const SumulaReport = ({ variant = 'campo' }) => {
     setFeedback(null)
 
     const normalizedId = parseNumber(formData.id)
-    const normalizedCodigo = parseNumber(formData.codigo)
-
-    if (!normalizedId && !normalizedCodigo) {
-      setFeedback({ type: 'danger', message: 'Informe o ID do jogo ou o código do jogo.' })
+    if (!normalizedId) {
+      setFeedback({ type: 'danger', message: 'Informe o ID do jogo.' })
       return
     }
 
     setIsDownloading(true)
 
     try {
-      const reportId = await resolveJogoReportId({
-        id: normalizedId,
-        codigo: normalizedCodigo,
-      })
-      const reportBlob = await config.download({ id: reportId })
+      const reportBlob = await config.download({ id: normalizedId })
       const url = window.URL.createObjectURL(reportBlob)
       const link = document.createElement('a')
       link.href = url
-      link.download = config.fileName(reportId)
+      link.download = config.fileName(normalizedId)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -132,7 +119,7 @@ const SumulaReport = ({ variant = 'campo' }) => {
           <CCardHeader>
             <strong>{config.cardTitle}</strong>
             <div className="small text-medium-emphasis">
-              Preencha ao menos um dos campos para baixar o PDF.
+              Preencha o ID do jogo para baixar o PDF.
             </div>
           </CCardHeader>
           <CCardBody>
@@ -145,18 +132,6 @@ const SumulaReport = ({ variant = 'campo' }) => {
                     name="id"
                     placeholder="Ex.: 125"
                     value={formData.id}
-                    onChange={handleInputChange}
-                    inputMode="numeric"
-                  />
-                </CCol>
-
-                <CCol md={6}>
-                  <CFormLabel htmlFor={`sumula-${variant}-codigo`}>Código do jogo</CFormLabel>
-                  <CFormInput
-                    id={`sumula-${variant}-codigo`}
-                    name="codigo"
-                    placeholder="Ex.: 1203"
-                    value={formData.codigo}
                     onChange={handleInputChange}
                     inputMode="numeric"
                   />
