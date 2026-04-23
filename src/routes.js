@@ -15,6 +15,7 @@ const CompeticoesCrud = React.lazy(() => import('./views/competicoes/Competicoes
 const CategoriasCrud = React.lazy(() => import('./views/categorias/CategoriasCrud'))
 const JulgamentosCrud = React.lazy(() => import('./views/julgamentos/JulgamentosCrud'))
 const RodadaSemanaReport = React.lazy(() => import('./views/relatorios/RodadaSemanaReport'))
+const SumulaReport = React.lazy(() => import('./views/relatorios/SumulaReport'))
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 const Logout = React.lazy(() => import('./views/pages/logout/Logout'))
 
@@ -36,29 +37,33 @@ const routes = [
           ? NoticiasCrud
           : item.route === 'painel/patrocinadores'
             ? PatrocinadoresCrud
-          : item.route === 'painel/criarjogadores'
-            ? JogadoresCrud
-            : item.route === 'painel/criarequipes'
-              ? EquipesCrud
-              : item.route === 'painel/viewjogos'
-                ? JogosCrud
-                : item.route === 'gerenciador/competicao/admin'
-                  ? CompeticoesCrud
-                  : item.route === 'painel/categorias'
-                    ? CategoriasCrud
-                    : item.route === 'painel/julgamento'
-                      ? JulgamentosCrud
-                      : item.route === 'painel/tblsemana'
-                        ? RodadaSemanaReport
-                        : item.route === 'user/admin'
-                          ? UsuariosCrud
-                          : item.route === 'gerenciador/acesso/logout'
-                            ? Logout
-                            : item.route === 'painel/viewuploadsumula'
-                              ? UploadSumulaCrud
-                              : item.route === 'sumula/selecao'
-                                ? SumulasCrud
-                                : buildLegacyRoute(item),
+            : item.route === 'painel/criarjogadores'
+              ? JogadoresCrud
+              : item.route === 'painel/criarequipes'
+                ? EquipesCrud
+                : item.route === 'painel/viewjogos'
+                  ? JogosCrud
+                  : item.route === 'gerenciador/competicao/admin'
+                    ? CompeticoesCrud
+                    : item.route === 'painel/categorias'
+                      ? CategoriasCrud
+                      : item.route === 'painel/julgamento'
+                        ? JulgamentosCrud
+                        : item.route === 'painel/tblsemana'
+                          ? RodadaSemanaReport
+                          : item.route === 'painel/sumulacampo'
+                            ? () => <SumulaReport variant="campo" />
+                            : item.route === 'painel/sumulafutsal'
+                              ? () => <SumulaReport variant="futsal" />
+                              : item.route === 'user/admin'
+                                ? UsuariosCrud
+                                : item.route === 'gerenciador/acesso/logout'
+                                  ? Logout
+                                  : item.route === 'painel/viewuploadsumula'
+                                    ? UploadSumulaCrud
+                                    : item.route === 'sumula/selecao'
+                                      ? SumulasCrud
+                                      : buildLegacyRoute(item),
   })),
 ]
 
