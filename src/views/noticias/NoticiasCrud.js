@@ -276,6 +276,12 @@ const NoticiasCrud = () => {
   }
 
   const articles = news ?? []
+  const selectedCompetitionLabel = selectedCompetition
+    ? selectedCompetition.nomeCompeticao || selectedCompetition.descricao || selectedCompetition.id
+    : selectedCompetitionId
+      ? 'Competição não localizada'
+      : 'Selecione uma competição'
+
   const handleNewsFileChange = ({ target }) => {
     const file = target.files?.[0]
     if (!file) return
@@ -290,238 +296,216 @@ const NoticiasCrud = () => {
   }
 
   return (
-    <CRow className="g-4">
-      <CCol md={4}>
-        <CCard className="h-100">
-          <CCardHeader>
-            <strong>Competição selecionada</strong>
-          </CCardHeader>
-          <CCardBody>
-            {selectedCompetition ? (
-              <>
-                <div className="fw-semibold">
-                  {selectedCompetition.nomeCompeticao ||
-                    selectedCompetition.descricao ||
-                    selectedCompetition.id}
-                </div>
-                <small className="text-medium-emphasis">
-                  {selectedCompetition.temporada
-                    ? `Temporada ${selectedCompetition.temporada}`
-                    : 'Sem temporada definida'}
-                </small>
-              </>
-            ) : (
-              <div className="text-medium-emphasis">
-                Não encontrei essa competição nos dados carregados.
-              </div>
-            )}
-          </CCardBody>
-        </CCard>
-      </CCol>
-
-      <CCol md={8}>
+    <>
+      <CRow className="g-4">
         {feedback && (
-          <CAlert color={feedback.type ?? 'success'} className="mb-3">
-            {feedback.message}
-          </CAlert>
+          <CCol xs={12}>
+            <CAlert color={feedback.type ?? 'success'} className="mb-0">
+              {feedback.message}
+            </CAlert>
+          </CCol>
         )}
-        <CRow className="g-4">
-          <CCol md={5}>
-            <CCard className="h-100">
-              <CCardHeader className="d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>Notícias</strong>
-                  <div className="small text-medium-emphasis">
-                    {selectedCompetition
-                      ? selectedCompetition.nomeCompeticao || selectedCompetition.descricao
-                      : 'Selecione uma competição'}
-                  </div>
+
+        <CCol md={5}>
+          <CCard className="h-100">
+            <CCardHeader className="d-flex justify-content-between align-items-center gap-3">
+              <div>
+                <strong>Notícias</strong>
+                <div className="mt-1">
+                  <CBadge color={selectedCompetition ? 'primary' : 'secondary'}>
+                    {selectedCompetitionLabel}
+                  </CBadge>
+                  {selectedCompetition?.temporada && (
+                    <CBadge color="secondary" className="ms-2">
+                      Temporada {selectedCompetition.temporada}
+                    </CBadge>
+                  )}
                 </div>
-                <CButton
-                  color="primary"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedNewsId(null)
-                    setFormData(createEmptyArticle())
-                    setFeedback(null)
-                  }}
-                >
-                  <CIcon icon={cilPlus} className="me-2" /> Nova
-                </CButton>
-              </CCardHeader>
-              <CCardBody className="p-0">
-                {isLoading ? (
-                  <div className="p-3">
-                    <CSpinner size="sm" className="me-2" /> Carregando notícias...
-                  </div>
-                ) : articles.length === 0 ? (
-                  <div className="p-3 text-medium-emphasis">
-                    Nenhuma notícia cadastrada para esta competição.
-                  </div>
-                ) : (
-                  <CListGroup flush>
-                    {articles.map((article) => (
-                      <CListGroupItem
-                        key={article.id}
-                        action
-                        active={String(article.id) === String(selectedNewsId)}
-                        onClick={() => handleNewsSelect(article.id)}
-                      >
-                        <div className="d-flex justify-content-between align-items-start gap-2">
-                          <div className="me-2">
-                            <div className="fw-semibold">{article.titulo}</div>
-                            <small className="text-medium-emphasis">
-                              Publicada em {article.data}
-                            </small>
-                          </div>
-                          <div className="d-flex flex-column align-items-end gap-1">
-                            {article.destaque && (
-                              <CBadge color="info" shape="rounded-pill">
-                                Destaque
-                              </CBadge>
-                            )}
-                            <CBadge color={article.ativo ? 'success' : 'secondary'}>
-                              {article.ativo ? 'Ativa' : 'Inativa'}
-                            </CBadge>
-                          </div>
+              </div>
+              <CButton
+                color="primary"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedNewsId(null)
+                  setFormData(createEmptyArticle())
+                  setFeedback(null)
+                }}
+              >
+                <CIcon icon={cilPlus} className="me-2" /> Nova
+              </CButton>
+            </CCardHeader>
+            <CCardBody className="p-0">
+              {isLoading ? (
+                <div className="p-3">
+                  <CSpinner size="sm" className="me-2" /> Carregando notícias...
+                </div>
+              ) : articles.length === 0 ? (
+                <div className="p-3 text-medium-emphasis">
+                  Nenhuma notícia cadastrada para esta competição.
+                </div>
+              ) : (
+                <CListGroup flush>
+                  {articles.map((article) => (
+                    <CListGroupItem
+                      key={article.id}
+                      action
+                      active={String(article.id) === String(selectedNewsId)}
+                      onClick={() => handleNewsSelect(article.id)}
+                    >
+                      <div className="d-flex justify-content-between align-items-start gap-2">
+                        <div className="me-2">
+                          <div className="fw-semibold">{article.titulo}</div>
+                          <small className="text-medium-emphasis">
+                            Publicada em {article.data}
+                          </small>
                         </div>
-                      </CListGroupItem>
-                    ))}
-                  </CListGroup>
-                )}
-              </CCardBody>
-            </CCard>
-          </CCol>
-
-          <CCol md={7}>
-            <CCard className="h-100">
-              <CCardHeader>
-                <strong>{selectedNewsId ? 'Editar notícia' : 'Nova notícia'}</strong>
-                <div className="small text-medium-emphasis">
-                  A notícia será enviada para a API oficial, incluindo a imagem enviada.
-                </div>
-              </CCardHeader>
-              <CCardBody>
-                <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
-                  <div>
-                    <CFormLabel htmlFor="news-title">Título</CFormLabel>
-                    <CFormInput
-                      id="news-title"
-                      name="titulo"
-                      placeholder="Ex.: Equipe garante vitória na estreia"
-                      value={formData.titulo}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <CFormLabel htmlFor="news-summary">Resumo</CFormLabel>
-                    <CFormTextarea
-                      id="news-summary"
-                      name="chamada"
-                      rows={2}
-                      placeholder="Resumo curto exibido na lista"
-                      value={formData.chamada}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <CFormLabel htmlFor="news-content">Conteúdo</CFormLabel>
-                    <div id="news-content" ref={quillContainerRef} />
-                  </div>
-
-                  <div>
-                    <CFormLabel htmlFor="news-image-upload">Upload de imagem da notícia</CFormLabel>
-                    <CFormInput
-                      id="news-image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleNewsFileChange}
-                      required={!selectedNewsId}
-                    />
-                    {formData.imageFileName && (
-                      <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
-                    )}
-                    {formData.imagePreviewUrl && (
-                      <div className="mt-2">
-                        <img
-                          src={formData.imagePreviewUrl}
-                          alt="Prévia da notícia"
-                          className="img-fluid rounded border"
-                        />
+                        <div className="d-flex flex-column align-items-end gap-1">
+                          {article.destaque && (
+                            <CBadge color="info" shape="rounded-pill">
+                              Destaque
+                            </CBadge>
+                          )}
+                          <CBadge color={article.ativo ? 'success' : 'secondary'}>
+                            {article.ativo ? 'Ativa' : 'Inativa'}
+                          </CBadge>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    </CListGroupItem>
+                  ))}
+                </CListGroup>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
 
-                  <div className="d-flex gap-3 align-items-center">
-                    <CFormSwitch
-                      id="news-highlight"
-                      label="Destacar notícia"
-                      checked={formData.destaque}
-                      onChange={({ target }) => {
-                        setFormData((previous) => ({
-                          ...previous,
-                          destaque: target.checked,
-                        }))
-                      }}
-                    />
-                    <div className="text-medium-emphasis small">
-                      Aparece com selo de destaque na lista.
+        <CCol md={7}>
+          <CCard className="h-100">
+            <CCardHeader>
+              <strong>{selectedNewsId ? 'Editar notícia' : 'Nova notícia'}</strong>
+              <div className="small text-medium-emphasis">
+                A notícia será enviada para a API oficial, incluindo a imagem enviada.
+              </div>
+            </CCardHeader>
+            <CCardBody>
+              <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+                <div>
+                  <CFormLabel htmlFor="news-title">Título</CFormLabel>
+                  <CFormInput
+                    id="news-title"
+                    name="titulo"
+                    placeholder="Ex.: Equipe garante vitória na estreia"
+                    value={formData.titulo}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <CFormLabel htmlFor="news-summary">Resumo</CFormLabel>
+                  <CFormTextarea
+                    id="news-summary"
+                    name="chamada"
+                    rows={2}
+                    placeholder="Resumo curto exibido na lista"
+                    value={formData.chamada}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <CFormLabel htmlFor="news-content">Conteúdo</CFormLabel>
+                  <div id="news-content" ref={quillContainerRef} />
+                </div>
+
+                <div>
+                  <CFormLabel htmlFor="news-image-upload">Upload de imagem da notícia</CFormLabel>
+                  <CFormInput
+                    id="news-image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleNewsFileChange}
+                    required={!selectedNewsId}
+                  />
+                  {formData.imageFileName && (
+                    <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
+                  )}
+                  {formData.imagePreviewUrl && (
+                    <div className="mt-2">
+                      <img
+                        src={formData.imagePreviewUrl}
+                        alt="Prévia da notícia"
+                        className="img-fluid rounded border"
+                      />
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  <CRow className="g-3">
-                    <CCol sm={6}>
-                      <CFormLabel htmlFor="news-status">Status ativo</CFormLabel>
-                      <CFormSelect
-                        id="news-status"
-                        name="ativo"
-                        value={String(formData.ativo)}
-                        onChange={handleInputChange}
-                      >
-                        <option value="true">Ativa</option>
-                        <option value="false">Inativa</option>
-                      </CFormSelect>
-                    </CCol>
-                  </CRow>
-
-                  <div className="d-flex flex-wrap gap-2">
-                    <CButton color="primary" type="submit">
-                      <CIcon icon={cilSave} className="me-2" /> Salvar
-                    </CButton>
-                    <CButton
-                      color="secondary"
-                      variant="outline"
-                      type="button"
-                      onClick={() => {
-                        setSelectedNewsId(null)
-                        setFormData(createEmptyArticle())
-                        setFeedback(null)
-                      }}
-                    >
-                      <CIcon icon={cilReload} className="me-2" /> Limpar
-                    </CButton>
-                    <CButton
-                      color="danger"
-                      variant="ghost"
-                      type="button"
-                      disabled={!selectedNewsId || isLoading}
-                      onClick={handleDeleteNews}
-                    >
-                      <CIcon icon={cilTrash} className="me-2" /> Remover
-                    </CButton>
+                <div className="d-flex gap-3 align-items-center">
+                  <CFormSwitch
+                    id="news-highlight"
+                    label="Destacar notícia"
+                    checked={formData.destaque}
+                    onChange={({ target }) => {
+                      setFormData((previous) => ({
+                        ...previous,
+                        destaque: target.checked,
+                      }))
+                    }}
+                  />
+                  <div className="text-medium-emphasis small">
+                    Aparece com selo de destaque na lista.
                   </div>
-                </CForm>
-              </CCardBody>
-            </CCard>
-          </CCol>
-        </CRow>
-      </CCol>
-    </CRow>
+                </div>
+
+                <CRow className="g-3">
+                  <CCol sm={6}>
+                    <CFormLabel htmlFor="news-status">Status ativo</CFormLabel>
+                    <CFormSelect
+                      id="news-status"
+                      name="ativo"
+                      value={String(formData.ativo)}
+                      onChange={handleInputChange}
+                    >
+                      <option value="true">Ativa</option>
+                      <option value="false">Inativa</option>
+                    </CFormSelect>
+                  </CCol>
+                </CRow>
+
+                <div className="d-flex flex-wrap gap-2">
+                  <CButton color="primary" type="submit">
+                    <CIcon icon={cilSave} className="me-2" /> Salvar
+                  </CButton>
+                  <CButton
+                    color="secondary"
+                    variant="outline"
+                    type="button"
+                    onClick={() => {
+                      setSelectedNewsId(null)
+                      setFormData(createEmptyArticle())
+                      setFeedback(null)
+                    }}
+                  >
+                    <CIcon icon={cilReload} className="me-2" /> Limpar
+                  </CButton>
+                  <CButton
+                    color="danger"
+                    variant="ghost"
+                    type="button"
+                    disabled={!selectedNewsId || isLoading}
+                    onClick={handleDeleteNews}
+                  >
+                    <CIcon icon={cilTrash} className="me-2" /> Remover
+                  </CButton>
+                </div>
+              </CForm>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+    </>
   )
 }
 
