@@ -45,7 +45,7 @@ const createPlayerFormState = (player) => ({
   selected: true,
   cartaoAmarelo: player?.cartaoAmarelo ?? '',
   cartaoVermelho: player?.cartaoVermelho ?? '',
-  gols: player?.gols ?? '',
+  gols: '',
   capitao: Boolean(player?.capitao),
 })
 
