@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilSoccer, cilTrash } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listEquipes } from '../../services/equipeApi'
 import { createJogo, deleteJogo, listJogos, updateJogo } from '../../services/jogosApi'
@@ -277,6 +278,7 @@ const JogosCrud = () => {
               <div className="text-medium-emphasis">
                 Cadastre partidas utilizando os endpoints de jogos e selecione as equipes vinculadas à competição.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

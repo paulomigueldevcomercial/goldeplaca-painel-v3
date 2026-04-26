@@ -23,6 +23,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload, cilPencil, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import {
@@ -259,6 +260,7 @@ const JulgamentosCrud = () => {
               <div className="text-medium-emphasis">
                 Cadastre, edite e acompanhe julgamentos da competição selecionada.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

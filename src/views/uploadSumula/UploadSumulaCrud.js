@@ -14,6 +14,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCloudUpload, cilReload, cilSave } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import { uploadSumula } from '../../services/sumulaApi'
 
 const emptyUpload = {
@@ -83,6 +84,7 @@ const UploadSumulaCrud = () => {
               <div className="text-medium-emphasis">
                 Envie a súmula em PDF informando o número do jogo. Os dados serão enviados para a API oficial.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

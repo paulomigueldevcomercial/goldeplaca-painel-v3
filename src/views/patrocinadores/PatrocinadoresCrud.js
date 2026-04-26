@@ -15,7 +15,8 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createPatrocinio,
   deletePatrocinio,
@@ -173,6 +174,21 @@ const PatrocinadoresCrud = () => {
 
   return (
     <CRow className="g-4">
+      <CCol xs={12}>
+        <CCard className="mb-3">
+          <CCardBody className="d-flex align-items-center gap-3">
+            <CIcon icon={cilNotes} size="xl" className="text-primary" />
+            <div>
+              <h4 className="mb-1">Patrocinadores</h4>
+              <div className="text-medium-emphasis">
+                Cadastre e edite patrocinadores exibidos no painel.
+              </div>
+              <SelectedCompetitionBadge className="mt-2" />
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+
       <CCol md={5}>
         <CCard className="h-100">
           <CCardHeader className="d-flex justify-content-between align-items-center">

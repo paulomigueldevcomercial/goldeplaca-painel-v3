@@ -14,6 +14,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilDescription, cilReload, cilSave } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import { downloadSumulaFutsalReport, downloadSumulaReport } from '../../services/relatoriosApi'
 
 const parseNumber = (value) => {
@@ -103,6 +104,7 @@ const SumulaReport = ({ variant = 'campo' }) => {
             <div>
               <h4 className="mb-1">{config.pageTitle}</h4>
               <div className="text-medium-emphasis">{config.description}</div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

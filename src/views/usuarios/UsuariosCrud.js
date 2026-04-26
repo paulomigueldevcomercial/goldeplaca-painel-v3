@@ -16,6 +16,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import {
   createUsuario,
@@ -198,6 +199,7 @@ const UsuariosCrud = () => {
             <div>
               <h4 className="mb-1">Usuários</h4>
               <div className="text-medium-emphasis">Gerenciamento de usuários do painel.</div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

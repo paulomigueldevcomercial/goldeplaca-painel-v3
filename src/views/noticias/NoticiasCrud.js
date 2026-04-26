@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
   CAlert,
@@ -20,10 +20,10 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
-import { listCompeticoes } from '../../services/competicaoApi'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createNoticia,
   deleteNoticia,
@@ -63,7 +63,6 @@ const quillModules = {
 }
 
 const NoticiasCrud = () => {
-  const [competitions, setCompetitions] = useState([])
   const [news, setNews] = useState([])
   const [selectedNewsId, setSelectedNewsId] = useState(null)
   const [formData, setFormData] = useState(createEmptyArticle())
@@ -78,12 +77,6 @@ const NoticiasCrud = () => {
     const parsed = Number(value)
     return Number.isNaN(parsed) ? null : parsed
   }
-
-  const selectedCompetition = useMemo(
-    () =>
-      competitions.find((competition) => String(competition.id) === String(selectedCompetitionId)),
-    [competitions, selectedCompetitionId],
-  )
 
   useEffect(() => {
     setSelectedNewsId(null)
@@ -115,16 +108,6 @@ const NoticiasCrud = () => {
       competicao: selectedCompetitionId ?? '',
     }))
   }, [selectedCompetitionId, selectedNewsId])
-
-  useEffect(() => {
-    listCompeticoes()
-      .then((data) => {
-        setCompetitions(Array.isArray(data) ? data : [])
-      })
-      .catch(() => {
-        setCompetitions([])
-      })
-  }, [])
 
   const loadNews = useCallback(async () => {
     if (!selectedCompetitionId) {
@@ -280,11 +263,6 @@ const NoticiasCrud = () => {
   }
 
   const articles = news ?? []
-  const selectedCompetitionLabel = selectedCompetition
-    ? selectedCompetition.nomeCompeticao || selectedCompetition.descricao || selectedCompetition.id
-    : selectedCompetitionId
-      ? 'Competição não localizada'
-      : 'Selecione uma competição'
 
   const handleNewsFileChange = ({ target }) => {
     const file = target.files?.[0]
@@ -302,6 +280,21 @@ const NoticiasCrud = () => {
   return (
     <>
       <CRow className="g-4">
+        <CCol xs={12}>
+          <CCard className="mb-3">
+            <CCardBody className="d-flex align-items-center gap-3">
+              <CIcon icon={cilNotes} size="xl" className="text-primary" />
+              <div>
+                <h4 className="mb-1">Notícias</h4>
+                <div className="text-medium-emphasis">
+                  Cadastre e edite notícias vinculadas ao campeonato selecionado.
+                </div>
+                <SelectedCompetitionBadge className="mt-2" />
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+
         {feedback && (
           <CCol xs={12}>
             <CAlert color={feedback.type ?? 'success'} className="mb-0">
@@ -309,18 +302,6 @@ const NoticiasCrud = () => {
             </CAlert>
           </CCol>
         )}
-
-        <CCol xs={12}>
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <span className="fw-semibold">Campeonato selecionado:</span>
-            <CBadge color={selectedCompetition ? 'primary' : 'secondary'}>
-              {selectedCompetitionLabel}
-            </CBadge>
-            {selectedCompetition?.temporada && (
-              <CBadge color="secondary">Temporada {selectedCompetition.temporada}</CBadge>
-            )}
-          </div>
-        </CCol>
 
         <CCol md={5}>
           <CCard className="h-100">

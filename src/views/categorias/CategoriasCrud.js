@@ -18,6 +18,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilList, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import { createCategoria, deleteCategoria, listCategorias, updateCategoria } from '../../services/categoriaApi'
 import { listEquipes } from '../../services/equipeApi'
 
@@ -196,6 +197,7 @@ const CategoriasCrud = () => {
               <div className="text-medium-emphasis">
                 Utilize os endpoints de categorias para criar, editar ou remover categorias disponíveis.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

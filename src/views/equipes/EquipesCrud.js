@@ -20,6 +20,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilGroup, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listCategorias } from '../../services/categoriaApi'
 import { createEquipe, deleteEquipe, listEquipes, updateEquipe } from '../../services/equipeApi'
@@ -354,6 +355,7 @@ const EquipesCrud = () => {
               <div className="text-medium-emphasis">
                 Gerencie os dados de equipes usando os endpoints de equipes, competições e categorias da API.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

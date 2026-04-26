@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilArrowRight, cilPlus, cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listEquipes } from '../../services/equipeApi'
 import {
@@ -352,6 +353,7 @@ const JogadoresCrud = () => {
               <div className="text-medium-emphasis">
                 Gerencie o registro de atletas utilizando a API do painel.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

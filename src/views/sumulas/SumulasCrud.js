@@ -20,6 +20,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheck, cilPencil, cilPlus, cilReload, cilSave, cilTrash, cilX } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { createSumulas, deleteSumula, listSumulas, updateSumula } from '../../services/sumulasApi'
@@ -247,6 +248,7 @@ const SumulasCrud = () => {
               <div className="text-medium-emphasis">
                 Cadastre listas de jogadores por jogo e time, consulte e edite registros individuais.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

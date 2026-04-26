@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CAlert, CButton, CCard, CCardBody, CCardHeader, CCol, CRow, CSpinner } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilDescription } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import { downloadTabelaSemanaReport } from '../../services/relatoriosApi'
 
@@ -62,9 +65,24 @@ const RodadaSemanaReport = () => {
   return (
     <CRow className="g-4">
       <CCol xs={12}>
+        <CCard className="mb-3">
+          <CCardBody className="d-flex align-items-center gap-3">
+            <CIcon icon={cilDescription} size="xl" className="text-primary" />
+            <div>
+              <h4 className="mb-1">Relatório - Rodada da Semana</h4>
+              <div className="text-medium-emphasis">
+                Gere o PDF da rodada da semana para o campeonato selecionado.
+              </div>
+              <SelectedCompetitionBadge className="mt-2" />
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+      <CCol xs={12}>
         <CCard>
           <CCardHeader>
-            <strong>Relatório - Rodada da Semana</strong>
+            <strong>Gerar relatório</strong>
           </CCardHeader>
           <CCardBody className="d-flex flex-column gap-3">
             {feedback && (

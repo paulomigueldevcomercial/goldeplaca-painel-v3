@@ -18,6 +18,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@coreui/icons'
+import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import { createCompeticao, deleteCompeticao, listCompeticoes, updateCompeticao } from '../../services/competicaoApi'
 
 const createEmptyCompetition = () => ({
@@ -220,6 +221,7 @@ const CompeticoesCrud = () => {
               <div className="text-medium-emphasis">
                 Cadastre competições e envie imagens pelo formulário para o endpoint de competições do painel.
               </div>
+              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>
