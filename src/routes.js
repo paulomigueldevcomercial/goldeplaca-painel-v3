@@ -1,5 +1,5 @@
 import React from 'react'
-import legacyMenuSections from './views/painel/legacyMenuData'
+import { getVisibleLegacyMenuSections } from './views/painel/legacyMenuData'
 
 const PainelMenu = React.lazy(() => import('./views/painel/PainelMenu'))
 const LegacyMenuItem = React.lazy(() => import('./views/painel/LegacyMenuItem'))
@@ -19,7 +19,7 @@ const SumulaReport = React.lazy(() => import('./views/relatorios/SumulaReport'))
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 const Logout = React.lazy(() => import('./views/pages/logout/Logout'))
 
-const legacyItems = legacyMenuSections.flatMap((section) => section.items)
+const legacyItems = getVisibleLegacyMenuSections().flatMap((section) => section.items)
 
 const buildLegacyRoute = (item) => () => <LegacyMenuItem item={item} />
 

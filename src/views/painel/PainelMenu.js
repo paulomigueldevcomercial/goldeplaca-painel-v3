@@ -11,7 +11,9 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from '@coreui/react'
-import legacyMenuSections from './legacyMenuData'
+import { getVisibleLegacyMenuSections } from './legacyMenuData'
+
+const visibleLegacyMenuSections = getVisibleLegacyMenuSections()
 
 const PainelMenu = () => {
   return (
@@ -22,10 +24,12 @@ const PainelMenu = () => {
             <strong>Mapa de menu do painel legado</strong>
           </CCardHeader>
           <CCardBody>
-            {legacyMenuSections.map((section) => (
+            {visibleLegacyMenuSections.map((section) => (
               <div key={section.title} className="mb-4">
                 <h5 className="mb-2">{section.title}</h5>
-                {section.visibility && <p className="text-medium-emphasis mb-2">{section.visibility}</p>}
+                {section.visibility && (
+                  <p className="text-medium-emphasis mb-2">{section.visibility}</p>
+                )}
                 <CTable align="middle" className="mb-0" hover responsive>
                   <CTableHead color="light">
                     <CTableRow>

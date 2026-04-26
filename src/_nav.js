@@ -2,14 +2,14 @@ import React from 'react'
 import CIcon from '@coreui/icons-react'
 import { cilNotes } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
-import legacyMenuSections from './views/painel/legacyMenuData'
+import { getVisibleLegacyMenuSections } from './views/painel/legacyMenuData'
 import { hasAdminRole } from './utils/authSession'
 
 const isRestrictedItem = (item) =>
   item.route === 'user/admin' || item.route === 'gerenciador/competicao/admin'
 
 export const buildNavigation = (roles) =>
-  legacyMenuSections.flatMap((section) => {
+  getVisibleLegacyMenuSections().flatMap((section) => {
     const visibleItems = section.items.filter((item) => {
       if (!isRestrictedItem(item)) return true
       return hasAdminRole(roles)

@@ -1,3 +1,37 @@
+export const hidePendingLegacyMenuItems = true
+
+export const implementedLegacyMenuRoutes = [
+  'painel/albuns',
+  'painel/noticiascompeticao',
+  'painel/patrocinadores',
+  'painel/viewuploadsumula',
+  'painel/criarjogadores',
+  'painel/criarequipes',
+  'painel/categorias',
+  'sumula/selecao',
+  'painel/viewjogos',
+  'user/admin',
+  'gerenciador/competicao/admin',
+  'painel/sumulacampo',
+  'painel/sumulafutsal',
+  'painel/tblsemana',
+  'painel/julgamento',
+  'gerenciador/acesso/logout',
+]
+
+export const isPendingLegacyMenuItem = (item) => !implementedLegacyMenuRoutes.includes(item.route)
+
+export const shouldShowLegacyMenuItem = (item) =>
+  !hidePendingLegacyMenuItems || !isPendingLegacyMenuItem(item)
+
+export const getVisibleLegacyMenuSections = () =>
+  legacyMenuSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(shouldShowLegacyMenuItem),
+    }))
+    .filter((section) => section.items.length > 0)
+
 const legacyMenuSections = [
   {
     title: 'Gerenciamento',
