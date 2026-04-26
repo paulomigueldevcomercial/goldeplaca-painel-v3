@@ -1,7 +1,6 @@
 export const hidePendingLegacyMenuItems = true
 
 export const implementedLegacyMenuRoutes = [
-  'painel/albuns',
   'painel/noticiascompeticao',
   'painel/patrocinadores',
   'painel/viewuploadsumula',
