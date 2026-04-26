@@ -22,7 +22,7 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPencil, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import { cilCloudDownload, cilPencil, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import CategorySelect from '../../components/forms/CategorySelect'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import {
@@ -248,39 +248,6 @@ const JulgamentosCrud = () => {
     }
   }
 
-  const handleDownloadReport = async (numeroProcesso) => {
-    const normalizedNumeroProcesso = String(numeroProcesso ?? '').trim()
-    if (!normalizedNumeroProcesso) {
-      setFeedback({
-        type: 'danger',
-        message: 'Informe o número do processo para baixar o relatório.',
-      })
-      return
-    }
-
-    const reportKey = `report-${normalizedNumeroProcesso}`
-    setReportLoadingKey(reportKey)
-
-    try {
-      const reportBlob = await downloadJulgamentoReport({
-        numeroProcesso: normalizedNumeroProcesso,
-      })
-
-      const url = window.URL.createObjectURL(reportBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `relatorio-julgamento-${normalizedNumeroProcesso}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      setFeedback({ type: 'danger', message: 'Não foi possível baixar o relatório de julgamento.' })
-    } finally {
-      setReportLoadingKey(null)
-    }
-  }
-
   return (
     <CRow className="g-4">
       <CCol xs={12}>
@@ -357,25 +324,6 @@ const JulgamentosCrud = () => {
                 <CIcon icon={cilReload} className="me-2" />
                 {isLoading ? 'Atualizando...' : 'Atualizar lista'}
               </CButton>
-              <CButton
-                color="secondary"
-                variant="outline"
-                disabled={
-                  !selectedCompetitionId ||
-                  reportLoadingKey !== null ||
-                  !String(filters.search || '').trim()
-                }
-                onClick={() => handleDownloadReport(filters.search)}
-              >
-                {reportLoadingKey === `report-${String(filters.search || '').trim()}` ? (
-                  <>
-                    <CSpinner size="sm" className="me-2" />
-                    Baixando...
-                  </>
-                ) : (
-                  'Baixar relatório'
-                )}
-              </CButton>
             </div>
 
             {isLoading ? (
@@ -416,9 +364,9 @@ const JulgamentosCrud = () => {
                             <CIcon icon={cilPencil} />
                           </CButton>
                           <CButton
-                            color="secondary"
+                            color="success"
                             size="sm"
-                            variant="ghost"
+                            className="fw-semibold text-white shadow-sm"
                             disabled={
                               !String(julgamento.numeroProcesso || '').trim() ||
                               reportLoadingKey === `report-${julgamento.id}`
@@ -448,9 +396,17 @@ const JulgamentosCrud = () => {
                               }
                             }}
                           >
-                            {reportLoadingKey === `report-${julgamento.id}`
-                              ? 'Baixando...'
-                              : 'Relatório'}
+                            {reportLoadingKey === `report-${julgamento.id}` ? (
+                              <>
+                                <CSpinner size="sm" className="me-2" />
+                                Baixando...
+                              </>
+                            ) : (
+                              <>
+                                <CIcon icon={cilCloudDownload} className="me-1" />
+                                Relatório
+                              </>
+                            )}
                           </CButton>
                           <CButton
                             color="danger"
