@@ -45,6 +45,15 @@ const createEmptyArticle = () => ({
   imagePreviewUrl: '',
 })
 
+const NEWS_IMAGE_BASE_URL = 'http://129.121.45.176/images/noticias'
+
+const getNewsImageUrl = (foto) => {
+  if (!foto) return ''
+
+  const fileName = String(foto).split('/').filter(Boolean).pop()
+  return fileName ? `${NEWS_IMAGE_BASE_URL}/${fileName}` : ''
+}
+
 const quillModules = {
   toolbar: [
     ['bold', 'italic', 'underline', 'strike'],
@@ -97,7 +106,7 @@ const NoticiasCrud = () => {
       ativo: article.ativo ?? true,
       imageFile: null,
       imageFileName: '',
-      imagePreviewUrl: article.foto ?? '',
+      imagePreviewUrl: getNewsImageUrl(article.foto),
     })
   }, [news, selectedNewsId, selectedCompetitionId])
 
