@@ -397,15 +397,9 @@ const JulgamentosCrud = () => {
                             }}
                           >
                             {reportLoadingKey === `report-${julgamento.id}` ? (
-                              <>
-                                <CSpinner size="sm" className="me-2" />
-                                Baixando...
-                              </>
+                              <CSpinner size="sm" />
                             ) : (
-                              <>
-                                <CIcon icon={cilCloudDownload} className="me-1" />
-                                Relatório
-                              </>
+                              <CIcon icon={cilCloudDownload} />
                             )}
                           </CButton>
                           <CButton
