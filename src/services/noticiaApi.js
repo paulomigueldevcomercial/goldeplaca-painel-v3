@@ -30,8 +30,8 @@ const requestMultipart = async (path, { method = 'POST', noticia, file } = {}) =
   return text ? JSON.parse(text) : null
 }
 
-export const listNoticias = ({ competicaoId } = {}) =>
-  requestJson('/api/noticias', { params: { competicaoId } })
+export const listNoticias = ({ competicaoId, ativo, destaque } = {}) =>
+  requestJson('/api/noticias', { params: { competicaoId, ativo, destaque } })
 
 export const getNoticia = (id) => requestJson(`/api/noticias/${id}`)
 

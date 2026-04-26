@@ -54,6 +54,34 @@ const getNewsImageUrl = (foto) => {
   return fileName ? `${NEWS_IMAGE_BASE_URL}/${fileName}` : ''
 }
 
+const formatPublishedAt = (value) => {
+  if (!value) return '-'
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/)
+  if (match) {
+    const [, year, month, day, hour = '00', minute = '00'] = match
+    return `${day}/${month}/${year} às ${hour}:${minute}`
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+    .format(date)
+    .replace(',', ' às')
+}
+
+const parseBooleanFilter = (value) => {
+  if (value === '') return undefined
+  return value === 'true'
+}
+
 const quillModules = {
   toolbar: [
     ['bold', 'italic', 'underline', 'strike'],
@@ -75,6 +103,7 @@ const NoticiasCrud = () => {
   const [news, setNews] = useState([])
   const [selectedNewsId, setSelectedNewsId] = useState(null)
   const [formData, setFormData] = useState(createEmptyArticle())
+  const [filters, setFilters] = useState({ ativo: '', destaque: '' })
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
@@ -90,6 +119,7 @@ const NoticiasCrud = () => {
   useEffect(() => {
     setSelectedNewsId(null)
     setFormData(createEmptyArticle())
+    setFilters({ ativo: '', destaque: '' })
     setFeedback(null)
   }, [selectedCompetitionId])
 
@@ -126,7 +156,11 @@ const NoticiasCrud = () => {
 
     setIsLoading(true)
     try {
-      const data = await listNoticias({ competicaoId: selectedCompetitionId })
+      const data = await listNoticias({
+        competicaoId: selectedCompetitionId,
+        ativo: parseBooleanFilter(filters.ativo),
+        destaque: parseBooleanFilter(filters.destaque),
+      })
       setNews(Array.isArray(data) ? data : [])
     } catch (error) {
       setNews([])
@@ -134,7 +168,7 @@ const NoticiasCrud = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [selectedCompetitionId])
+  }, [filters.ativo, filters.destaque, selectedCompetitionId])
 
   useEffect(() => {
     loadNews()
@@ -151,6 +185,20 @@ const NoticiasCrud = () => {
       ...prevState,
       [name]: name === 'ativo' ? value === 'true' : value,
     }))
+  }
+
+  const handleFilterChange = ({ target }) => {
+    const { name, value } = target
+    setFilters((previous) => ({
+      ...previous,
+      [name]: value,
+    }))
+    setSelectedNewsId(null)
+  }
+
+  const handleClearFilters = () => {
+    setFilters({ ativo: '', destaque: '' })
+    setSelectedNewsId(null)
   }
 
   useEffect(() => {
@@ -330,6 +378,51 @@ const NoticiasCrud = () => {
               </CButton>
             </CCardHeader>
             <CCardBody className="p-0">
+              <div className="p-3 border-bottom">
+                <CRow className="g-3">
+                  <CCol sm={6}>
+                    <CFormLabel htmlFor="news-filter-active">Status</CFormLabel>
+                    <CFormSelect
+                      id="news-filter-active"
+                      name="ativo"
+                      value={filters.ativo}
+                      onChange={handleFilterChange}
+                      disabled={isLoading}
+                    >
+                      <option value="">Todos</option>
+                      <option value="true">Ativas</option>
+                      <option value="false">Inativas</option>
+                    </CFormSelect>
+                  </CCol>
+                  <CCol sm={6}>
+                    <CFormLabel htmlFor="news-filter-highlight">Destaque</CFormLabel>
+                    <CFormSelect
+                      id="news-filter-highlight"
+                      name="destaque"
+                      value={filters.destaque}
+                      onChange={handleFilterChange}
+                      disabled={isLoading}
+                    >
+                      <option value="">Todos</option>
+                      <option value="true">Com destaque</option>
+                      <option value="false">Sem destaque</option>
+                    </CFormSelect>
+                  </CCol>
+                  <CCol xs={12}>
+                    <CButton
+                      color="secondary"
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      onClick={handleClearFilters}
+                      disabled={isLoading || (!filters.ativo && !filters.destaque)}
+                    >
+                      <CIcon icon={cilReload} className="me-2" />
+                      Limpar filtros
+                    </CButton>
+                  </CCol>
+                </CRow>
+              </div>
               {isLoading ? (
                 <div className="p-3">
                   <CSpinner size="sm" className="me-2" /> Carregando notícias...
@@ -340,33 +433,37 @@ const NoticiasCrud = () => {
                 </div>
               ) : (
                 <CListGroup flush>
-                  {articles.map((article) => (
-                    <CListGroupItem
-                      key={article.id}
-                      action
-                      active={String(article.id) === String(selectedNewsId)}
-                      onClick={() => handleNewsSelect(article.id)}
-                    >
-                      <div className="d-flex justify-content-between align-items-start gap-2">
-                        <div className="me-2">
-                          <div className="fw-semibold">{article.titulo}</div>
-                          <small className="text-medium-emphasis">
-                            Publicada em {article.data}
-                          </small>
-                        </div>
-                        <div className="d-flex flex-column align-items-end gap-1">
-                          {article.destaque && (
-                            <CBadge color="info" shape="rounded-pill">
-                              Destaque
+                  {articles.map((article) => {
+                    const isSelected = String(article.id) === String(selectedNewsId)
+
+                    return (
+                      <CListGroupItem
+                        key={article.id}
+                        action
+                        active={isSelected}
+                        onClick={() => handleNewsSelect(article.id)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div className="me-2">
+                            <div className="fw-semibold">{article.titulo}</div>
+                            <small className={isSelected ? 'text-white' : 'text-dark'}>
+                              Publicada em {formatPublishedAt(article.data)}
+                            </small>
+                          </div>
+                          <div className="d-flex flex-column align-items-end gap-1">
+                            {article.destaque && (
+                              <CBadge color="info" shape="rounded-pill">
+                                Destaque
+                              </CBadge>
+                            )}
+                            <CBadge color={article.ativo ? 'success' : 'secondary'}>
+                              {article.ativo ? 'Ativa' : 'Inativa'}
                             </CBadge>
-                          )}
-                          <CBadge color={article.ativo ? 'success' : 'secondary'}>
-                            {article.ativo ? 'Ativa' : 'Inativa'}
-                          </CBadge>
+                          </div>
                         </div>
-                      </div>
-                    </CListGroupItem>
-                  ))}
+                      </CListGroupItem>
+                    )
+                  })}
                 </CListGroup>
               )}
             </CCardBody>
