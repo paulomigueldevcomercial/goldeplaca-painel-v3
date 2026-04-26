@@ -242,10 +242,14 @@ const NoticiasCrud = () => {
       }
 
       await loadNews()
-      const nextId = response?.id ?? selectedNewsId ?? null
-      setSelectedNewsId(nextId)
-      if (!nextId) {
-        setFormData(createEmptyArticle())
+      if (selectedNewsId) {
+        setSelectedNewsId(response?.id ?? selectedNewsId)
+      } else {
+        setSelectedNewsId(null)
+        setFormData({
+          ...createEmptyArticle(),
+          competicao: selectedCompetitionId ?? '',
+        })
       }
       setFeedback({
         type: 'success',
@@ -306,22 +310,22 @@ const NoticiasCrud = () => {
           </CCol>
         )}
 
+        <CCol xs={12}>
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            <span className="fw-semibold">Campeonato selecionado:</span>
+            <CBadge color={selectedCompetition ? 'primary' : 'secondary'}>
+              {selectedCompetitionLabel}
+            </CBadge>
+            {selectedCompetition?.temporada && (
+              <CBadge color="secondary">Temporada {selectedCompetition.temporada}</CBadge>
+            )}
+          </div>
+        </CCol>
+
         <CCol md={5}>
           <CCard className="h-100">
             <CCardHeader className="d-flex justify-content-between align-items-center gap-3">
-              <div>
-                <strong>Notícias</strong>
-                <div className="mt-1">
-                  <CBadge color={selectedCompetition ? 'primary' : 'secondary'}>
-                    {selectedCompetitionLabel}
-                  </CBadge>
-                  {selectedCompetition?.temporada && (
-                    <CBadge color="secondary" className="ms-2">
-                      Temporada {selectedCompetition.temporada}
-                    </CBadge>
-                  )}
-                </div>
-              </div>
+              <strong>Notícias</strong>
               <CButton
                 color="primary"
                 size="sm"
