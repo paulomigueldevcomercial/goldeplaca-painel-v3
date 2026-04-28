@@ -55,7 +55,7 @@ const Login = () => {
         selectedCompetitionId: session.user?.competicaoId || '',
       })
 
-      const redirectTo = location.state?.from?.pathname || '/'
+      const redirectTo = location.state?.from?.pathname || '/painel'
       navigate(redirectTo, { replace: true })
     } catch (error) {
       setFeedback({
@@ -77,9 +77,7 @@ const Login = () => {
                 <CCardBody>
                   <CForm onSubmit={handleSubmit}>
                     <h1>Autenticação</h1>
-                    <p className="text-body-secondary">
-                      Acesse o painel administrativo.
-                    </p>
+                    <p className="text-body-secondary">Acesse o painel administrativo.</p>
                     {feedback ? <CAlert color={feedback.type}>{feedback.message}</CAlert> : null}
                     <CFormLabel htmlFor="username">Usuário</CFormLabel>
                     <CInputGroup className="mb-3">
@@ -133,9 +131,7 @@ const Login = () => {
                 <CCardBody className="text-center">
                   <div>
                     <h2>Painel administrativo</h2>
-                    <p>
-                      Gerenciamento do site Gol de Placa MA.
-                    </p>
+                    <p>Gerenciamento do site Gol de Placa MA.</p>
                   </div>
                 </CCardBody>
               </CCard>

@@ -8,7 +8,7 @@ const RequireAdmin = ({ children }) => {
   const user = useSelector((state) => state.auth?.user)
 
   if (!hasAdminRole(user?.roleList ?? user?.roles)) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/painel" replace />
   }
 
   return children

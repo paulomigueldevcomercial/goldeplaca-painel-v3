@@ -51,7 +51,7 @@ const App = () => {
             exact
             path="/login"
             name="Login Page"
-            element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+            element={isAuthenticated ? <Navigate to="/painel" replace /> : <Login />}
           />
           <Route exact path="/register" name="Register Page" element={<Register />} />
           <Route exact path="/404" name="Page 404" element={<Page404 />} />

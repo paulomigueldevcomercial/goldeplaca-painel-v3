@@ -48,7 +48,7 @@ const AppSidebar = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <CSidebarBrand to="/">
+        <CSidebarBrand to="/painel">
           <span className="sidebar-brand-text">Painel - Gol de Placa MA</span>
         </CSidebarBrand>
         <CCloseButton

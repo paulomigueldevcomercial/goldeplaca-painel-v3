@@ -32,7 +32,7 @@ const AppContent = () => {
               )
             )
           })}
-          <Route path="/" element={<Navigate to="/painel/gerenciamento/galeria" replace />} />
+          <Route path="/" element={<Navigate to="/painel" replace />} />
         </Routes>
       </Suspense>
     </CContainer>

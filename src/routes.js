@@ -2,6 +2,7 @@ import React from 'react'
 import { getVisibleLegacyMenuSections } from './views/painel/legacyMenuData'
 
 const PainelMenu = React.lazy(() => import('./views/painel/PainelMenu'))
+const PainelWelcome = React.lazy(() => import('./views/painel/PainelWelcome'))
 const LegacyMenuItem = React.lazy(() => import('./views/painel/LegacyMenuItem'))
 const GaleriaCrud = React.lazy(() => import('./views/galeria/GaleriaCrud'))
 const NoticiasCrud = React.lazy(() => import('./views/noticias/NoticiasCrud'))
@@ -25,6 +26,7 @@ const buildLegacyRoute = (item) => () => <LegacyMenuItem item={item} />
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
+  { path: '/painel', exact: true, name: 'Painel', element: PainelWelcome },
   { path: '/painel/menu', name: 'Mapa do painel', element: PainelMenu },
   ...legacyItems.map((item) => ({
     path: item.path,
