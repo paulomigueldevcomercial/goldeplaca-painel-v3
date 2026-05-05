@@ -52,7 +52,7 @@ const UploadSumulaCrud = () => {
     setFeedback(null)
 
     if (!formData.codigo || !formData.pdfFile) {
-      setFeedback({ type: 'danger', message: 'Informe o número do jogo e selecione o PDF da súmula.' })
+      setFeedback({ type: 'danger', message: 'Informe o ID do jogo e selecione o PDF da súmula.' })
       return
     }
 
@@ -82,7 +82,7 @@ const UploadSumulaCrud = () => {
             <div>
               <h4 className="mb-1">Upload de Súmulas</h4>
               <div className="text-medium-emphasis">
-                Envie a súmula em PDF informando o número do jogo. Os dados serão enviados para a API oficial.
+                Envie a súmula em PDF informando o IDs do jogo. Os dados serão enviados para a API oficial.
               </div>
               <SelectedCompetitionBadge className="mt-2" />
             </div>
@@ -99,12 +99,12 @@ const UploadSumulaCrud = () => {
         <CCard className="h-100">
           <CCardHeader>
             <strong>Enviar súmula</strong>
-            <div className="small text-medium-emphasis">Informe o número do jogo e faça o upload do PDF.</div>
+            <div className="small text-medium-emphasis">Informe o ID do jogo e faça o upload do PDF.</div>
           </CCardHeader>
           <CCardBody>
             <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
               <div>
-                <CFormLabel htmlFor="sumula-codigo">Número do jogo</CFormLabel>
+                <CFormLabel htmlFor="sumula-codigo">ID do jogo</CFormLabel>
                 <CFormInput
                   id="sumula-codigo"
                   name="codigo"
