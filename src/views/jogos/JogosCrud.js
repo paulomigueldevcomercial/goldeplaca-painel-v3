@@ -58,6 +58,27 @@ const parseNumber = (value) => {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+})
+
+const formatGameDate = (value) => {
+  if (!value) return 'Data não informada'
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (match) {
+    const [, year, month, day] = match
+    return `${day}/${month}/${year}`
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return dateFormatter.format(date)
+}
+
 const JogosCrud = () => {
   const [teams, setTeams] = useState([])
   const [games, setGames] = useState([])
@@ -343,7 +364,7 @@ const JogosCrud = () => {
                           {game.categoria || 'Categoria'}
                         </CBadge>
                         <CBadge color="info" shape="rounded-pill">
-                          {game.dataJogo || 'Data não informada'}
+                          {formatGameDate(game.dataJogo)}
                         </CBadge>
                       </div>
                     </div>
