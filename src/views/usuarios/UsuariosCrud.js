@@ -9,6 +9,7 @@ import {
   CForm,
   CFormInput,
   CFormLabel,
+  CFormSelect,
   CListGroup,
   CListGroupItem,
   CRow,
@@ -16,8 +17,6 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
-import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import {
   createUsuario,
   deleteUsuario,
@@ -26,20 +25,14 @@ import {
   updateUsuario,
 } from '../../services/usuariosApi'
 
+const ROLE_OPTIONS = ['admin', 'user', 'apcef', 'oab', 'bancarios']
+
 const createEmptyUser = () => ({
-  id: '',
   name: '',
   username: '',
   password: '',
   roles: '',
-  competicaoId: '',
 })
-
-const parseNumber = (value) => {
-  if (value === '' || value === null || value === undefined) return null
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? null : parsed
-}
 
 const normalizeText = (value) => {
   const text = String(value ?? '').trim()
@@ -94,12 +87,10 @@ const UsuariosCrud = () => {
     try {
       const user = await getUsuario(id)
       setFormData({
-        id: user?.id ?? '',
         name: user?.name ?? '',
         username: user?.username ?? '',
         password: '',
         roles: user?.roles ?? '',
-        competicaoId: user?.competicaoId ?? '',
       })
     } catch (error) {
       setFeedback({ type: 'danger', message: 'Não foi possível carregar o usuário selecionado.' })
@@ -130,6 +121,11 @@ const UsuariosCrud = () => {
       return
     }
 
+    if (!formData.roles) {
+      setFeedback({ type: 'danger', message: 'Selecione uma role para o usuário.' })
+      return
+    }
+
     if (!selectedUserId && !formData.password) {
       setFeedback({ type: 'danger', message: 'Informe a senha para cadastrar um novo usuário.' })
       return
@@ -140,11 +136,9 @@ const UsuariosCrud = () => {
 
     try {
       const payload = {
-        id: parseNumber(formData.id),
         name: normalizeText(formData.name),
         username: normalizeText(formData.username),
         roles: normalizeText(formData.roles),
-        competicaoId: parseNumber(formData.competicaoId),
       }
 
       const password = normalizeText(formData.password)
@@ -199,7 +193,6 @@ const UsuariosCrud = () => {
             <div>
               <h4 className="mb-1">Usuários</h4>
               <div className="text-medium-emphasis">Gerenciamento de usuários do painel.</div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>
@@ -268,11 +261,7 @@ const UsuariosCrud = () => {
           <CCardBody>
             <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
               <CRow className="g-3">
-                <CCol md={3}>
-                  <CFormLabel htmlFor="usuario-id">ID</CFormLabel>
-                  <CFormInput id="usuario-id" name="id" value={formData.id} readOnly disabled />
-                </CCol>
-                <CCol md={9}>
+                <CCol md={12}>
                   <CFormLabel htmlFor="usuario-name">Nome</CFormLabel>
                   <CFormInput
                     id="usuario-name"
@@ -311,25 +300,20 @@ const UsuariosCrud = () => {
               <CRow className="g-3">
                 <CCol md={6}>
                   <CFormLabel htmlFor="usuario-roles">Roles</CFormLabel>
-                  <CFormInput
+                  <CFormSelect
                     id="usuario-roles"
                     name="roles"
                     value={formData.roles}
                     onChange={handleInputChange}
-                    placeholder="Ex.: ROLE_ADMIN"
-                  />
-                </CCol>
-                <CCol md={6}>
-                  <CompetitionSelect
-                    id="usuario-competicao"
-                    name="competicaoId"
-                    label="Competição"
-                    value={formData.competicaoId}
-                    onValueChange={(value) =>
-                      setFormData((previous) => ({ ...previous, competicaoId: value }))
-                    }
-                    autoSelectFirst={false}
-                  />
+                    required
+                  >
+                    <option value="">Selecione uma role</option>
+                    {ROLE_OPTIONS.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </CFormSelect>
                 </CCol>
               </CRow>
 
