@@ -1,3 +1,5 @@
+import { hasAdminRole } from '../../utils/authSession'
+
 export const hidePendingLegacyMenuItems = true
 
 export const implementedLegacyMenuRoutes = [
@@ -23,11 +25,24 @@ export const isPendingLegacyMenuItem = (item) => !implementedLegacyMenuRoutes.in
 export const shouldShowLegacyMenuItem = (item) =>
   !hidePendingLegacyMenuItems || !isPendingLegacyMenuItem(item)
 
+export const isAdminOnlyLegacyMenuItem = (item) => item.route === 'user/admin'
+
+export const shouldShowLegacyMenuItemForRoles = (item, roles) =>
+  shouldShowLegacyMenuItem(item) && (!isAdminOnlyLegacyMenuItem(item) || hasAdminRole(roles))
+
 export const getVisibleLegacyMenuSections = () =>
   legacyMenuSections
     .map((section) => ({
       ...section,
       items: section.items.filter(shouldShowLegacyMenuItem),
+    }))
+    .filter((section) => section.items.length > 0)
+
+export const getVisibleLegacyMenuSectionsForRoles = (roles) =>
+  legacyMenuSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => shouldShowLegacyMenuItemForRoles(item, roles)),
     }))
     .filter((section) => section.items.length > 0)
 
@@ -122,7 +137,7 @@ const legacyMenuSections = [
       {
         label: 'Competição',
         route: 'gerenciador/competicao/admin',
-        visibility: 'Disponível apenas para administradores',
+        visibility: 'Disponível para todos os usuários',
         path: '/painel/gerenciamento/competicao',
       },
     ],

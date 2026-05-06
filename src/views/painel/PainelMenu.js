@@ -11,11 +11,15 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from '@coreui/react'
-import { getVisibleLegacyMenuSections } from './legacyMenuData'
-
-const visibleLegacyMenuSections = getVisibleLegacyMenuSections()
+import { useSelector } from 'react-redux'
+import { getVisibleLegacyMenuSectionsForRoles } from './legacyMenuData'
 
 const PainelMenu = () => {
+  const authUser = useSelector((state) => state.auth?.user)
+  const visibleLegacyMenuSections = getVisibleLegacyMenuSectionsForRoles(
+    authUser?.roleList ?? authUser?.roles,
+  )
+
   return (
     <CRow>
       <CCol xs={12}>
