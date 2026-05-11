@@ -411,13 +411,17 @@ const JogadoresCrud = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    const submittedValues = Object.fromEntries(new FormData(event.currentTarget).entries())
     setFeedback(null)
 
     if (!selectedCompetitionId) {
       setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
       return
     }
-    if (!formData.categoria || !formData.nomeJogador) {
+    if (
+      !(submittedValues.categoria || formData.categoria) ||
+      !(submittedValues.nomeJogador || formData.nomeJogador)
+    ) {
       setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios.' })
       return
     }
@@ -437,13 +441,14 @@ const JogadoresCrud = () => {
       } = formData
       const payload = {
         ...playerData,
+        ...submittedValues,
         id: selectedPlayerId ?? (formData.id || undefined),
         competicao: parseNumber(selectedCompetitionId),
-        gols: parseNonNegativeNumberOrZero(formData.gols),
-        amarelo: parseNonNegativeNumberOrZero(formData.amarelo),
-        vermelho: parseNonNegativeNumberOrZero(formData.vermelho),
-        golContra: parseNonNegativeNumberOrZero(formData.golContra),
-        situacaoAtleta: formData.situacaoAtleta || 'AA',
+        gols: parseNonNegativeNumberOrZero(submittedValues.gols ?? formData.gols),
+        amarelo: parseNonNegativeNumberOrZero(submittedValues.amarelo ?? formData.amarelo),
+        vermelho: parseNonNegativeNumberOrZero(submittedValues.vermelho ?? formData.vermelho),
+        golContra: parseNonNegativeNumberOrZero(submittedValues.golContra ?? formData.golContra),
+        situacaoAtleta: submittedValues.situacaoAtleta || formData.situacaoAtleta || 'AA',
       }
 
       if (selectedPlayerId) {
