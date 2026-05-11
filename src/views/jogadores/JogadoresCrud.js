@@ -40,9 +40,10 @@ const createEmptyPlayer = () => ({
   categoria: '',
   competicao: '',
   dataNascimento: '',
-  gols: '',
-  amarelo: '',
-  vermelho: '',
+  gols: 0,
+  amarelo: 0,
+  vermelho: 0,
+  golContra: 0,
   cartao: '',
   situacaoAtleta: '',
   representante: '',
@@ -67,6 +68,11 @@ const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
   const parsed = Number(value)
   return Number.isNaN(parsed) ? null : parsed
+}
+
+const parseNumberOrZero = (value) => {
+  const parsed = parseNumber(value)
+  return parsed ?? 0
 }
 
 const resolveStaticImageUrl = (value, basePath) => {
@@ -202,6 +208,10 @@ const JogadoresCrud = () => {
       competicao: player.competicao ?? selectedCompetitionId,
       categoria: player.categoria ?? '',
       time: player.time ?? '',
+      gols: player.gols ?? 0,
+      amarelo: player.amarelo ?? 0,
+      vermelho: player.vermelho ?? 0,
+      golContra: player.golContra ?? player.gols_contra ?? 0,
       img: resolveStaticImageUrl(player.img, PLAYER_IMAGE_BASE_PATH),
       imgPerfil: resolveStaticImageUrl(
         player.imgPerfil ?? player.img_perfil,
@@ -323,9 +333,10 @@ const JogadoresCrud = () => {
         ...playerData,
         id: selectedPlayerId ?? (formData.id || undefined),
         competicao: parseNumber(selectedCompetitionId),
-        gols: parseNumber(formData.gols),
-        amarelo: parseNumber(formData.amarelo),
-        vermelho: parseNumber(formData.vermelho),
+        gols: parseNumberOrZero(formData.gols),
+        amarelo: parseNumberOrZero(formData.amarelo),
+        vermelho: parseNumberOrZero(formData.vermelho),
+        golContra: parseNumberOrZero(formData.golContra),
       }
 
       if (selectedPlayerId) {
@@ -602,7 +613,7 @@ const JogadoresCrud = () => {
               </CRow>
 
               <CRow className="g-3">
-                <CCol md={4}>
+                <CCol md={3}>
                   <CFormLabel htmlFor="player-gols">Gols</CFormLabel>
                   <CFormInput
                     id="player-gols"
@@ -612,7 +623,7 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={3}>
                   <CFormLabel htmlFor="player-amarelo">Cartões amarelos</CFormLabel>
                   <CFormInput
                     id="player-amarelo"
@@ -622,13 +633,23 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={3}>
                   <CFormLabel htmlFor="player-vermelho">Cartões vermelhos</CFormLabel>
                   <CFormInput
                     id="player-vermelho"
                     name="vermelho"
                     type="number"
                     value={formData.vermelho}
+                    onChange={handleInputChange}
+                  />
+                </CCol>
+                <CCol md={3}>
+                  <CFormLabel htmlFor="player-gol-contra">Gols contra</CFormLabel>
+                  <CFormInput
+                    id="player-gol-contra"
+                    name="golContra"
+                    type="number"
+                    value={formData.golContra}
                     onChange={handleInputChange}
                   />
                 </CCol>
@@ -669,17 +690,6 @@ const JogadoresCrud = () => {
               </div>
 
               <div>
-                <CFormLabel htmlFor="player-image-url">Imagem do jogador (URL)</CFormLabel>
-                <CFormInput
-                  id="player-image-url"
-                  name="img"
-                  placeholder="https://..."
-                  value={formData.img}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
                 <CFormLabel htmlFor="player-profile-image">Imagem de perfil (arquivo)</CFormLabel>
                 <CFormInput
                   id="player-profile-image"
@@ -690,17 +700,6 @@ const JogadoresCrud = () => {
                 {formData.imgPerfilFileName && (
                   <div className="form-text">Arquivo selecionado: {formData.imgPerfilFileName}</div>
                 )}
-              </div>
-
-              <div>
-                <CFormLabel htmlFor="player-profile-url">Imagem de perfil (URL)</CFormLabel>
-                <CFormInput
-                  id="player-profile-url"
-                  name="imgPerfil"
-                  placeholder="https://..."
-                  value={formData.imgPerfil}
-                  onChange={handleInputChange}
-                />
               </div>
 
               <div className="d-flex flex-wrap gap-2">
@@ -740,8 +739,8 @@ const JogadoresCrud = () => {
                       />
                       <div className="text-medium-emphasis">
                         Pré-visualização da imagem principal.{' '}
-                        <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o arquivo ou URL
-                        para trocar.
+                        <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o arquivo para
+                        trocar.
                       </div>
                     </div>
                   )}
@@ -756,8 +755,8 @@ const JogadoresCrud = () => {
                       />
                       <div className="text-medium-emphasis">
                         Pré-visualização da imagem de perfil.{' '}
-                        <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o arquivo ou URL
-                        para trocar.
+                        <CIcon icon={cilArrowRight} className="mx-1" /> Atualize o arquivo para
+                        trocar.
                       </div>
                     </div>
                   )}
