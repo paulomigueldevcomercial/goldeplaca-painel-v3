@@ -561,10 +561,10 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Selecione</option>
-                    <option value="Ativo">Ativo</option>
-                    <option value="Suspenso">Suspenso</option>
-                    <option value="Pendente">Pendente</option>
+                    <option value="">Sem situação</option>
+                    <option value="AA">AA</option>
+                    <option value="ES">ES</option>
+                    <option value="EX">EX</option>
                   </CFormSelect>
                 </CCol>
               </CRow>
@@ -613,7 +613,7 @@ const JogadoresCrud = () => {
               </CRow>
 
               <CRow className="g-3">
-                <CCol md={3}>
+                <CCol md={4} lg={3}>
                   <CFormLabel htmlFor="player-gols">Gols</CFormLabel>
                   <CFormInput
                     id="player-gols"
@@ -623,7 +623,7 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                   />
                 </CCol>
-                <CCol md={3}>
+                <CCol md={4} lg={3}>
                   <CFormLabel htmlFor="player-amarelo">Cartões amarelos</CFormLabel>
                   <CFormInput
                     id="player-amarelo"
@@ -633,7 +633,7 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                   />
                 </CCol>
-                <CCol md={3}>
+                <CCol md={4} lg={3}>
                   <CFormLabel htmlFor="player-vermelho">Cartões vermelhos</CFormLabel>
                   <CFormInput
                     id="player-vermelho"
@@ -643,7 +643,20 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                   />
                 </CCol>
-                <CCol md={3}>
+                <CCol md={6} lg={3}>
+                  <CFormLabel htmlFor="player-cartao">Cartão</CFormLabel>
+                  <CFormSelect
+                    id="player-cartao"
+                    name="cartao"
+                    value={formData.cartao}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Sem cartão</option>
+                    <option value="Suspenso">Suspenso</option>
+                    <option value="Pendurado">Pendurado</option>
+                  </CFormSelect>
+                </CCol>
+                <CCol md={6} lg={3}>
                   <CFormLabel htmlFor="player-gol-contra">Gols contra</CFormLabel>
                   <CFormInput
                     id="player-gol-contra"
