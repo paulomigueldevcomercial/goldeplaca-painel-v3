@@ -25,8 +25,8 @@ import CategorySelect from '../../components/forms/CategorySelect'
 import { listCategorias } from '../../services/categoriaApi'
 import { createEquipe, deleteEquipe, listEquipes, updateEquipe } from '../../services/equipeApi'
 
-const TEAM_LOGO_BASE_PATH = '/images/equipes'
-const TEAM_PHOTO_BASE_PATH = '/images/equipes/foto'
+const TEAM_LOGO_BASE_PATH = '/images/logo'
+const TEAM_PHOTO_BASE_PATH = '/images/logo/fotos'
 const MAX_TEAM_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const MAX_TEAM_IMAGE_SIZE_LABEL = '10 MB'
 const ACCEPTED_TEAM_IMAGE_TYPES = 'image/jpeg,image/png,.jpg,.jpeg,.png'
@@ -168,16 +168,30 @@ const formatFileSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const resolveStaticImageUrl = (value, basePath) => {
+const getImageExtension = (value, fallback = 'jpg') => {
   if (!value) return ''
 
   const imageValue = String(value).trim()
-  if (!imageValue || imageValue.startsWith('data:') || imageValue.startsWith('blob:')) {
-    return imageValue
-  }
+  const fileName = imageValue.split('?')[0].split('#')[0].split('/').filter(Boolean).pop() ?? ''
+  const extension = fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() : ''
 
-  const fileName = imageValue.split('?')[0].split('#')[0].split('/').filter(Boolean).pop()
-  return fileName ? `${basePath}/${fileName}` : ''
+  return ALLOWED_TEAM_IMAGE_EXTENSIONS.has(extension) ? extension : fallback
+}
+
+const resolveTeamLogoUrl = (team) => {
+  const teamName = String(team?.equipe ?? '').trim()
+  if (!teamName) return ''
+
+  const extension = getImageExtension(team?.logo ?? team?.imgLogo ?? team?.imagemLogo)
+  return `${TEAM_LOGO_BASE_PATH}/${encodeURIComponent(teamName)}.${extension}`
+}
+
+const resolveTeamPhotoUrl = (team) => {
+  const teamId = team?.id
+  if (!teamId) return ''
+
+  const extension = getImageExtension(team?.foto ?? team?.imagem)
+  return `${TEAM_PHOTO_BASE_PATH}/${encodeURIComponent(String(teamId))}.${extension}`
 }
 
 const EquipesCrud = () => {
@@ -271,13 +285,10 @@ const EquipesCrud = () => {
       categoria: team.categoria ?? selectedCategoryId,
       logoFile: null,
       logoFileName: '',
-      logoPreviewUrl: resolveStaticImageUrl(
-        team.logo ?? team.imgLogo ?? team.imagemLogo,
-        TEAM_LOGO_BASE_PATH,
-      ),
+      logoPreviewUrl: resolveTeamLogoUrl(team),
       fotoFile: null,
       fotoFileName: '',
-      fotoPreviewUrl: resolveStaticImageUrl(team.foto ?? team.imagem, TEAM_PHOTO_BASE_PATH),
+      fotoPreviewUrl: resolveTeamPhotoUrl(team),
     })
   }, [selectedTeamId, teams, selectedCompetitionId, selectedCategoryId])
 
