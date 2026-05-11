@@ -29,6 +29,9 @@ import {
   updateJogador,
 } from '../../services/jogadorApi'
 
+const PLAYER_IMAGE_BASE_PATH = '/images/jogadores'
+const PLAYER_PROFILE_IMAGE_BASE_PATH = '/images/jogadores/perfil'
+
 const createEmptyPlayer = () => ({
   id: '',
   matricula: '',
@@ -46,7 +49,9 @@ const createEmptyPlayer = () => ({
   tecnico: '',
   img: '',
   imgPerfil: '',
+  imgFile: null,
   imgFileName: '',
+  imgPerfilFile: null,
   imgPerfilFileName: '',
 })
 
@@ -62,6 +67,18 @@ const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
   const parsed = Number(value)
   return Number.isNaN(parsed) ? null : parsed
+}
+
+const resolveStaticImageUrl = (value, basePath) => {
+  if (!value) return ''
+
+  const imageValue = String(value).trim()
+  if (!imageValue || imageValue.startsWith('data:') || imageValue.startsWith('blob:')) {
+    return imageValue
+  }
+
+  const fileName = imageValue.split('?')[0].split('#')[0].split('/').filter(Boolean).pop()
+  return fileName ? `${basePath}/${fileName}` : ''
 }
 
 const JogadoresCrud = () => {
@@ -185,7 +202,14 @@ const JogadoresCrud = () => {
       competicao: player.competicao ?? selectedCompetitionId,
       categoria: player.categoria ?? '',
       time: player.time ?? '',
+      img: resolveStaticImageUrl(player.img, PLAYER_IMAGE_BASE_PATH),
+      imgPerfil: resolveStaticImageUrl(
+        player.imgPerfil ?? player.img_perfil,
+        PLAYER_PROFILE_IMAGE_BASE_PATH,
+      ),
       imgFileName: '',
+      imgFile: null,
+      imgPerfilFile: null,
       imgPerfilFileName: '',
     })
   }, [selectedPlayerId, players, selectedCompetitionId])
@@ -264,6 +288,7 @@ const JogadoresCrud = () => {
       setFormData((previous) => ({
         ...previous,
         [field]: dataUrl,
+        [`${field}File`]: file,
         [fileField]: file.name,
       }))
     } catch (error) {
@@ -285,8 +310,17 @@ const JogadoresCrud = () => {
 
     setIsLoading(true)
     try {
+      const {
+        img,
+        imgPerfil,
+        imgFile,
+        imgFileName,
+        imgPerfilFile,
+        imgPerfilFileName,
+        ...playerData
+      } = formData
       const payload = {
-        ...formData,
+        ...playerData,
         id: selectedPlayerId ?? (formData.id || undefined),
         competicao: parseNumber(selectedCompetitionId),
         gols: parseNumber(formData.gols),
@@ -295,10 +329,10 @@ const JogadoresCrud = () => {
       }
 
       if (selectedPlayerId) {
-        await updateJogador(selectedPlayerId, payload)
+        await updateJogador(selectedPlayerId, payload, imgFile, imgPerfilFile)
         setFeedback({ type: 'success', message: 'Dados do jogador atualizados com sucesso.' })
       } else {
-        const created = await createJogador(payload)
+        const created = await createJogador(payload, imgFile, imgPerfilFile)
         setSelectedPlayerId(created?.id ?? payload.id ?? null)
         setFeedback({ type: 'success', message: 'Jogador cadastrado com sucesso.' })
       }
