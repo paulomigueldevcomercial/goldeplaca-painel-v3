@@ -31,6 +31,10 @@ import {
 
 const PLAYER_IMAGE_BASE_PATH = '/images/jogadores'
 const PLAYER_PROFILE_IMAGE_BASE_PATH = '/images/jogadores/perfil'
+const MAX_PLAYER_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+const MAX_PLAYER_IMAGE_SIZE_LABEL = '10 MB'
+const ACCEPTED_PLAYER_IMAGE_TYPES = 'image/jpeg,image/png,.jpg,.jpeg,.png'
+const ALLOWED_PLAYER_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png'])
 
 const createEmptyPlayer = () => ({
   id: '',
@@ -63,6 +67,11 @@ const readFileAsDataUrl = (file) =>
     reader.onerror = () => reject(reader.error)
     reader.readAsDataURL(file)
   })
+
+const isSupportedImageFile = (file) => {
+  const extension = file.name?.split('.').pop()?.toLowerCase()
+  return file.type === 'image/jpeg' || file.type === 'image/png' || ALLOWED_PLAYER_IMAGE_EXTENSIONS.has(extension)
+}
 
 const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
@@ -292,6 +301,21 @@ const JogadoresCrud = () => {
   const handleImageChange = async ({ target }, field, fileField) => {
     const file = target.files?.[0]
     if (!file) return
+
+    if (!isSupportedImageFile(file)) {
+      target.value = ''
+      setFeedback({ type: 'danger', message: 'Selecione uma imagem JPG ou PNG válida.' })
+      return
+    }
+
+    if (file.size > MAX_PLAYER_IMAGE_SIZE_BYTES) {
+      target.value = ''
+      setFeedback({
+        type: 'danger',
+        message: `A imagem selecionada ultrapassa ${MAX_PLAYER_IMAGE_SIZE_LABEL}.`,
+      })
+      return
+    }
 
     try {
       const dataUrl = await readFileAsDataUrl(file)
@@ -694,7 +718,7 @@ const JogadoresCrud = () => {
                 <CFormInput
                   id="player-image"
                   type="file"
-                  accept="image/*"
+                  accept={ACCEPTED_PLAYER_IMAGE_TYPES}
                   onChange={(event) => handleImageChange(event, 'img', 'imgFileName')}
                 />
                 {formData.imgFileName && (
@@ -707,7 +731,7 @@ const JogadoresCrud = () => {
                 <CFormInput
                   id="player-profile-image"
                   type="file"
-                  accept="image/*"
+                  accept={ACCEPTED_PLAYER_IMAGE_TYPES}
                   onChange={(event) => handleImageChange(event, 'imgPerfil', 'imgPerfilFileName')}
                 />
                 {formData.imgPerfilFileName && (
