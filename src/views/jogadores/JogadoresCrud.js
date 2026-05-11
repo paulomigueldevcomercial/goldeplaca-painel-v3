@@ -53,6 +53,7 @@ const createEmptyPlayer = () => ({
   vermelho: 0,
   golContra: 0,
   cartao: '',
+  jgd: 'Jgd',
   situacaoAtleta: 'AA',
   representante: '',
   tecnico: '',
@@ -295,6 +296,7 @@ const JogadoresCrud = () => {
       amarelo: player.amarelo ?? 0,
       vermelho: player.vermelho ?? 0,
       golContra: player.golContra ?? player.gols_contra ?? 0,
+      jgd: player.jgd || 'Jgd',
       situacaoAtleta: player.situacaoAtleta || 'AA',
       img: resolveStaticImageUrl(player.img, PLAYER_IMAGE_BASE_PATH),
       imgPerfil: resolveStaticImageUrl(
@@ -448,6 +450,7 @@ const JogadoresCrud = () => {
         amarelo: parseNonNegativeNumberOrZero(submittedValues.amarelo ?? formData.amarelo),
         vermelho: parseNonNegativeNumberOrZero(submittedValues.vermelho ?? formData.vermelho),
         golContra: parseNonNegativeNumberOrZero(submittedValues.golContra ?? formData.golContra),
+        jgd: submittedValues.jgd || formData.jgd || 'Jgd',
         situacaoAtleta: submittedValues.situacaoAtleta || formData.situacaoAtleta || 'AA',
       }
 
@@ -642,7 +645,7 @@ const JogadoresCrud = () => {
           <CCardBody>
             <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
               <CRow className="g-3">
-                <CCol md={4}>
+                <CCol md={3}>
                   <CFormLabel htmlFor="player-registration">Matrícula</CFormLabel>
                   <CFormInput
                     id="player-registration"
@@ -653,7 +656,7 @@ const JogadoresCrud = () => {
                     required
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={3}>
                   <CFormLabel htmlFor="player-birth">Data de nascimento</CFormLabel>
                   <CFormInput
                     id="player-birth"
@@ -664,7 +667,20 @@ const JogadoresCrud = () => {
                     required
                   />
                 </CCol>
-                <CCol md={4}>
+                <CCol md={3}>
+                  <CFormLabel htmlFor="player-type">Tipo</CFormLabel>
+                  <CFormSelect
+                    id="player-type"
+                    name="jgd"
+                    value={formData.jgd}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="Jgd">Jogador</option>
+                    <option value="Gol">Goleiro</option>
+                  </CFormSelect>
+                </CCol>
+                <CCol md={3}>
                   <CFormLabel htmlFor="player-status">Situação do atleta</CFormLabel>
                   <CFormSelect
                     id="player-status"
