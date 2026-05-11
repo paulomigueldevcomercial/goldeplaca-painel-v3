@@ -25,6 +25,17 @@ import CategorySelect from '../../components/forms/CategorySelect'
 import { listCategorias } from '../../services/categoriaApi'
 import { createEquipe, deleteEquipe, listEquipes, updateEquipe } from '../../services/equipeApi'
 
+const TEAM_LOGO_BASE_PATH = '/images/equipes'
+const TEAM_PHOTO_BASE_PATH = '/images/equipes/foto'
+const MAX_TEAM_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+const MAX_TEAM_IMAGE_SIZE_LABEL = '10 MB'
+const ACCEPTED_TEAM_IMAGE_TYPES = 'image/jpeg,image/png,.jpg,.jpeg,.png'
+const ALLOWED_TEAM_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png'])
+const TEAM_IMAGE_UPLOAD_OPTIONS = {
+  logo: { maxWidth: 500, maxHeight: 500, maxBytes: 220 * 1024, quality: 0.72 },
+  foto: { maxWidth: 900, maxHeight: 900, maxBytes: 450 * 1024, quality: 0.72 },
+}
+
 const createEmptyTeam = () => ({
   id: '',
   equipe: '',
@@ -72,6 +83,101 @@ const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
   const parsed = Number(value)
   return Number.isNaN(parsed) ? null : parsed
+}
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+
+const isSupportedImageFile = (file) => {
+  const extension = file.name?.split('.').pop()?.toLowerCase()
+  return (
+    file.type === 'image/jpeg' ||
+    file.type === 'image/png' ||
+    ALLOWED_TEAM_IMAGE_EXTENSIONS.has(extension)
+  )
+}
+
+const loadImage = (file) =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Não foi possível carregar a imagem.'))
+    }
+    image.src = url
+  })
+
+const createImageBlob = (image, width, height, quality) =>
+  new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+
+    canvas.width = width
+    canvas.height = height
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, width, height)
+    context.drawImage(image, 0, 0, width, height)
+    canvas.toBlob(resolve, 'image/jpeg', quality)
+  })
+
+const compactImageFile = async (file, { maxWidth, maxHeight, maxBytes, quality }) => {
+  if (!file?.type?.startsWith('image/')) return file
+
+  const image = await loadImage(file)
+  const sizeRatio = Math.min(maxWidth / image.width, maxHeight / image.height, 1)
+  let width = Math.max(1, Math.round(image.width * sizeRatio))
+  let height = Math.max(1, Math.round(image.height * sizeRatio))
+  let currentQuality = quality
+  let compactedBlob = null
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    compactedBlob = await createImageBlob(image, width, height, currentQuality)
+    if (!compactedBlob) return file
+    if (compactedBlob.size <= maxBytes) break
+
+    if (currentQuality > 0.52) {
+      currentQuality -= 0.08
+    } else {
+      width = Math.max(1, Math.round(width * 0.85))
+      height = Math.max(1, Math.round(height * 0.85))
+    }
+  }
+
+  if (!compactedBlob || compactedBlob.size >= file.size) return file
+
+  const fileName = file.name.replace(/\.[^.]+$/, '.jpg')
+  return new File([compactedBlob], fileName, {
+    type: 'image/jpeg',
+    lastModified: Date.now(),
+  })
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 KB'
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const resolveStaticImageUrl = (value, basePath) => {
+  if (!value) return ''
+
+  const imageValue = String(value).trim()
+  if (!imageValue || imageValue.startsWith('data:') || imageValue.startsWith('blob:')) {
+    return imageValue
+  }
+
+  const fileName = imageValue.split('?')[0].split('#')[0].split('/').filter(Boolean).pop()
+  return fileName ? `${basePath}/${fileName}` : ''
 }
 
 const EquipesCrud = () => {
@@ -162,15 +268,18 @@ const EquipesCrud = () => {
       competicao: String(
         team.competicao ?? team.competicaoId ?? team.id_competicao ?? selectedCompetitionId,
       ),
-      categoria: team.categoria ?? formData.categoria,
+      categoria: team.categoria ?? selectedCategoryId,
       logoFile: null,
       logoFileName: '',
-      logoPreviewUrl: '',
+      logoPreviewUrl: resolveStaticImageUrl(
+        team.logo ?? team.imgLogo ?? team.imagemLogo,
+        TEAM_LOGO_BASE_PATH,
+      ),
       fotoFile: null,
       fotoFileName: '',
-      fotoPreviewUrl: '',
+      fotoPreviewUrl: resolveStaticImageUrl(team.foto ?? team.imagem, TEAM_PHOTO_BASE_PATH),
     })
-  }, [selectedTeamId, teams, selectedCompetitionId])
+  }, [selectedTeamId, teams, selectedCompetitionId, selectedCategoryId])
 
   useEffect(() => {
     if (selectedTeamId) return
@@ -209,6 +318,7 @@ const EquipesCrud = () => {
 
   const handleInputChange = ({ target }) => {
     const { name, value } = target
+    setFeedback(null)
     setFormData((previous) => ({
       ...previous,
       [name]: value,
@@ -216,17 +326,23 @@ const EquipesCrud = () => {
   }
 
   const handleCategoryChange = (newCategoryId) => {
+    setFeedback(null)
     setFormData((previous) => ({ ...previous, categoria: newCategoryId }))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    const submittedValues = Object.fromEntries(new FormData(event.currentTarget).entries())
+    setFeedback(null)
 
     if (!selectedCompetitionId) {
       setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
       return
     }
-    if (!formData.categoria || !formData.equipe) {
+    if (
+      !(submittedValues.categoria || formData.categoria) ||
+      !(submittedValues.equipe || formData.equipe)
+    ) {
       setFeedback({ type: 'danger', message: 'Preencha os campos obrigatórios.' })
       return
     }
@@ -234,6 +350,11 @@ const EquipesCrud = () => {
     setIsLoading(true)
     try {
       const teamData = { ...formData }
+      delete teamData.logo
+      delete teamData.foto
+      delete teamData.imagem
+      delete teamData.imgLogo
+      delete teamData.imagemLogo
       delete teamData.logoFile
       delete teamData.logoFileName
       delete teamData.logoPreviewUrl
@@ -242,27 +363,32 @@ const EquipesCrud = () => {
       delete teamData.fotoPreviewUrl
       const payload = {
         ...teamData,
+        ...submittedValues,
         id: teamData.id ? parseNumber(teamData.id) : undefined,
         competicao: parseNumber(selectedCompetitionId),
-        vitorias: parseNumber(teamData.vitorias),
-        derrotas: parseNumber(teamData.derrotas),
-        empates: parseNumber(teamData.empates),
-        golsPro: parseNumber(teamData.golsPro),
-        golsContra: parseNumber(teamData.golsContra),
-        saldoGols: parseNumber(teamData.saldoGols),
-        partidas: parseNumber(teamData.partidas),
-        pontos: parseNumber(teamData.pontos),
-        classificacao: parseNumber(teamData.classificacao),
-        porcentagem: parseNumber(teamData.porcentagem),
-        wo: parseNumber(teamData.wo),
-        amarelos: parseNumber(teamData.amarelos),
-        vermelhos: parseNumber(teamData.vermelhos),
-        pontosAmarelo: parseNumber(teamData.pontosAmarelo),
-        pontosVermelho: parseNumber(teamData.pontosVermelho),
-        pontuacaoCartoes: parseNumber(teamData.pontuacaoCartoes),
-        classificacaoDisciplinar: parseNumber(teamData.classificacaoDisciplinar),
-        pontosPerdidos: parseNumber(teamData.pontosPerdidos),
-        pontosGanho: parseNumber(teamData.pontosGanho),
+        vitorias: parseNumber(submittedValues.vitorias ?? teamData.vitorias),
+        derrotas: parseNumber(submittedValues.derrotas ?? teamData.derrotas),
+        empates: parseNumber(submittedValues.empates ?? teamData.empates),
+        golsPro: parseNumber(submittedValues.golsPro ?? teamData.golsPro),
+        golsContra: parseNumber(submittedValues.golsContra ?? teamData.golsContra),
+        saldoGols: parseNumber(submittedValues.saldoGols ?? teamData.saldoGols),
+        partidas: parseNumber(submittedValues.partidas ?? teamData.partidas),
+        pontos: parseNumber(submittedValues.pontos ?? teamData.pontos),
+        classificacao: parseNumber(submittedValues.classificacao ?? teamData.classificacao),
+        porcentagem: parseNumber(submittedValues.porcentagem ?? teamData.porcentagem),
+        wo: parseNumber(submittedValues.wo ?? teamData.wo),
+        amarelos: parseNumber(submittedValues.amarelos ?? teamData.amarelos),
+        vermelhos: parseNumber(submittedValues.vermelhos ?? teamData.vermelhos),
+        pontosAmarelo: parseNumber(submittedValues.pontosAmarelo ?? teamData.pontosAmarelo),
+        pontosVermelho: parseNumber(submittedValues.pontosVermelho ?? teamData.pontosVermelho),
+        pontuacaoCartoes: parseNumber(
+          submittedValues.pontuacaoCartoes ?? teamData.pontuacaoCartoes,
+        ),
+        classificacaoDisciplinar: parseNumber(
+          submittedValues.classificacaoDisciplinar ?? teamData.classificacaoDisciplinar,
+        ),
+        pontosPerdidos: parseNumber(submittedValues.pontosPerdidos ?? teamData.pontosPerdidos),
+        pontosGanho: parseNumber(submittedValues.pontosGanho ?? teamData.pontosGanho),
       }
 
       if (selectedTeamId) {
@@ -313,34 +439,67 @@ const EquipesCrud = () => {
     setFeedback(null)
   }
 
-  const handleLogoFileChange = ({ target }) => {
+  const handleImageFileChange = async (
+    { target },
+    field,
+    fileField,
+    previewField,
+    uploadOptions,
+  ) => {
     const file = target.files?.[0]
     if (!file) return
 
-    const objectUrl = URL.createObjectURL(file)
-    setFormData((previous) => ({
-      ...previous,
-      logoPreviewUrl: objectUrl,
-      logoFile: file,
-      logoFileName: file.name,
-    }))
+    if (!isSupportedImageFile(file)) {
+      target.value = ''
+      setFeedback({ type: 'danger', message: 'Selecione uma imagem JPG ou PNG válida.' })
+      return
+    }
+
+    if (file.size > MAX_TEAM_IMAGE_SIZE_BYTES) {
+      target.value = ''
+      setFeedback({
+        type: 'danger',
+        message: `A imagem selecionada ultrapassa ${MAX_TEAM_IMAGE_SIZE_LABEL}.`,
+      })
+      return
+    }
+
+    try {
+      const compactedFile = await compactImageFile(file, uploadOptions)
+      const previewUrl = await readFileAsDataUrl(compactedFile)
+      setFeedback(null)
+      setFormData((previous) => ({
+        ...previous,
+        [field]: compactedFile,
+        [fileField]: `${compactedFile.name} (${formatFileSize(compactedFile.size)})`,
+        [previewField]: previewUrl,
+      }))
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível carregar a imagem selecionada.' })
+    }
   }
 
-  const handleFotoFileChange = ({ target }) => {
-    const file = target.files?.[0]
-    if (!file) return
+  const handleLogoFileChange = (event) =>
+    handleImageFileChange(
+      event,
+      'logoFile',
+      'logoFileName',
+      'logoPreviewUrl',
+      TEAM_IMAGE_UPLOAD_OPTIONS.logo,
+    )
 
-    const objectUrl = URL.createObjectURL(file)
-    setFormData((previous) => ({
-      ...previous,
-      fotoPreviewUrl: objectUrl,
-      fotoFile: file,
-      fotoFileName: file.name,
-    }))
-  }
+  const handleFotoFileChange = (event) =>
+    handleImageFileChange(
+      event,
+      'fotoFile',
+      'fotoFileName',
+      'fotoPreviewUrl',
+      TEAM_IMAGE_UPLOAD_OPTIONS.foto,
+    )
 
   const getCategoryName = (team) =>
-    formCategoryOptions.find((category) => String(category.value) === String(team.categoria))?.label ??
+    formCategoryOptions.find((category) => String(category.value) === String(team.categoria))
+      ?.label ??
     team.categoria ??
     'Categoria não informada'
 
@@ -353,7 +512,8 @@ const EquipesCrud = () => {
             <div>
               <h4 className="mb-1">Equipes</h4>
               <div className="text-medium-emphasis">
-                Gerencie os dados de equipes usando os endpoints de equipes, competições e categorias da API.
+                Gerencie os dados de equipes usando os endpoints de equipes, competições e
+                categorias da API.
               </div>
               <SelectedCompetitionBadge className="mt-2" />
             </div>
@@ -366,7 +526,9 @@ const EquipesCrud = () => {
           <CCardHeader className="d-flex flex-column gap-2">
             <div>
               <strong>Equipes</strong>
-              <div className="small text-medium-emphasis">Filtradas pela competição selecionada e categoria</div>
+              <div className="small text-medium-emphasis">
+                Filtradas pela competição selecionada e categoria
+              </div>
             </div>
             <div className="d-flex gap-2">
               <CategorySelect
@@ -396,9 +558,13 @@ const EquipesCrud = () => {
                 <CSpinner size="sm" /> Carregando equipes...
               </div>
             ) : filteredTeams.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhuma equipe cadastrada para esta competição.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhuma equipe cadastrada para esta competição.
+              </div>
             ) : visibleTeams.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhuma equipe encontrada para o termo buscado.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhuma equipe encontrada para o termo buscado.
+              </div>
             ) : (
               <CListGroup flush>
                 {visibleTeams.map((team) => (
@@ -442,7 +608,9 @@ const EquipesCrud = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <div>
               <strong>{selectedTeamId ? 'Editar equipe' : 'Nova equipe'}</strong>
-              <div className="small text-medium-emphasis">Preencha todos os campos obrigatórios para salvar.</div>
+              <div className="small text-medium-emphasis">
+                Preencha todos os campos obrigatórios para salvar.
+              </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={handleReset}>
               <CIcon icon={cilPlus} className="me-2" /> Novo
@@ -532,7 +700,7 @@ const EquipesCrud = () => {
                   <CFormInput
                     id="team-logo-upload"
                     type="file"
-                    accept="image/*"
+                    accept={ACCEPTED_TEAM_IMAGE_TYPES}
                     onChange={handleLogoFileChange}
                   />
                   {formData.logoFileName && (
@@ -553,7 +721,7 @@ const EquipesCrud = () => {
                   <CFormInput
                     id="team-foto-upload"
                     type="file"
-                    accept="image/*"
+                    accept={ACCEPTED_TEAM_IMAGE_TYPES}
                     onChange={handleFotoFileChange}
                   />
                   {formData.fotoFileName && (
@@ -574,38 +742,86 @@ const EquipesCrud = () => {
               <CRow className="g-3">
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-v">Vitórias</CFormLabel>
-                  <CFormInput id="team-v" name="vitorias" type="number" value={formData.vitorias} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-v"
+                    name="vitorias"
+                    type="number"
+                    value={formData.vitorias}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-e">Empates</CFormLabel>
-                  <CFormInput id="team-e" name="empates" type="number" value={formData.empates} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-e"
+                    name="empates"
+                    type="number"
+                    value={formData.empates}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-d">Derrotas</CFormLabel>
-                  <CFormInput id="team-d" name="derrotas" type="number" value={formData.derrotas} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-d"
+                    name="derrotas"
+                    type="number"
+                    value={formData.derrotas}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-part">Partidas</CFormLabel>
-                  <CFormInput id="team-part" name="partidas" type="number" value={formData.partidas} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-part"
+                    name="partidas"
+                    type="number"
+                    value={formData.partidas}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
               </CRow>
 
               <CRow className="g-3">
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-gp">Gols pró</CFormLabel>
-                  <CFormInput id="team-gp" name="golsPro" type="number" value={formData.golsPro} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-gp"
+                    name="golsPro"
+                    type="number"
+                    value={formData.golsPro}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-gc">Gols contra</CFormLabel>
-                  <CFormInput id="team-gc" name="golsContra" type="number" value={formData.golsContra} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-gc"
+                    name="golsContra"
+                    type="number"
+                    value={formData.golsContra}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-sg">Saldo de gols</CFormLabel>
-                  <CFormInput id="team-sg" name="saldoGols" type="number" value={formData.saldoGols} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-sg"
+                    name="saldoGols"
+                    type="number"
+                    value={formData.saldoGols}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-pts">Pontos</CFormLabel>
-                  <CFormInput id="team-pts" name="pontos" type="number" value={formData.pontos} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-pts"
+                    name="pontos"
+                    type="number"
+                    value={formData.pontos}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
               </CRow>
 
@@ -632,18 +848,36 @@ const EquipesCrud = () => {
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-pp">Pontos perdidos</CFormLabel>
-                  <CFormInput id="team-pp" name="pontosPerdidos" type="number" value={formData.pontosPerdidos} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-pp"
+                    name="pontosPerdidos"
+                    type="number"
+                    value={formData.pontosPerdidos}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="team-pg">Pontos ganhos</CFormLabel>
-                  <CFormInput id="team-pg" name="pontosGanho" type="number" value={formData.pontosGanho} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-pg"
+                    name="pontosGanho"
+                    type="number"
+                    value={formData.pontosGanho}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
               </CRow>
 
               <CRow className="g-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="team-wo">WO</CFormLabel>
-                  <CFormInput id="team-wo" name="wo" type="number" value={formData.wo} onChange={handleInputChange} />
+                  <CFormInput
+                    id="team-wo"
+                    name="wo"
+                    type="number"
+                    value={formData.wo}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="team-pt-amarelo">Pts Amarelo</CFormLabel>
@@ -803,7 +1037,13 @@ const EquipesCrud = () => {
                 <CButton color="primary" type="submit" disabled={isLoading}>
                   <CIcon icon={cilSave} className="me-2" /> Salvar
                 </CButton>
-                <CButton color="secondary" variant="outline" type="button" onClick={handleReset} disabled={isLoading}>
+                <CButton
+                  color="secondary"
+                  variant="outline"
+                  type="button"
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
                 <CButton

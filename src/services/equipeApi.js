@@ -1,15 +1,23 @@
-import { API_BASE_URL, requestJson } from './apiClient'
+import { buildUrl, requestJson } from './apiClient'
+
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return ''
+
+  try {
+    const stored = window.localStorage.getItem('authSession')
+    if (!stored) return ''
+    return JSON.parse(stored)?.token ?? ''
+  } catch (error) {
+    return ''
+  }
+}
 
 const requestMultipart = async (path, { method = 'POST', equipe, logoFile, fotoFile } = {}) => {
-  const url = `${API_BASE_URL}${path}`
+  const url = buildUrl(path, equipe)
   const formData = new FormData()
+  const token = getAuthToken()
+  const headers = {}
 
-  if (equipe) {
-    Object.entries(equipe).forEach(([key, value]) => {
-      if (value === undefined || value === null || value === '') return
-      formData.append(key, String(value))
-    })
-  }
   if (logoFile) {
     formData.append('logo', logoFile)
   }
@@ -17,8 +25,14 @@ const requestMultipart = async (path, { method = 'POST', equipe, logoFile, fotoF
     formData.append('foto', fotoFile)
   }
 
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
   const response = await fetch(url, {
     method,
+    credentials: 'include',
+    headers,
     body: formData,
   })
 
