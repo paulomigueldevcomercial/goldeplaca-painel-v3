@@ -53,7 +53,7 @@ const createEmptyPlayer = () => ({
   vermelho: 0,
   golContra: 0,
   cartao: '',
-  situacaoAtleta: '',
+  situacaoAtleta: 'AA',
   representante: '',
   tecnico: '',
   img: '',
@@ -153,9 +153,9 @@ const parseNumber = (value) => {
   return Number.isNaN(parsed) ? null : parsed
 }
 
-const parseNumberOrZero = (value) => {
+const parseNonNegativeNumberOrZero = (value) => {
   const parsed = parseNumber(value)
-  return parsed ?? 0
+  return Math.max(0, parsed ?? 0)
 }
 
 const resolveStaticImageUrl = (value, basePath) => {
@@ -295,6 +295,7 @@ const JogadoresCrud = () => {
       amarelo: player.amarelo ?? 0,
       vermelho: player.vermelho ?? 0,
       golContra: player.golContra ?? player.gols_contra ?? 0,
+      situacaoAtleta: player.situacaoAtleta || 'AA',
       img: resolveStaticImageUrl(player.img, PLAYER_IMAGE_BASE_PATH),
       imgPerfil: resolveStaticImageUrl(
         player.imgPerfil ?? player.img_perfil,
@@ -354,6 +355,7 @@ const JogadoresCrud = () => {
 
   const handleInputChange = ({ target }) => {
     const { name, value } = target
+    setFeedback(null)
     setFormData((previous) => ({
       ...previous,
       [name]: value,
@@ -361,6 +363,7 @@ const JogadoresCrud = () => {
   }
 
   const handleCategoryChange = (newCategoryId) => {
+    setFeedback(null)
     setFormData((previous) => ({
       ...previous,
       categoria: newCategoryId,
@@ -369,6 +372,7 @@ const JogadoresCrud = () => {
   }
 
   const handleTeamChange = ({ target }) => {
+    setFeedback(null)
     setFormData((previous) => ({ ...previous, time: target.value }))
   }
 
@@ -407,6 +411,7 @@ const JogadoresCrud = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setFeedback(null)
 
     if (!selectedCompetitionId) {
       setFeedback({ type: 'danger', message: 'Selecione uma competição no menu lateral.' })
@@ -426,16 +431,19 @@ const JogadoresCrud = () => {
         imgFileName,
         imgPerfilFile,
         imgPerfilFileName,
+        img_perfil,
+        gols_contra,
         ...playerData
       } = formData
       const payload = {
         ...playerData,
         id: selectedPlayerId ?? (formData.id || undefined),
         competicao: parseNumber(selectedCompetitionId),
-        gols: parseNumberOrZero(formData.gols),
-        amarelo: parseNumberOrZero(formData.amarelo),
-        vermelho: parseNumberOrZero(formData.vermelho),
-        golContra: parseNumberOrZero(formData.golContra),
+        gols: parseNonNegativeNumberOrZero(formData.gols),
+        amarelo: parseNonNegativeNumberOrZero(formData.amarelo),
+        vermelho: parseNonNegativeNumberOrZero(formData.vermelho),
+        golContra: parseNonNegativeNumberOrZero(formData.golContra),
+        situacaoAtleta: formData.situacaoAtleta || 'AA',
       }
 
       if (selectedPlayerId) {
@@ -660,7 +668,6 @@ const JogadoresCrud = () => {
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Sem situação</option>
                     <option value="AA">AA</option>
                     <option value="ES">ES</option>
                     <option value="EX">EX</option>
@@ -718,6 +725,7 @@ const JogadoresCrud = () => {
                     id="player-gols"
                     name="gols"
                     type="number"
+                    min="0"
                     value={formData.gols}
                     onChange={handleInputChange}
                   />
@@ -728,6 +736,7 @@ const JogadoresCrud = () => {
                     id="player-amarelo"
                     name="amarelo"
                     type="number"
+                    min="0"
                     value={formData.amarelo}
                     onChange={handleInputChange}
                   />
@@ -738,6 +747,7 @@ const JogadoresCrud = () => {
                     id="player-vermelho"
                     name="vermelho"
                     type="number"
+                    min="0"
                     value={formData.vermelho}
                     onChange={handleInputChange}
                   />
@@ -761,6 +771,7 @@ const JogadoresCrud = () => {
                     id="player-gol-contra"
                     name="golContra"
                     type="number"
+                    min="0"
                     value={formData.golContra}
                     onChange={handleInputChange}
                   />
