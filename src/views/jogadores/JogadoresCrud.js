@@ -35,6 +35,10 @@ const MAX_PLAYER_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const MAX_PLAYER_IMAGE_SIZE_LABEL = '10 MB'
 const ACCEPTED_PLAYER_IMAGE_TYPES = 'image/jpeg,image/png,.jpg,.jpeg,.png'
 const ALLOWED_PLAYER_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png'])
+const PLAYER_IMAGE_UPLOAD_OPTIONS = {
+  img: { maxWidth: 900, maxHeight: 900, maxBytes: 450 * 1024, quality: 0.72 },
+  imgPerfil: { maxWidth: 500, maxHeight: 500, maxBytes: 220 * 1024, quality: 0.72 },
+}
 
 const createEmptyPlayer = () => ({
   id: '',
@@ -70,7 +74,77 @@ const readFileAsDataUrl = (file) =>
 
 const isSupportedImageFile = (file) => {
   const extension = file.name?.split('.').pop()?.toLowerCase()
-  return file.type === 'image/jpeg' || file.type === 'image/png' || ALLOWED_PLAYER_IMAGE_EXTENSIONS.has(extension)
+  return (
+    file.type === 'image/jpeg' ||
+    file.type === 'image/png' ||
+    ALLOWED_PLAYER_IMAGE_EXTENSIONS.has(extension)
+  )
+}
+
+const loadImage = (file) =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Não foi possível carregar a imagem.'))
+    }
+    image.src = url
+  })
+
+const createImageBlob = (image, width, height, quality) =>
+  new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+
+    canvas.width = width
+    canvas.height = height
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, width, height)
+    context.drawImage(image, 0, 0, width, height)
+    canvas.toBlob(resolve, 'image/jpeg', quality)
+  })
+
+const compactImageFile = async (file, { maxWidth, maxHeight, maxBytes, quality }) => {
+  if (!file?.type?.startsWith('image/')) return file
+
+  const image = await loadImage(file)
+  const sizeRatio = Math.min(maxWidth / image.width, maxHeight / image.height, 1)
+  let width = Math.max(1, Math.round(image.width * sizeRatio))
+  let height = Math.max(1, Math.round(image.height * sizeRatio))
+  let currentQuality = quality
+  let compactedBlob = null
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    compactedBlob = await createImageBlob(image, width, height, currentQuality)
+    if (!compactedBlob) return file
+    if (compactedBlob.size <= maxBytes) break
+
+    if (currentQuality > 0.52) {
+      currentQuality -= 0.08
+    } else {
+      width = Math.max(1, Math.round(width * 0.85))
+      height = Math.max(1, Math.round(height * 0.85))
+    }
+  }
+
+  if (!compactedBlob || compactedBlob.size >= file.size) return file
+
+  const fileName = file.name.replace(/\.[^.]+$/, '.jpg')
+  return new File([compactedBlob], fileName, {
+    type: 'image/jpeg',
+    lastModified: Date.now(),
+  })
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 KB'
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const parseNumber = (value) => {
@@ -318,12 +392,13 @@ const JogadoresCrud = () => {
     }
 
     try {
-      const dataUrl = await readFileAsDataUrl(file)
+      const compactedFile = await compactImageFile(file, PLAYER_IMAGE_UPLOAD_OPTIONS[field])
+      const dataUrl = await readFileAsDataUrl(compactedFile)
       setFormData((previous) => ({
         ...previous,
         [field]: dataUrl,
-        [`${field}File`]: file,
-        [fileField]: file.name,
+        [`${field}File`]: compactedFile,
+        [fileField]: `${compactedFile.name} (${formatFileSize(compactedFile.size)})`,
       }))
     } catch (error) {
       setFeedback({ type: 'danger', message: 'Não foi possível carregar a imagem selecionada.' })
