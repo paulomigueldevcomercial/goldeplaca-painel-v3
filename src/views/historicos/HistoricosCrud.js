@@ -280,19 +280,6 @@ const HistoricosCrud = () => {
       return
     }
 
-    const missingImageFields = HISTORICO_IMAGE_FIELDS.filter(
-      (config) => !imageFiles[config.fileField] && !formData[config.valueField],
-    )
-    if (missingImageFields.length > 0) {
-      setFeedback({
-        type: 'danger',
-        message: `Selecione as imagens obrigatórias: ${missingImageFields
-          .map((config) => config.label)
-          .join(', ')}.`,
-      })
-      return
-    }
-
     setIsLoading(true)
     try {
       const payload = buildPayload(formData, selectedHistoricoId)
@@ -591,7 +578,6 @@ const HistoricosCrud = () => {
                         type="file"
                         accept={ACCEPTED_IMAGE_TYPES}
                         onChange={(event) => handleImageChange(event, config)}
-                        required={!imageFiles[config.fileField] && !formData[config.valueField]}
                       />
                       {formData[config.fileNameField] && (
                         <div className="form-text">
