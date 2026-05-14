@@ -573,7 +573,13 @@ const JulgamentosCrud = () => {
                   disabled={isSaving || !formData.competicaoId}
                 >
                   <CIcon icon={cilSave} className="me-2" />
-                  {isSaving ? 'Salvando...' : 'Salvar'}
+                  {isSaving
+                    ? selectedJulgamentoId
+                      ? 'Atualizando...'
+                      : 'Salvando...'
+                    : selectedJulgamentoId
+                      ? 'Atualizar'
+                      : 'Salvar'}
                 </CButton>
                 <CButton
                   color="secondary"

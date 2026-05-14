@@ -7,6 +7,7 @@ import {
   CCardHeader,
   CCol,
   CForm,
+  CFormCheck,
   CFormInput,
   CFormLabel,
   CFormSelect,
@@ -24,6 +25,8 @@ import {
   listUsuarios,
   updateUsuario,
 } from '../../services/usuariosApi'
+import { MENU_ALLOWED_OPTIONS } from '../../config/menusAllowed'
+import { normalizeMenusAllowed } from '../../utils/authSession'
 
 const ROLE_OPTIONS = ['admin', 'user', 'apcef', 'oab', 'bancarios']
 
@@ -32,12 +35,15 @@ const createEmptyUser = () => ({
   username: '',
   password: '',
   roles: '',
+  menusAllowed: '',
 })
 
 const normalizeText = (value) => {
   const text = String(value ?? '').trim()
   return text || undefined
 }
+
+const serializeMenusAllowed = (value) => normalizeMenusAllowed(value).join(',')
 
 const UsuariosCrud = () => {
   const [users, setUsers] = useState([])
@@ -91,6 +97,7 @@ const UsuariosCrud = () => {
         username: user?.username ?? '',
         password: '',
         roles: user?.roles ?? '',
+        menusAllowed: serializeMenusAllowed(user?.menusAllowed),
       })
     } catch (error) {
       setFeedback({ type: 'danger', message: 'Não foi possível carregar o usuário selecionado.' })
@@ -105,6 +112,27 @@ const UsuariosCrud = () => {
       ...previous,
       [name]: value,
     }))
+  }
+
+  const handleMenuAllowedChange = ({ target }) => {
+    const { checked, value } = target
+
+    setFormData((previous) => {
+      const selectedAliases = new Set(normalizeMenusAllowed(previous.menusAllowed))
+
+      if (checked) {
+        selectedAliases.add(value)
+      } else {
+        selectedAliases.delete(value)
+      }
+
+      return {
+        ...previous,
+        menusAllowed: MENU_ALLOWED_OPTIONS.map((option) => option.alias)
+          .filter((alias) => selectedAliases.has(alias))
+          .join(','),
+      }
+    })
   }
 
   const handleReset = () => {
@@ -126,6 +154,11 @@ const UsuariosCrud = () => {
       return
     }
 
+    if (!formData.menusAllowed) {
+      setFeedback({ type: 'danger', message: 'Selecione ao menos um menu para o usuário.' })
+      return
+    }
+
     if (!selectedUserId && !formData.password) {
       setFeedback({ type: 'danger', message: 'Informe a senha para cadastrar um novo usuário.' })
       return
@@ -139,6 +172,7 @@ const UsuariosCrud = () => {
         name: normalizeText(formData.name),
         username: normalizeText(formData.username),
         roles: normalizeText(formData.roles),
+        menusAllowed: serializeMenusAllowed(formData.menusAllowed),
       }
 
       const password = normalizeText(formData.password)
@@ -317,10 +351,37 @@ const UsuariosCrud = () => {
                 </CCol>
               </CRow>
 
+              <CRow className="g-3">
+                <CCol xs={12}>
+                  <CFormLabel>Menus permitidos</CFormLabel>
+                  <CRow className="g-2">
+                    {MENU_ALLOWED_OPTIONS.map((option) => (
+                      <CCol sm={6} lg={4} key={option.alias}>
+                        <CFormCheck
+                          id={`usuario-menu-${option.alias}`}
+                          label={option.menu}
+                          value={option.alias}
+                          checked={normalizeMenusAllowed(formData.menusAllowed).includes(
+                            option.alias,
+                          )}
+                          onChange={handleMenuAllowedChange}
+                        />
+                      </CCol>
+                    ))}
+                  </CRow>
+                </CCol>
+              </CRow>
+
               <div className="d-flex gap-2">
                 <CButton color="primary" type="submit" disabled={isSaving}>
                   <CIcon icon={cilSave} className="me-2" />
-                  {isSaving ? 'Salvando...' : 'Salvar'}
+                  {isSaving
+                    ? selectedUserId
+                      ? 'Atualizando...'
+                      : 'Salvando...'
+                    : selectedUserId
+                      ? 'Atualizar'
+                      : 'Salvar'}
                 </CButton>
                 <CButton color="secondary" variant="outline" type="button" onClick={handleReset}>
                   <CIcon icon={cilReload} className="me-2" />

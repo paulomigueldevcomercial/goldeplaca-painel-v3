@@ -598,7 +598,8 @@ const JogosCrud = () => {
 
               <div className="d-flex flex-wrap gap-2">
                 <CButton color="primary" type="submit" disabled={isLoading}>
-                  <CIcon icon={cilSave} className="me-2" /> Salvar
+                  <CIcon icon={cilSave} className="me-2" />{' '}
+                  {selectedGameId ? 'Atualizar' : 'Salvar'}
                 </CButton>
                 <CButton
                   color="secondary"

@@ -2,6 +2,7 @@ import React from 'react'
 import {
   getVisibleLegacyMenuSections,
   isAdminOnlyLegacyMenuItem,
+  isAlwaysVisibleLegacyMenuItem,
 } from './views/painel/legacyMenuData'
 
 const PainelMenu = React.lazy(() => import('./views/painel/PainelMenu'))
@@ -35,6 +36,8 @@ const routes = [
     path: item.path,
     name: item.label,
     adminOnly: isAdminOnlyLegacyMenuItem(item),
+    alwaysAllowed: isAlwaysVisibleLegacyMenuItem(item),
+    menuAlias: item.menuAlias,
     element:
       item.route === 'painel/albuns'
         ? GaleriaCrud

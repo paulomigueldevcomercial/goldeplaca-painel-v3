@@ -23,7 +23,10 @@ const AppSidebar = () => {
   const sidebarShow = useSelector((state) => state.sidebarShow)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
   const authUser = useSelector((state) => state.auth?.user)
-  const navigation = buildNavigation(authUser?.roleList ?? authUser?.roles)
+  const navigation = buildNavigation(
+    authUser?.roleList ?? authUser?.roles,
+    authUser?.menusAllowedList ?? authUser?.menusAllowed,
+  )
   const isAdmin = hasAdminRole(authUser?.roleList ?? authUser?.roles)
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import React, { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { CContainer, CSpinner } from '@coreui/react'
 import RequireAdmin from './auth/RequireAdmin'
+import RequireMenuAccess from './auth/RequireMenuAccess'
 
 // routes config
 import routes from '../routes'
@@ -22,8 +23,20 @@ const AppContent = () => {
                   element={
                     route.adminOnly ? (
                       <RequireAdmin>
-                        <route.element />
+                        <RequireMenuAccess
+                          alwaysAllowed={route.alwaysAllowed}
+                          menuAlias={route.menuAlias}
+                        >
+                          <route.element />
+                        </RequireMenuAccess>
                       </RequireAdmin>
+                    ) : route.menuAlias || route.alwaysAllowed ? (
+                      <RequireMenuAccess
+                        alwaysAllowed={route.alwaysAllowed}
+                        menuAlias={route.menuAlias}
+                      >
+                        <route.element />
+                      </RequireMenuAccess>
                     ) : (
                       <route.element />
                     )

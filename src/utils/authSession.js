@@ -27,6 +27,21 @@ const normalizeRoleEntries = (value) => {
   return []
 }
 
+const normalizeCommaSeparatedEntries = (value) => {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => normalizeCommaSeparatedEntries(entry))
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean)
+  }
+
+  return []
+}
+
 const decodeJwtPayload = (token) => {
   if (!token || typeof token !== 'string') return null
 
@@ -64,6 +79,14 @@ export const normalizeRoles = (value) => Array.from(new Set(normalizeRoleEntries
 
 export const hasAdminRole = (value) => normalizeRoles(value).includes('admin')
 
+export const normalizeMenusAllowed = (value) =>
+  Array.from(new Set(normalizeCommaSeparatedEntries(value)))
+
+export const hasAllowedMenu = (menusAllowed, alias) => {
+  if (!alias) return false
+  return normalizeMenusAllowed(menusAllowed).includes(String(alias).trim().toLowerCase())
+}
+
 export const buildSessionFromLogin = (response, credentials = {}) => {
   const token =
     response?.token ??
@@ -75,20 +98,36 @@ export const buildSessionFromLogin = (response, credentials = {}) => {
     ''
 
   const decodedToken = decodeJwtPayload(token)
+  const responseUser = response?.user ?? response?.usuario ?? null
   const roleList = normalizeRoles(
     response?.roles ??
       response?.role ??
       response?.authorities ??
+      responseUser?.roles ??
+      responseUser?.role ??
+      responseUser?.authorities ??
       decodedToken?.roles ??
       decodedToken?.role ??
       decodedToken?.authorities ??
       decodedToken?.scope,
   )
 
+  const menusAllowedList = normalizeMenusAllowed(
+    response?.menusAllowed ??
+      response?.menus_allowed ??
+      responseUser?.menusAllowed ??
+      responseUser?.menus_allowed ??
+      decodedToken?.menusAllowed ??
+      decodedToken?.menus_allowed,
+  )
+
   const competitionId =
     response?.competicaoId ??
     response?.competitionId ??
     response?.competicao ??
+    responseUser?.competicaoId ??
+    responseUser?.competitionId ??
+    responseUser?.competicao ??
     decodedToken?.competicaoId ??
     decodedToken?.competitionId ??
     decodedToken?.competicao ??
@@ -98,11 +137,14 @@ export const buildSessionFromLogin = (response, credentials = {}) => {
     token,
     message: response?.message ?? response?.mensagem ?? '',
     user: {
-      id: response?.id ?? decodedToken?.id ?? '',
-      name: response?.name ?? decodedToken?.name ?? credentials.username ?? '',
+      id: response?.id ?? responseUser?.id ?? decodedToken?.id ?? '',
+      name:
+        response?.name ?? responseUser?.name ?? decodedToken?.name ?? credentials.username ?? '',
       username:
         response?.username ??
         response?.userName ??
+        responseUser?.username ??
+        responseUser?.userName ??
         decodedToken?.preferred_username ??
         decodedToken?.username ??
         decodedToken?.sub ??
@@ -110,6 +152,8 @@ export const buildSessionFromLogin = (response, credentials = {}) => {
         '',
       roles: roleList.join(','),
       roleList,
+      menusAllowed: menusAllowedList.join(','),
+      menusAllowedList,
       competicaoId: competitionId ? String(competitionId) : '',
     },
     raw: response ?? null,

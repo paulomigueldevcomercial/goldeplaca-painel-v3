@@ -1,0 +1,33 @@
+export const MENU_ALLOWED_OPTIONS = [
+  { menu: 'Notícias', alias: 'noticias' },
+  { menu: 'Patrocinadores', alias: 'patrocinadores' },
+  { menu: 'Upload Súmula', alias: 'upload_sumula' },
+  { menu: 'Jogadores', alias: 'jogadores' },
+  { menu: 'Equipes', alias: 'equipes' },
+  { menu: 'Categorias', alias: 'categorias' },
+  { menu: 'Súmula', alias: 'sumula' },
+  { menu: 'Jogos', alias: 'jogos' },
+  { menu: 'Usuários', alias: 'usuarios' },
+  { menu: 'Competição', alias: 'competicao' },
+  { menu: 'Súmula Campo', alias: 'sumula_campo' },
+  { menu: 'Súmula Futsal', alias: 'sumula_futsal' },
+  { menu: 'Rodada da Semana', alias: 'rodada_da_semana' },
+  { menu: 'Julgamento', alias: 'relatorios_julgamento' },
+]
+
+export const MENU_ALIAS_BY_ROUTE = {
+  'painel/noticiascompeticao': 'noticias',
+  'painel/patrocinadores': 'patrocinadores',
+  'painel/viewuploadsumula': 'upload_sumula',
+  'painel/criarjogadores': 'jogadores',
+  'painel/criarequipes': 'equipes',
+  'painel/categorias': 'categorias',
+  'sumula/selecao': 'sumula',
+  'painel/viewjogos': 'jogos',
+  'user/admin': 'usuarios',
+  'gerenciador/competicao/admin': 'competicao',
+  'painel/sumulacampo': 'sumula_campo',
+  'painel/sumulafutsal': 'sumula_futsal',
+  'painel/tblsemana': 'rodada_da_semana',
+  'painel/julgamento': 'relatorios_julgamento',
+}

@@ -1,4 +1,5 @@
-import { hasAdminRole } from '../../utils/authSession'
+import { hasAdminRole, normalizeMenusAllowed } from '../../utils/authSession'
+import { MENU_ALIAS_BY_ROUTE } from '../../config/menusAllowed'
 
 export const hidePendingLegacyMenuItems = true
 
@@ -27,8 +28,13 @@ export const shouldShowLegacyMenuItem = (item) =>
 
 export const isAdminOnlyLegacyMenuItem = (item) => item.route === 'user/admin'
 
-export const shouldShowLegacyMenuItemForRoles = (item, roles) =>
-  shouldShowLegacyMenuItem(item) && (!isAdminOnlyLegacyMenuItem(item) || hasAdminRole(roles))
+export const isAlwaysVisibleLegacyMenuItem = (item) => item.route === 'gerenciador/acesso/logout'
+
+export const shouldShowLegacyMenuItemForAccess = (item, roles, menusAllowed = []) =>
+  shouldShowLegacyMenuItem(item) &&
+  (isAlwaysVisibleLegacyMenuItem(item) ||
+    (normalizeMenusAllowed(menusAllowed).includes(item.menuAlias) &&
+      (!isAdminOnlyLegacyMenuItem(item) || hasAdminRole(roles))))
 
 export const getVisibleLegacyMenuSections = () =>
   legacyMenuSections
@@ -38,11 +44,13 @@ export const getVisibleLegacyMenuSections = () =>
     }))
     .filter((section) => section.items.length > 0)
 
-export const getVisibleLegacyMenuSectionsForRoles = (roles) =>
+export const getVisibleLegacyMenuSectionsForAccess = (roles, menusAllowed = []) =>
   legacyMenuSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => shouldShowLegacyMenuItemForRoles(item, roles)),
+      items: section.items.filter((item) =>
+        shouldShowLegacyMenuItemForAccess(item, roles, menusAllowed),
+      ),
     }))
     .filter((section) => section.items.length > 0)
 
@@ -238,5 +246,11 @@ const legacyMenuSections = [
     ],
   },
 ]
+
+legacyMenuSections.forEach((section) => {
+  section.items.forEach((item) => {
+    item.menuAlias = MENU_ALIAS_BY_ROUTE[item.route] ?? ''
+  })
+})
 
 export default legacyMenuSections

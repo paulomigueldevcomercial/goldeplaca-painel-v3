@@ -567,7 +567,8 @@ const NoticiasCrud = () => {
 
                 <div className="d-flex flex-wrap gap-2">
                   <CButton color="primary" type="submit">
-                    <CIcon icon={cilSave} className="me-2" /> Salvar
+                    <CIcon icon={cilSave} className="me-2" />{' '}
+                    {selectedNewsId ? 'Atualizar' : 'Salvar'}
                   </CButton>
                   <CButton
                     color="secondary"

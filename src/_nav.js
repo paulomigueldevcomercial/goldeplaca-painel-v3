@@ -2,10 +2,10 @@ import React from 'react'
 import CIcon from '@coreui/icons-react'
 import { cilNotes } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
-import { getVisibleLegacyMenuSectionsForRoles } from './views/painel/legacyMenuData'
+import { getVisibleLegacyMenuSectionsForAccess } from './views/painel/legacyMenuData'
 
-export const buildNavigation = (roles) =>
-  getVisibleLegacyMenuSectionsForRoles(roles).flatMap((section) => [
+export const buildNavigation = (roles, menusAllowed) =>
+  getVisibleLegacyMenuSectionsForAccess(roles, menusAllowed).flatMap((section) => [
     {
       component: CNavTitle,
       name: section.title,

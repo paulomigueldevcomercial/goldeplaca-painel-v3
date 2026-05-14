@@ -41,9 +41,7 @@ const GaleriaCrud = () => {
 
   const selectedCompetition = useMemo(
     () =>
-      competitions.find(
-        (competition) => String(competition.id) === String(selectedCompetitionId),
-      ),
+      competitions.find((competition) => String(competition.id) === String(selectedCompetitionId)),
     [competitions, selectedCompetitionId],
   )
 
@@ -102,15 +100,14 @@ const GaleriaCrud = () => {
     setCompetitions((previous) => {
       const targetId = String(selectedCompetitionId)
       const existing = previous.find((competition) => String(competition.id) === targetId)
-      const baseCompetition =
-        existing ?? {
-          id: targetId,
-          name: `Competição ${targetId}`,
-          season: '',
-          category: '',
-          news: [],
-          galleries: [],
-        }
+      const baseCompetition = existing ?? {
+        id: targetId,
+        name: `Competição ${targetId}`,
+        season: '',
+        category: '',
+        news: [],
+        galleries: [],
+      }
       const galleries = selectedGalleryId
         ? baseCompetition.galleries.map((gallery) =>
             gallery.id === selectedGalleryId ? payload : gallery,
@@ -126,7 +123,11 @@ const GaleriaCrud = () => {
     })
 
     setSelectedGalleryId(galleryId)
-    setFeedback(selectedGalleryId ? 'Galeria atualizada com sucesso.' : 'Nova galeria criada para a competição.')
+    setFeedback(
+      selectedGalleryId
+        ? 'Galeria atualizada com sucesso.'
+        : 'Nova galeria criada para a competição.',
+    )
   }
 
   const handleDeleteGallery = () => {
@@ -216,7 +217,9 @@ const GaleriaCrud = () => {
               </CCardHeader>
               <CCardBody className="p-0">
                 {galleries.length === 0 ? (
-                  <div className="p-3 text-medium-emphasis">Nenhuma galeria cadastrada para esta competição.</div>
+                  <div className="p-3 text-medium-emphasis">
+                    Nenhuma galeria cadastrada para esta competição.
+                  </div>
                 ) : (
                   <CListGroup flush>
                     {galleries.map((gallery) => (
@@ -229,9 +232,19 @@ const GaleriaCrud = () => {
                         <div className="d-flex justify-content-between align-items-start">
                           <div>
                             <div className="fw-semibold">{gallery.title}</div>
-                            <small className="text-medium-emphasis">Atualizado em {gallery.updatedAt}</small>
+                            <small className="text-medium-emphasis">
+                              Atualizado em {gallery.updatedAt}
+                            </small>
                           </div>
-                          <CBadge color={gallery.status === 'ativa' ? 'success' : gallery.status === 'rascunho' ? 'warning' : 'secondary'}>
+                          <CBadge
+                            color={
+                              gallery.status === 'ativa'
+                                ? 'success'
+                                : gallery.status === 'rascunho'
+                                  ? 'warning'
+                                  : 'secondary'
+                            }
+                          >
                             {gallery.status}
                           </CBadge>
                         </div>
@@ -329,7 +342,8 @@ const GaleriaCrud = () => {
 
                   <div className="d-flex flex-wrap gap-2">
                     <CButton color="primary" type="submit">
-                      <CIcon icon={cilSave} className="me-2" /> Salvar
+                      <CIcon icon={cilSave} className="me-2" />{' '}
+                      {selectedGalleryId ? 'Atualizar' : 'Salvar'}
                     </CButton>
                     <CButton
                       color="secondary"

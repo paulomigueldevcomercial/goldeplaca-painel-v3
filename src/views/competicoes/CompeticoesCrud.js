@@ -19,7 +19,12 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@coreui/icons'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
-import { createCompeticao, deleteCompeticao, listCompeticoes, updateCompeticao } from '../../services/competicaoApi'
+import {
+  createCompeticao,
+  deleteCompeticao,
+  listCompeticoes,
+  updateCompeticao,
+} from '../../services/competicaoApi'
 
 const createEmptyCompetition = () => ({
   id: '',
@@ -89,7 +94,9 @@ const CompeticoesCrud = () => {
   useEffect(() => {
     if (!selectedCompetitionId) return
 
-    const competition = competitions.find((item) => String(item.id) === String(selectedCompetitionId))
+    const competition = competitions.find(
+      (item) => String(item.id) === String(selectedCompetitionId),
+    )
     if (!competition) return
 
     setFormData({
@@ -219,7 +226,8 @@ const CompeticoesCrud = () => {
             <div>
               <h4 className="mb-1">Competições</h4>
               <div className="text-medium-emphasis">
-                Cadastre competições e envie imagens pelo formulário para o endpoint de competições do painel.
+                Cadastre competições e envie imagens pelo formulário para o endpoint de competições
+                do painel.
               </div>
               <SelectedCompetitionBadge className="mt-2" />
             </div>
@@ -249,7 +257,9 @@ const CompeticoesCrud = () => {
             ) : filteredCompetitions.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhuma competição cadastrada.</div>
             ) : visibleCompetitions.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhuma competição encontrada para o termo buscado.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhuma competição encontrada para o termo buscado.
+              </div>
             ) : (
               <CListGroup flush>
                 {visibleCompetitions.map((competition) => (
@@ -262,16 +272,25 @@ const CompeticoesCrud = () => {
                     <div className="d-flex justify-content-between align-items-start gap-2">
                       <div>
                         <div className="fw-semibold">
-                          {competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`}
+                          {competition.nomeCompeticao ||
+                            competition.descricao ||
+                            `Competição ${competition.id}`}
                         </div>
-                        <small className="text-medium-emphasis">Temporada {competition.temporada || 'não informada'}</small>
+                        <small className="text-medium-emphasis">
+                          Temporada {competition.temporada || 'não informada'}
+                        </small>
                       </div>
                       <div className="d-flex flex-column align-items-end gap-1">
-                        <CBadge color={competition.ativo ? 'success' : 'secondary'} shape="rounded-pill">
+                        <CBadge
+                          color={competition.ativo ? 'success' : 'secondary'}
+                          shape="rounded-pill"
+                        >
                           {competition.ativo ? 'Ativa' : 'Inativa'}
                         </CBadge>
                         <CBadge color="info" shape="rounded-pill">
-                          {competition.modalidadeId ? `Modalidade ${competition.modalidadeId}` : 'Sem modalidade'}
+                          {competition.modalidadeId
+                            ? `Modalidade ${competition.modalidadeId}`
+                            : 'Sem modalidade'}
                         </CBadge>
                       </div>
                     </div>
@@ -293,7 +312,9 @@ const CompeticoesCrud = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <div>
               <strong>{selectedCompetitionId ? 'Editar competição' : 'Nova competição'}</strong>
-              <div className="small text-medium-emphasis">Preencha os campos obrigatórios para salvar.</div>
+              <div className="small text-medium-emphasis">
+                Preencha os campos obrigatórios para salvar.
+              </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={handleReset}>
               <CIcon icon={cilPlus} className="me-2" /> Novo
@@ -488,7 +509,9 @@ const CompeticoesCrud = () => {
                     accept="image/*"
                     onChange={(event) => handleImageChange(event, 'foto', 'fotoFileName')}
                   />
-                  {formData.fotoFileName && <div className="form-text">Arquivo selecionado: {formData.fotoFileName}</div>}
+                  {formData.fotoFileName && (
+                    <div className="form-text">Arquivo selecionado: {formData.fotoFileName}</div>
+                  )}
                 </CCol>
                 <CCol md={6}>
                   <CFormLabel htmlFor="competition-imagem-empresa">Imagem da empresa</CFormLabel>
@@ -496,10 +519,14 @@ const CompeticoesCrud = () => {
                     id="competition-imagem-empresa"
                     type="file"
                     accept="image/*"
-                    onChange={(event) => handleImageChange(event, 'imagemEmpresa', 'imagemEmpresaFileName')}
+                    onChange={(event) =>
+                      handleImageChange(event, 'imagemEmpresa', 'imagemEmpresaFileName')
+                    }
                   />
                   {formData.imagemEmpresaFileName && (
-                    <div className="form-text">Arquivo selecionado: {formData.imagemEmpresaFileName}</div>
+                    <div className="form-text">
+                      Arquivo selecionado: {formData.imagemEmpresaFileName}
+                    </div>
                   )}
                 </CCol>
               </CRow>
@@ -516,7 +543,9 @@ const CompeticoesCrud = () => {
               </div>
 
               <div>
-                <CFormLabel htmlFor="competition-imagem-url">URL da imagem da empresa (opcional)</CFormLabel>
+                <CFormLabel htmlFor="competition-imagem-url">
+                  URL da imagem da empresa (opcional)
+                </CFormLabel>
                 <CFormInput
                   id="competition-imagem-url"
                   name="imagemEmpresa"
@@ -528,9 +557,16 @@ const CompeticoesCrud = () => {
 
               <div className="d-flex flex-wrap gap-2">
                 <CButton color="primary" type="submit" disabled={isLoading}>
-                  <CIcon icon={cilSave} className="me-2" /> Salvar
+                  <CIcon icon={cilSave} className="me-2" />{' '}
+                  {selectedCompetitionId ? 'Atualizar' : 'Salvar'}
                 </CButton>
-                <CButton color="secondary" variant="outline" type="button" onClick={handleReset} disabled={isLoading}>
+                <CButton
+                  color="secondary"
+                  variant="outline"
+                  type="button"
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
                 <CButton
@@ -548,8 +584,16 @@ const CompeticoesCrud = () => {
                 <div className="d-flex flex-column gap-2 border-top pt-3">
                   {formData.foto && (
                     <div className="d-flex align-items-center gap-2">
-                      <img src={formData.foto} alt="Foto da competição" width={96} height={64} className="rounded" />
-                      <div className="text-medium-emphasis">Pré-visualização da foto da competição.</div>
+                      <img
+                        src={formData.foto}
+                        alt="Foto da competição"
+                        width={96}
+                        height={64}
+                        className="rounded"
+                      />
+                      <div className="text-medium-emphasis">
+                        Pré-visualização da foto da competição.
+                      </div>
                     </div>
                   )}
                   {formData.imagemEmpresa && (
@@ -561,7 +605,9 @@ const CompeticoesCrud = () => {
                         height={64}
                         className="rounded"
                       />
-                      <div className="text-medium-emphasis">Pré-visualização da imagem da empresa.</div>
+                      <div className="text-medium-emphasis">
+                        Pré-visualização da imagem da empresa.
+                      </div>
                     </div>
                   )}
                 </div>

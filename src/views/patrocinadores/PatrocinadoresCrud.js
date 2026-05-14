@@ -194,7 +194,9 @@ const PatrocinadoresCrud = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <div>
               <strong>Patrocinadores</strong>
-              <div className="small text-medium-emphasis">Cadastro global via `patrocinio-controller`.</div>
+              <div className="small text-medium-emphasis">
+                Cadastro global via `patrocinio-controller`.
+              </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={resetForm}>
               <CIcon icon={cilPlus} className="me-2" /> Novo
@@ -286,7 +288,8 @@ const PatrocinadoresCrud = () => {
 
               <div className="d-flex flex-wrap gap-2">
                 <CButton color="primary" type="submit" disabled={isLoading}>
-                  <CIcon icon={cilSave} className="me-2" /> Salvar
+                  <CIcon icon={cilSave} className="me-2" />{' '}
+                  {selectedSponsorId ? 'Atualizar' : 'Salvar'}
                 </CButton>
                 <CButton
                   color="secondary"
