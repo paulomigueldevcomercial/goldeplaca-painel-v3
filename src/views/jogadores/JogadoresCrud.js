@@ -55,8 +55,8 @@ const createEmptyPlayer = () => ({
   cartao: '',
   jgd: 'Jgd',
   situacaoAtleta: 'AA',
-  representante: '',
-  tecnico: '',
+  at: 'OK',
+  sumula: 'HO',
   img: '',
   imgPerfil: '',
   imgFile: null,
@@ -298,6 +298,8 @@ const JogadoresCrud = () => {
       golContra: player.golContra ?? player.gols_contra ?? 0,
       jgd: player.jgd || 'Jgd',
       situacaoAtleta: player.situacaoAtleta || 'AA',
+      at: player.at || 'OK',
+      sumula: player.sumula || 'HO',
       img: resolveStaticImageUrl(player.img, PLAYER_IMAGE_BASE_PATH),
       imgPerfil: resolveStaticImageUrl(
         player.imgPerfil ?? player.img_perfil,
@@ -439,6 +441,8 @@ const JogadoresCrud = () => {
         imgPerfilFileName,
         img_perfil,
         gols_contra,
+        representante,
+        tecnico,
         ...playerData
       } = formData
       const payload = {
@@ -452,6 +456,8 @@ const JogadoresCrud = () => {
         golContra: parseNonNegativeNumberOrZero(submittedValues.golContra ?? formData.golContra),
         jgd: submittedValues.jgd || formData.jgd || 'Jgd',
         situacaoAtleta: submittedValues.situacaoAtleta || formData.situacaoAtleta || 'AA',
+        at: submittedValues.at || formData.at || 'OK',
+        sumula: submittedValues.sumula || formData.sumula || 'HO',
       }
 
       if (selectedPlayerId) {
@@ -694,6 +700,32 @@ const JogadoresCrud = () => {
                     <option value="EX">EX</option>
                   </CFormSelect>
                 </CCol>
+                <CCol md={3}>
+                  <CFormLabel htmlFor="player-at">Atestado</CFormLabel>
+                  <CFormSelect
+                    id="player-at"
+                    name="at"
+                    value={formData.at}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="OK">OK</option>
+                    <option value="AT">Atestado</option>
+                  </CFormSelect>
+                </CCol>
+                <CCol md={3}>
+                  <CFormLabel htmlFor="player-sumula">Súmula</CFormLabel>
+                  <CFormSelect
+                    id="player-sumula"
+                    name="sumula"
+                    value={formData.sumula}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="HO">Homologado</option>
+                    <option value="NH">Não homologado</option>
+                  </CFormSelect>
+                </CCol>
               </CRow>
 
               <div>
@@ -794,27 +826,6 @@ const JogadoresCrud = () => {
                     type="number"
                     min="0"
                     value={formData.golContra}
-                    onChange={handleInputChange}
-                  />
-                </CCol>
-              </CRow>
-
-              <CRow className="g-3">
-                <CCol md={6}>
-                  <CFormLabel htmlFor="player-representante">Representante</CFormLabel>
-                  <CFormInput
-                    id="player-representante"
-                    name="representante"
-                    value={formData.representante}
-                    onChange={handleInputChange}
-                  />
-                </CCol>
-                <CCol md={6}>
-                  <CFormLabel htmlFor="player-tecnico">Técnico</CFormLabel>
-                  <CFormInput
-                    id="player-tecnico"
-                    name="tecnico"
-                    value={formData.tecnico}
                     onChange={handleInputChange}
                   />
                 </CCol>
