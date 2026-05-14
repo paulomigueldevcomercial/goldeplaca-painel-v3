@@ -343,7 +343,6 @@ const HistoricosCrud = () => {
               <div className="text-medium-emphasis">
                 Cadastro de históricos de competições com imagens dos destaques.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

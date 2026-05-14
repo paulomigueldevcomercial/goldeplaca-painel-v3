@@ -253,7 +253,6 @@ const ArtilheirosCrud = () => {
               <div className="text-medium-emphasis">
                 Cadastro dos maiores artilheiros com imagem de destaque.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>
