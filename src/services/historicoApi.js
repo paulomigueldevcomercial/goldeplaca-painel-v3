@@ -1,4 +1,4 @@
-import { buildUrl, requestJson } from './apiClient'
+import { API_BASE_URL, requestJson } from './apiClient'
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -13,10 +13,17 @@ const getAuthToken = () => {
 }
 
 const requestMultipart = async (path, { method = 'POST', historico, files = {} } = {}) => {
-  const url = buildUrl(path, historico)
+  const url = `${API_BASE_URL}${path}`
   const formData = new FormData()
   const token = getAuthToken()
   const headers = {}
+
+  if (historico) {
+    Object.entries(historico).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return
+      formData.append(key, String(value))
+    })
+  }
 
   Object.entries(files).forEach(([field, file]) => {
     if (file) {

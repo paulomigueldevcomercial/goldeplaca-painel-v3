@@ -1,4 +1,4 @@
-import { buildUrl, requestJson } from './apiClient'
+import { API_BASE_URL, requestJson } from './apiClient'
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -13,10 +13,18 @@ const getAuthToken = () => {
 }
 
 const requestMultipart = async (path, { method = 'POST', artilheiro, imageFile } = {}) => {
-  const url = buildUrl(path, artilheiro)
+  const url = `${API_BASE_URL}${path}`
   const formData = new FormData()
   const token = getAuthToken()
   const headers = {}
+
+  if (artilheiro) {
+    Object.entries(artilheiro).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return
+      if (key === 'imagem' && imageFile) return
+      formData.append(key, String(value))
+    })
+  }
 
   if (imageFile) {
     formData.append('imagem', imageFile)
