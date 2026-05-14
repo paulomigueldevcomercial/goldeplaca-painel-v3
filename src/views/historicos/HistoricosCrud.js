@@ -33,36 +33,42 @@ const HISTORICO_IMAGE_FIELDS = [
     fileField: 'img_campeao',
     valueField: 'imgCampeao',
     fileNameField: 'imgCampeaoFileName',
+    previewField: 'imgCampeaoPreviewUrl',
     label: 'Imagem campeão',
   },
   {
     fileField: 'img_vice_campeao',
     valueField: 'imgViceCampeao',
     fileNameField: 'imgViceCampeaoFileName',
+    previewField: 'imgViceCampeaoPreviewUrl',
     label: 'Imagem vice-campeão',
   },
   {
     fileField: 'img_terceiro_lugar',
     valueField: 'imgTerceiroLugar',
     fileNameField: 'imgTerceiroLugarFileName',
+    previewField: 'imgTerceiroLugarPreviewUrl',
     label: 'Imagem terceiro lugar',
   },
   {
     fileField: 'img_disciplina',
     valueField: 'imgDisciplina',
     fileNameField: 'imgDisciplinaFileName',
+    previewField: 'imgDisciplinaPreviewUrl',
     label: 'Imagem disciplina',
   },
   {
     fileField: 'img_melhor_defesa',
     valueField: 'imgMelhorDefesa',
     fileNameField: 'imgMelhorDefesaFileName',
+    previewField: 'imgMelhorDefesaPreviewUrl',
     label: 'Imagem melhor defesa',
   },
   {
     fileField: 'img_artilheiro',
     valueField: 'imgArtilheiro',
     fileNameField: 'imgArtilheiroFileName',
+    previewField: 'imgArtilheiroPreviewUrl',
     label: 'Imagem artilheiro',
   },
 ]
@@ -95,6 +101,12 @@ const createEmptyHistorico = () => ({
   imgDisciplinaFileName: '',
   imgMelhorDefesaFileName: '',
   imgArtilheiroFileName: '',
+  imgCampeaoPreviewUrl: '',
+  imgViceCampeaoPreviewUrl: '',
+  imgTerceiroLugarPreviewUrl: '',
+  imgDisciplinaPreviewUrl: '',
+  imgMelhorDefesaPreviewUrl: '',
+  imgArtilheiroPreviewUrl: '',
 })
 
 const parseNumber = (value) => {
@@ -108,6 +120,17 @@ const getCompetitionLabel = (competition) =>
   competition?.descricao ||
   competition?.temporada ||
   `Competição ${competition?.id ?? ''}`.trim()
+
+const normalizeHistoricoImageUrl = (value) => {
+  const url = String(value ?? '').trim()
+  if (!url) return ''
+  if (/^(https?:|data:|blob:)/i.test(url)) return url
+  if (url.startsWith('/')) return url
+  const normalizedUrl = url.replace(/^painel\//, '')
+  if (normalizedUrl.startsWith('images/')) return `/${normalizedUrl}`
+  if (normalizedUrl.startsWith('historico/')) return `/images/${normalizedUrl}`
+  return `/images/historico/${normalizedUrl}`
+}
 
 const buildPayload = (formData, selectedId) => ({
   id: selectedId ? parseNumber(selectedId) : (parseNumber(formData.id) ?? undefined),
@@ -245,6 +268,7 @@ const HistoricosCrud = () => {
     setFormData((previous) => ({
       ...previous,
       [config.fileNameField]: file.name,
+      [config.previewField]: URL.createObjectURL(file),
     }))
   }
 
@@ -540,27 +564,40 @@ const HistoricosCrud = () => {
               </CRow>
 
               <CRow className="g-3">
-                {HISTORICO_IMAGE_FIELDS.map((config) => (
-                  <CCol md={6} key={config.fileField}>
-                    <CFormLabel htmlFor={`historico-${config.fileField}`}>
-                      {config.label}
-                    </CFormLabel>
-                    <CFormInput
-                      id={`historico-${config.fileField}`}
-                      type="file"
-                      accept={ACCEPTED_IMAGE_TYPES}
-                      onChange={(event) => handleImageChange(event, config)}
-                    />
-                    {formData[config.fileNameField] && (
-                      <div className="form-text">
-                        Arquivo selecionado: {formData[config.fileNameField]}
-                      </div>
-                    )}
-                    {formData[config.valueField] && !formData[config.fileNameField] && (
-                      <div className="form-text">Imagem atual: {formData[config.valueField]}</div>
-                    )}
-                  </CCol>
-                ))}
+                {HISTORICO_IMAGE_FIELDS.map((config) => {
+                  const previewUrl =
+                    formData[config.previewField] ||
+                    normalizeHistoricoImageUrl(formData[config.valueField])
+
+                  return (
+                    <CCol md={6} key={config.fileField}>
+                      <CFormLabel htmlFor={`historico-${config.fileField}`}>
+                        {config.label}
+                      </CFormLabel>
+                      <CFormInput
+                        id={`historico-${config.fileField}`}
+                        type="file"
+                        accept={ACCEPTED_IMAGE_TYPES}
+                        onChange={(event) => handleImageChange(event, config)}
+                      />
+                      {formData[config.fileNameField] && (
+                        <div className="form-text">
+                          Arquivo selecionado: {formData[config.fileNameField]}
+                        </div>
+                      )}
+                      {previewUrl && (
+                        <div className="mt-2">
+                          <img
+                            src={previewUrl}
+                            alt={`Prévia - ${config.label}`}
+                            className="img-fluid rounded border"
+                            style={{ maxHeight: '180px', objectFit: 'contain' }}
+                          />
+                        </div>
+                      )}
+                    </CCol>
+                  )
+                })}
               </CRow>
 
               <div className="d-flex flex-wrap gap-2">

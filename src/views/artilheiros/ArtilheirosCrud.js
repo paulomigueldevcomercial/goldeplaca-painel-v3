@@ -54,6 +54,14 @@ const getCompetitionLabel = (competition) =>
   competition?.temporada ||
   `Competição ${competition?.id ?? ''}`.trim()
 
+const normalizeImagePreviewUrl = (value) => {
+  const url = String(value ?? '').trim()
+  if (!url) return ''
+  if (/^(https?:|data:|blob:)/i.test(url)) return url
+  if (url.startsWith('/')) return url
+  return `/${url.replace(/^painel\//, '')}`
+}
+
 const ArtilheirosCrud = () => {
   const [artilheiros, setArtilheiros] = useState([])
   const [finishedCompetitions, setFinishedCompetitions] = useState([])
@@ -136,7 +144,7 @@ const ArtilheirosCrud = () => {
         artilheiro.competicao === null || artilheiro.competicao === undefined
           ? ''
           : String(artilheiro.competicao),
-      imagePreviewUrl: artilheiro.imagem ?? '',
+      imagePreviewUrl: normalizeImagePreviewUrl(artilheiro.imagem),
     })
     setFeedback(null)
   }
