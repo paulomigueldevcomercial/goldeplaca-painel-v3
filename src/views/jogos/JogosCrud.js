@@ -79,6 +79,21 @@ const formatGameDate = (value) => {
   return dateFormatter.format(date)
 }
 
+const normalizeText = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+
+const findTeamByIdOrName = (teams, id, name) => {
+  const idMatch = teams.find((team) => String(team.id) === String(id))
+  if (idMatch) return idMatch
+
+  const normalizedName = normalizeText(name)
+  if (!normalizedName) return null
+
+  return teams.find((team) => normalizeText(team.equipe) === normalizedName) ?? null
+}
+
 const JogosCrud = () => {
   const [teams, setTeams] = useState([])
   const [games, setGames] = useState([])
@@ -146,14 +161,20 @@ const JogosCrud = () => {
 
     const game = games.find((item) => String(item.codigo) === String(selectedGameId))
     if (!game) return
+    const team1 = findTeamByIdOrName(teams, game.equipe1Id, game.equipe1)
+    const team2 = findTeamByIdOrName(teams, game.equipe2Id, game.equipe2)
 
     setFormData({
       ...createEmptyGame(),
       ...game,
       competicaoId: String(game.competicaoId ?? selectedCompetitionId),
-      categoria: game.categoria ?? formData.categoria,
+      categoria: game.categoria ?? selectedCategoryId,
+      equipe1Id: String(team1?.id ?? game.equipe1Id ?? ''),
+      equipe1: team1?.equipe ?? game.equipe1 ?? '',
+      equipe2Id: String(team2?.id ?? game.equipe2Id ?? ''),
+      equipe2: team2?.equipe ?? game.equipe2 ?? '',
     })
-  }, [selectedGameId, games, selectedCompetitionId])
+  }, [selectedGameId, games, teams, selectedCompetitionId, selectedCategoryId])
 
   useEffect(() => {
     if (selectedGameId) return
@@ -205,14 +226,16 @@ const JogosCrud = () => {
     }))
   }
 
-  const handleTeamSelection = (targetFieldId, targetFieldName) => ({ target }) => {
-    const selectedTeam = teams.find((team) => String(team.id) === String(target.value))
-    setFormData((previous) => ({
-      ...previous,
-      [targetFieldId]: target.value,
-      [targetFieldName]: selectedTeam?.equipe ?? '',
-    }))
-  }
+  const handleTeamSelection =
+    (targetFieldId, targetFieldName) =>
+    ({ target }) => {
+      const selectedTeam = teams.find((team) => String(team.id) === String(target.value))
+      setFormData((previous) => ({
+        ...previous,
+        [targetFieldId]: target.value,
+        [targetFieldName]: selectedTeam?.equipe ?? '',
+      }))
+    }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -297,7 +320,8 @@ const JogosCrud = () => {
             <div>
               <h4 className="mb-1">Jogos</h4>
               <div className="text-medium-emphasis">
-                Cadastre partidas utilizando os endpoints de jogos e selecione as equipes vinculadas à competição.
+                Cadastre partidas utilizando os endpoints de jogos e selecione as equipes vinculadas
+                à competição.
               </div>
               <SelectedCompetitionBadge className="mt-2" />
             </div>
@@ -310,7 +334,9 @@ const JogosCrud = () => {
           <CCardHeader className="d-flex flex-column gap-2">
             <div>
               <strong>Jogos</strong>
-              <div className="small text-medium-emphasis">Filtrados pela competição selecionada e categoria</div>
+              <div className="small text-medium-emphasis">
+                Filtrados pela competição selecionada e categoria
+              </div>
             </div>
             <div className="d-flex gap-2">
               <CategorySelect
@@ -340,9 +366,13 @@ const JogosCrud = () => {
                 <CSpinner size="sm" /> Carregando jogos...
               </div>
             ) : filteredGames.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhum jogo cadastrado para esta competição.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhum jogo cadastrado para esta competição.
+              </div>
             ) : visibleGames.length === 0 ? (
-              <div className="p-3 text-medium-emphasis">Nenhum jogo encontrado para o termo buscado.</div>
+              <div className="p-3 text-medium-emphasis">
+                Nenhum jogo encontrado para o termo buscado.
+              </div>
             ) : (
               <CListGroup flush>
                 {visibleGames.map((game) => (
@@ -386,7 +416,9 @@ const JogosCrud = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <div>
               <strong>{selectedGameId ? 'Editar jogo' : 'Novo jogo'}</strong>
-              <div className="small text-medium-emphasis">Preencha os campos obrigatórios para salvar.</div>
+              <div className="small text-medium-emphasis">
+                Preencha os campos obrigatórios para salvar.
+              </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={handleReset}>
               <CIcon icon={cilPlus} className="me-2" /> Novo
@@ -443,7 +475,12 @@ const JogosCrud = () => {
                 </CCol>
                 <CCol md={6}>
                   <CFormLabel htmlFor="game-time">Horário</CFormLabel>
-                  <CFormInput id="game-time" name="hora" value={formData.hora} onChange={handleInputChange} />
+                  <CFormInput
+                    id="game-time"
+                    name="hora"
+                    value={formData.hora}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
               </CRow>
 
@@ -487,11 +524,21 @@ const JogosCrud = () => {
               <CRow className="g-3">
                 <CCol md={3}>
                   <CFormLabel htmlFor="game-score1">Placar 1</CFormLabel>
-                  <CFormInput id="game-score1" name="placar1" value={formData.placar1} onChange={handleInputChange} />
+                  <CFormInput
+                    id="game-score1"
+                    name="placar1"
+                    value={formData.placar1}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="game-score2">Placar 2</CFormLabel>
-                  <CFormInput id="game-score2" name="placar2" value={formData.placar2} onChange={handleInputChange} />
+                  <CFormInput
+                    id="game-score2"
+                    name="placar2"
+                    value={formData.placar2}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="game-penalty1">Pênaltis Eq. 1</CFormLabel>
@@ -518,11 +565,21 @@ const JogosCrud = () => {
               <CRow className="g-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="game-field">Campo</CFormLabel>
-                  <CFormInput id="game-field" name="campo" value={formData.campo} onChange={handleInputChange} />
+                  <CFormInput
+                    id="game-field"
+                    name="campo"
+                    value={formData.campo}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="game-stage">Fase</CFormLabel>
-                  <CFormInput id="game-stage" name="fase" value={formData.fase} onChange={handleInputChange} />
+                  <CFormInput
+                    id="game-stage"
+                    name="fase"
+                    value={formData.fase}
+                    onChange={handleInputChange}
+                  />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="game-highlight">Destaque</CFormLabel>
@@ -543,7 +600,13 @@ const JogosCrud = () => {
                 <CButton color="primary" type="submit" disabled={isLoading}>
                   <CIcon icon={cilSave} className="me-2" /> Salvar
                 </CButton>
-                <CButton color="secondary" variant="outline" type="button" onClick={handleReset} disabled={isLoading}>
+                <CButton
+                  color="secondary"
+                  variant="outline"
+                  type="button"
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
                 <CButton
