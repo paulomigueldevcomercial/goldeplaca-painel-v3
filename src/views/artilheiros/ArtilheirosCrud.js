@@ -182,6 +182,11 @@ const ArtilheirosCrud = () => {
       return
     }
 
+    if (!formData.imageFile && !formData.imagem) {
+      setFeedback({ type: 'danger', message: 'Selecione a imagem do artilheiro.' })
+      return
+    }
+
     setIsLoading(true)
     try {
       const payload = {
@@ -406,6 +411,7 @@ const ArtilheirosCrud = () => {
                   type="file"
                   accept={ACCEPTED_IMAGE_TYPES}
                   onChange={handleImageChange}
+                  required={!formData.imageFile && !formData.imagem}
                 />
                 {formData.imageFileName && (
                   <div className="form-text">Arquivo selecionado: {formData.imageFileName}</div>
