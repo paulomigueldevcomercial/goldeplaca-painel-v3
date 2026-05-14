@@ -13,6 +13,8 @@ export const MENU_ALLOWED_OPTIONS = [
   { menu: 'Súmula Futsal', alias: 'sumula_futsal' },
   { menu: 'Rodada da Semana', alias: 'rodada_da_semana' },
   { menu: 'Julgamento', alias: 'relatorios_julgamento' },
+  { menu: 'Artilheiros', alias: 'artilheiros' },
+  { menu: 'Histórico', alias: 'historico' },
 ]
 
 export const MENU_ALIAS_BY_ROUTE = {
@@ -30,4 +32,6 @@ export const MENU_ALIAS_BY_ROUTE = {
   'painel/sumulafutsal': 'sumula_futsal',
   'painel/tblsemana': 'rodada_da_semana',
   'painel/julgamento': 'relatorios_julgamento',
+  'painel/artilheiros-geral': 'artilheiros',
+  'historico/admin': 'historico',
 }

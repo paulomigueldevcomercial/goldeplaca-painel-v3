@@ -22,6 +22,8 @@ const JulgamentosCrud = React.lazy(() => import('./views/julgamentos/Julgamentos
 const RodadaSemanaReport = React.lazy(() => import('./views/relatorios/RodadaSemanaReport'))
 const SumulaReport = React.lazy(() => import('./views/relatorios/SumulaReport'))
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
+const ArtilheirosCrud = React.lazy(() => import('./views/artilheiros/ArtilheirosCrud'))
+const HistoricosCrud = React.lazy(() => import('./views/historicos/HistoricosCrud'))
 const Logout = React.lazy(() => import('./views/pages/logout/Logout'))
 
 const legacyItems = getVisibleLegacyMenuSections().flatMap((section) => section.items)
@@ -65,13 +67,17 @@ const routes = [
                               ? () => <SumulaReport variant="futsal" />
                               : item.route === 'user/admin'
                                 ? UsuariosCrud
-                                : item.route === 'gerenciador/acesso/logout'
-                                  ? Logout
-                                  : item.route === 'painel/viewuploadsumula'
-                                    ? UploadSumulaCrud
-                                    : item.route === 'sumula/selecao'
-                                      ? SumulasCrud
-                                      : buildLegacyRoute(item),
+                                : item.route === 'painel/artilheiros-geral'
+                                  ? ArtilheirosCrud
+                                  : item.route === 'historico/admin'
+                                    ? HistoricosCrud
+                                    : item.route === 'gerenciador/acesso/logout'
+                                      ? Logout
+                                      : item.route === 'painel/viewuploadsumula'
+                                        ? UploadSumulaCrud
+                                        : item.route === 'sumula/selecao'
+                                          ? SumulasCrud
+                                          : buildLegacyRoute(item),
   })),
 ]
 

@@ -18,6 +18,8 @@ export const implementedLegacyMenuRoutes = [
   'painel/sumulafutsal',
   'painel/tblsemana',
   'painel/julgamento',
+  'painel/artilheiros-geral',
+  'historico/admin',
   'gerenciador/acesso/logout',
 ]
 
@@ -131,12 +133,6 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento/carteirinha',
       },
       {
-        label: 'Imagem Artilheiros Geral',
-        route: 'painel/imagensartilheiro',
-        visibility: 'Disponível exceto para competições 32, 29, 45 e 38',
-        path: '/painel/gerenciamento/imagem-artilheiros-geral',
-      },
-      {
         label: 'Usuários',
         route: 'user/admin',
         visibility: 'Disponível apenas para administradores',
@@ -223,8 +219,14 @@ const legacyMenuSections = [
       {
         label: 'Histórico',
         route: 'historico/admin',
-        visibility: 'Disponível para competições permitidas',
+        visibility: 'Disponível para cadastro de históricos de competições',
         path: '/painel/historico/historico',
+      },
+      {
+        label: 'Artilheiros',
+        route: 'painel/artilheiros-geral',
+        visibility: 'Disponível para cadastro dos maiores artilheiros',
+        path: '/painel/historico/artilheiros',
       },
     ],
   },
