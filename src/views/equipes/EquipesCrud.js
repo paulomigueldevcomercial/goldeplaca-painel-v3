@@ -29,8 +29,8 @@ const TEAM_LOGO_BASE_PATH = '/images/logo'
 const TEAM_PHOTO_BASE_PATH = '/images/logo/fotos'
 const MAX_TEAM_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const MAX_TEAM_IMAGE_SIZE_LABEL = '10 MB'
-const ACCEPTED_TEAM_IMAGE_TYPES = 'image/jpeg,image/png,.jpg,.jpeg,.png'
-const ALLOWED_TEAM_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png'])
+const ACCEPTED_TEAM_IMAGE_TYPES = 'image/jpeg,.jpg,.jpeg'
+const ALLOWED_TEAM_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg'])
 const TEAM_IMAGE_UPLOAD_OPTIONS = {
   logo: { maxWidth: 500, maxHeight: 500, maxBytes: 220 * 1024, quality: 0.72 },
   foto: { maxWidth: 900, maxHeight: 900, maxBytes: 450 * 1024, quality: 0.72 },
@@ -95,11 +95,7 @@ const readFileAsDataUrl = (file) =>
 
 const isSupportedImageFile = (file) => {
   const extension = file.name?.split('.').pop()?.toLowerCase()
-  return (
-    file.type === 'image/jpeg' ||
-    file.type === 'image/png' ||
-    ALLOWED_TEAM_IMAGE_EXTENSIONS.has(extension)
-  )
+  return file.type === 'image/jpeg' || ALLOWED_TEAM_IMAGE_EXTENSIONS.has(extension)
 }
 
 const loadImage = (file) =>
@@ -169,7 +165,7 @@ const formatFileSize = (bytes) => {
 }
 
 const getImageExtension = (value, fallback = 'jpg') => {
-  if (!value) return ''
+  if (!value) return fallback
 
   const imageValue = String(value).trim()
   const fileName = imageValue.split('?')[0].split('#')[0].split('/').filter(Boolean).pop() ?? ''
@@ -462,7 +458,7 @@ const EquipesCrud = () => {
 
     if (!isSupportedImageFile(file)) {
       target.value = ''
-      setFeedback({ type: 'danger', message: 'Selecione uma imagem JPG ou PNG válida.' })
+      setFeedback({ type: 'danger', message: 'Selecione uma imagem JPG válida.' })
       return
     }
 
