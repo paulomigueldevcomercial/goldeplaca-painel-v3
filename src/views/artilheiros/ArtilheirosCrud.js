@@ -42,10 +42,25 @@ const createEmptyArtilheiro = () => ({
   imagePreviewUrl: '',
 })
 
+const NON_NEGATIVE_NUMBER_FIELDS = new Set(['gols'])
+
 const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
   const parsed = Number(value)
   return Number.isNaN(parsed) ? null : parsed
+}
+
+const parseNonNegativeNumber = (value) => {
+  const parsed = parseNumber(value)
+  if (parsed === null) return null
+  return Math.max(0, parsed)
+}
+
+const normalizeNonNegativeInputValue = (value) => {
+  if (value === '') return ''
+  const parsed = Number(value)
+  if (Number.isNaN(parsed)) return value
+  return parsed < 0 ? '0' : value
 }
 
 const getCompetitionLabel = (competition) =>
@@ -157,7 +172,7 @@ const ArtilheirosCrud = () => {
     const { name, value } = target
     setFormData((previous) => ({
       ...previous,
-      [name]: value,
+      [name]: NON_NEGATIVE_NUMBER_FIELDS.has(name) ? normalizeNonNegativeInputValue(value) : value,
     }))
   }
 
@@ -189,7 +204,7 @@ const ArtilheirosCrud = () => {
           ? parseNumber(selectedArtilheiroId)
           : (parseNumber(formData.id) ?? undefined),
         nome: formData.nome.trim(),
-        gols: parseNumber(formData.gols),
+        gols: parseNonNegativeNumber(formData.gols),
         categoria: formData.categoria.trim(),
         equipe: formData.equipe.trim(),
         competicao: parseNumber(formData.competicao),
@@ -336,8 +351,11 @@ const ArtilheirosCrud = () => {
                     id="artilheiro-gols"
                     name="gols"
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.gols}
                     onChange={handleInputChange}
+                    onWheel={({ currentTarget }) => currentTarget.blur()}
                   />
                 </CCol>
               </CRow>

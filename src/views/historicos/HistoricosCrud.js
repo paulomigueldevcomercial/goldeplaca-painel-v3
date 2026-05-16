@@ -109,10 +109,31 @@ const createEmptyHistorico = () => ({
   imgArtilheiroPreviewUrl: '',
 })
 
+const NON_NEGATIVE_NUMBER_FIELDS = new Set([
+  'totalGol',
+  'totalJogos',
+  'totalAmarelo',
+  'totalVermelho',
+  'totalWo',
+])
+
 const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
   const parsed = Number(value)
   return Number.isNaN(parsed) ? null : parsed
+}
+
+const parseNonNegativeNumber = (value) => {
+  const parsed = parseNumber(value)
+  if (parsed === null) return null
+  return Math.max(0, parsed)
+}
+
+const normalizeNonNegativeInputValue = (value) => {
+  if (value === '') return ''
+  const parsed = Number(value)
+  if (Number.isNaN(parsed)) return value
+  return parsed < 0 ? '0' : value
 }
 
 const getCompetitionLabel = (competition) =>
@@ -146,11 +167,11 @@ const buildPayload = (formData, selectedId) => ({
   imgMelhorDefesa: formData.imgMelhorDefesa || undefined,
   artilheiro: formData.artilheiro.trim(),
   imgArtilheiro: formData.imgArtilheiro || undefined,
-  totalGol: parseNumber(formData.totalGol),
-  totalJogos: parseNumber(formData.totalJogos),
-  totalAmarelo: parseNumber(formData.totalAmarelo),
-  totalVermelho: parseNumber(formData.totalVermelho),
-  totalWo: parseNumber(formData.totalWo),
+  totalGol: parseNonNegativeNumber(formData.totalGol),
+  totalJogos: parseNonNegativeNumber(formData.totalJogos),
+  totalAmarelo: parseNonNegativeNumber(formData.totalAmarelo),
+  totalVermelho: parseNonNegativeNumber(formData.totalVermelho),
+  totalWo: parseNonNegativeNumber(formData.totalWo),
   competicaoHistorico: parseNumber(formData.competicaoHistorico),
   categoria: formData.categoria.trim(),
   ano: parseNumber(formData.ano),
@@ -253,7 +274,7 @@ const HistoricosCrud = () => {
     const { name, value } = target
     setFormData((previous) => ({
       ...previous,
-      [name]: value,
+      [name]: NON_NEGATIVE_NUMBER_FIELDS.has(name) ? normalizeNonNegativeInputValue(value) : value,
     }))
   }
 
@@ -516,8 +537,11 @@ const HistoricosCrud = () => {
                     id="historico-gols"
                     name="totalGol"
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.totalGol}
                     onChange={handleInputChange}
+                    onWheel={({ currentTarget }) => currentTarget.blur()}
                   />
                 </CCol>
                 <CCol md={2}>
@@ -526,8 +550,11 @@ const HistoricosCrud = () => {
                     id="historico-jogos"
                     name="totalJogos"
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.totalJogos}
                     onChange={handleInputChange}
+                    onWheel={({ currentTarget }) => currentTarget.blur()}
                   />
                 </CCol>
                 <CCol md={3}>
@@ -536,8 +563,11 @@ const HistoricosCrud = () => {
                     id="historico-amarelos"
                     name="totalAmarelo"
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.totalAmarelo}
                     onChange={handleInputChange}
+                    onWheel={({ currentTarget }) => currentTarget.blur()}
                   />
                 </CCol>
                 <CCol md={3}>
@@ -546,8 +576,11 @@ const HistoricosCrud = () => {
                     id="historico-vermelhos"
                     name="totalVermelho"
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.totalVermelho}
                     onChange={handleInputChange}
+                    onWheel={({ currentTarget }) => currentTarget.blur()}
                   />
                 </CCol>
                 <CCol md={2}>
@@ -556,8 +589,11 @@ const HistoricosCrud = () => {
                     id="historico-wo"
                     name="totalWo"
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.totalWo}
                     onChange={handleInputChange}
+                    onWheel={({ currentTarget }) => currentTarget.blur()}
                   />
                 </CCol>
               </CRow>
