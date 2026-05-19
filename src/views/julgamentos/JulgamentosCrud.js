@@ -79,7 +79,7 @@ const JulgamentosCrud = () => {
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
   const [julgamentos, setJulgamentos] = useState([])
   const [selectedJulgamentoId, setSelectedJulgamentoId] = useState(null)
-  const [filters, setFilters] = useState({ convocado: '', search: '' })
+  const [filters, setFilters] = useState({ convocado: 'SIM', search: '' })
   const [formData, setFormData] = useState(createEmptyJulgamento())
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -114,7 +114,7 @@ const JulgamentosCrud = () => {
       competicaoId: resolveCompetitionId(selectedCompetitionId),
       convocado: previous.convocado || 'SIM',
     }))
-    setFilters({ convocado: '', search: '' })
+    setFilters({ convocado: 'SIM', search: '' })
     setFeedback(null)
   }, [selectedCompetitionId])
 
