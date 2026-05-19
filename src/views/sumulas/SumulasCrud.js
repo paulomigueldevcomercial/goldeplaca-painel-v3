@@ -15,9 +15,15 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCheck, cilReload, cilSave, cilSearch } from '@coreui/icons'
+import { cilCheck, cilReload, cilSave, cilSearch, cilTrash } from '@coreui/icons'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
-import { createSumulaJogo, getSumulaFormulario } from '../../services/sumulasApi'
+import {
+  createSumulas,
+  deleteSumula,
+  getSumulaFormulario,
+  listSumulas,
+  updateSumula,
+} from '../../services/sumulasApi'
 
 const parseNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null
@@ -30,9 +36,25 @@ const toInputNumber = (value) => {
   return parsed ?? 0
 }
 
+const toBooleanFlag = (value) => {
+  if (value === true || value === false) return value
+
+  const parsed = parseNumber(value)
+  if (parsed !== null) return parsed > 0
+
+  return Boolean(value)
+}
+
 const getTeamName = (team) => team?.nome || team?.equipe?.equipe || 'Equipe'
 
 const getTeamId = (team) => team?.idEquipe ?? team?.equipe?.id ?? null
+
+const normalizeText = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 
 const getPlayerName = (player) => player?.nomeJogador || player?.nome || 'Jogador'
 
@@ -45,11 +67,71 @@ const createPlayerFormState = (player) => ({
   selected: true,
   cartaoAmarelo: player?.cartaoAmarelo ?? '',
   cartaoVermelho: player?.cartaoVermelho ?? '',
-  gols: '',
-  capitao: Boolean(player?.capitao),
+  gols: player?.gols ?? '',
+  capitao: toBooleanFlag(player?.capitao),
 })
 
-const buildPlayerStates = (teams = []) =>
+const getSavedPlayerKey = (sumula) => {
+  const idJogador = sumula?.idJogador ?? sumula?.jogadorId
+  if (idJogador) return `id:${idJogador}`
+
+  return `name:${normalizeText(sumula?.time)}:${normalizeText(sumula?.nomeJogador)}`
+}
+
+const buildSavedSumulasMap = (sumulas = []) =>
+  sumulas.reduce((acc, sumula) => {
+    acc[getSavedPlayerKey(sumula)] = sumula
+    return acc
+  }, {})
+
+const findSavedSumula = (savedSumulasMap, team, player) => {
+  const playerId = getPlayerId(player)
+  if (playerId) {
+    const byId = savedSumulasMap[`id:${playerId}`]
+    if (byId) return byId
+  }
+
+  return savedSumulasMap[
+    `name:${normalizeText(getTeamName(team))}:${normalizeText(getPlayerName(player))}`
+  ]
+}
+
+const createPlayerFormStateFromSaved = (player, savedSumula, hasSavedSumulas) => {
+  if (!hasSavedSumulas || !savedSumula) {
+    return {
+      ...createPlayerFormState(player),
+      selected: !hasSavedSumulas,
+    }
+  }
+
+  return {
+    selected: true,
+    cartaoAmarelo: savedSumula?.cartaoAmarelo ?? '',
+    cartaoVermelho: savedSumula?.cartaoVermelho ?? '',
+    gols: savedSumula?.gols ?? '',
+    capitao: toBooleanFlag(savedSumula?.capitao),
+  }
+}
+
+const buildPlayerStates = (teams = [], savedSumulas = []) => {
+  const savedSumulasMap = buildSavedSumulasMap(savedSumulas)
+  const hasSavedSumulas = savedSumulas.length > 0
+
+  return teams.reduce((acc, team, teamIndex) => {
+    const players = Array.isArray(team?.jogadores) ? team.jogadores : []
+    players.forEach((player, playerIndex) => {
+      const savedSumula = findSavedSumula(savedSumulasMap, team, player)
+      acc[getPlayerKey(teamIndex, playerIndex, player)] = createPlayerFormStateFromSaved(
+        player,
+        savedSumula,
+        hasSavedSumulas,
+      )
+    })
+    return acc
+  }, {})
+}
+
+const buildDefaultPlayerStates = (teams = []) =>
   teams.reduce((acc, team, teamIndex) => {
     const players = Array.isArray(team?.jogadores) ? team.jogadores : []
     players.forEach((player, playerIndex) => {
@@ -57,6 +139,12 @@ const buildPlayerStates = (teams = []) =>
     })
     return acc
   }, {})
+
+const getGameCompetition = (formData) =>
+  formData?.jogo?.competicaoId ?? formData?.jogo?.competicao ?? null
+
+const getGameCategory = (formData, team, player) =>
+  formData?.jogo?.categoria ?? team?.equipe?.categoria ?? player?.categoria ?? ''
 
 const SumulasCrud = () => {
   const [gameId, setGameId] = useState('')
@@ -67,6 +155,8 @@ const SumulasCrud = () => {
   const [idArbitro, setIdArbitro] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isUpdateMode, setIsUpdateMode] = useState(false)
   const [feedback, setFeedback] = useState(null)
 
   const teams = useMemo(() => {
@@ -87,16 +177,26 @@ const SumulasCrud = () => {
     setIsLoading(true)
     try {
       const data = await getSumulaFormulario(id)
+      const savedSumulasResponse = await listSumulas({ jogoId: id })
+      const savedSumulas = Array.isArray(savedSumulasResponse) ? savedSumulasResponse : []
+      const firstSavedSumula = savedSumulas[0]
       const responseTeams = Array.isArray(data?.equipes) ? data.equipes : []
+      const hasSavedSumula = savedSumulas.length > 0
       setFormData(data)
-      setPlayerStates(buildPlayerStates(responseTeams))
-      setMesario(data?.mesario ?? '')
-      setIdArbitro(data?.idArbitro ?? '')
+      setPlayerStates(buildPlayerStates(responseTeams, savedSumulas))
+      setIsUpdateMode(hasSavedSumula)
+      setMesario(firstSavedSumula?.mesario ?? data?.mesario ?? '')
+      setIdArbitro(
+        firstSavedSumula?.arbitro !== undefined && firstSavedSumula?.arbitro !== null
+          ? String(firstSavedSumula.arbitro)
+          : (data?.idArbitro ?? ''),
+      )
       setLoadedGameId(String(id))
       setFeedback(null)
     } catch (error) {
       setFormData(null)
       setPlayerStates({})
+      setIsUpdateMode(false)
       setLoadedGameId('')
       setFeedback({ type: 'danger', message: 'Não foi possível buscar os dados da súmula.' })
     } finally {
@@ -114,7 +214,43 @@ const SumulasCrud = () => {
     }))
   }
 
-  const buildPayload = () => ({
+  const buildCreatePayload = () => {
+    const id = parseNumber(loadedGameId || gameId)
+    const arbitro = parseNumber(idArbitro)
+    const mesarioValue = mesario.trim()
+    const competicao = getGameCompetition(formData)
+
+    return teams.flatMap((team, teamIndex) => {
+      const teamName = getTeamName(team)
+      const players = Array.isArray(team?.jogadores) ? team.jogadores : []
+
+      return players
+        .map((player, playerIndex) => {
+          const key = getPlayerKey(teamIndex, playerIndex, player)
+          const state = playerStates[key] ?? createPlayerFormState(player)
+
+          if (!state.selected) return null
+
+          return {
+            jogo: id,
+            time: teamName,
+            nomeJogador: getPlayerName(player),
+            categoria: getGameCategory(formData, team, player),
+            competicao,
+            arbitro,
+            mesario: mesarioValue,
+            cartaoAmarelo: toInputNumber(state.cartaoAmarelo),
+            cartaoVermelho: toInputNumber(state.cartaoVermelho),
+            gols: toInputNumber(state.gols),
+            capitao: state.capitao ? 1 : 0,
+            tipoJogador: player?.tipoJogador ?? player?.tipo ?? player?.tipoJogadorSumula ?? '',
+          }
+        })
+        .filter(Boolean)
+    })
+  }
+
+  const buildUpdatePayload = () => ({
     idArbitro: parseNumber(idArbitro),
     mesario: mesario.trim(),
     equipes: teams.map((team, teamIndex) => ({
@@ -141,6 +277,9 @@ const SumulasCrud = () => {
     })),
   })
 
+  const countUpdatePayloadPlayers = (payload) =>
+    payload.equipes.reduce((total, team) => total + team.jogadores.length, 0)
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setFeedback(null)
@@ -155,11 +294,8 @@ const SumulasCrud = () => {
       return
     }
 
-    const payload = buildPayload()
-    const selectedPlayers = payload.equipes.reduce(
-      (total, team) => total + team.jogadores.length,
-      0,
-    )
+    const payload = isUpdateMode ? buildUpdatePayload() : buildCreatePayload()
+    const selectedPlayers = isUpdateMode ? countUpdatePayloadPlayers(payload) : payload.length
     if (selectedPlayers === 0) {
       setFeedback({ type: 'danger', message: 'Selecione ao menos um jogador para salvar.' })
       return
@@ -167,12 +303,56 @@ const SumulasCrud = () => {
 
     setIsSaving(true)
     try {
-      await createSumulaJogo(id, payload)
-      setFeedback({ type: 'success', message: 'Súmula salva com sucesso.' })
+      if (isUpdateMode) {
+        await updateSumula(id, payload)
+      } else {
+        await createSumulas(payload)
+        setIsUpdateMode(true)
+      }
+      setFeedback({
+        type: 'success',
+        message: isUpdateMode ? 'Súmula atualizada com sucesso.' : 'Súmula salva com sucesso.',
+      })
     } catch (error) {
-      setFeedback({ type: 'danger', message: 'Não foi possível salvar a súmula.' })
+      setFeedback({
+        type: 'danger',
+        message: isUpdateMode
+          ? 'Não foi possível atualizar a súmula.'
+          : 'Não foi possível salvar a súmula.',
+      })
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setFeedback(null)
+
+    const id = parseNumber(loadedGameId || gameId)
+    if (!id || !formData) {
+      setFeedback({ type: 'danger', message: 'Busque os dados do jogo antes de excluir.' })
+      return
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      !window.confirm(`Deseja excluir a súmula do jogo ${id}?`)
+    ) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteSumula(id)
+      setPlayerStates(buildDefaultPlayerStates(teams))
+      setMesario('')
+      setIdArbitro('')
+      setIsUpdateMode(false)
+      setFeedback({ type: 'success', message: 'Súmula excluída com sucesso.' })
+    } catch (error) {
+      setFeedback({ type: 'danger', message: 'Não foi possível excluir a súmula.' })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -181,6 +361,7 @@ const SumulasCrud = () => {
     setLoadedGameId('')
     setFormData(null)
     setPlayerStates({})
+    setIsUpdateMode(false)
     setMesario('')
     setIdArbitro('')
     setFeedback(null)
@@ -225,11 +406,15 @@ const SumulasCrud = () => {
                     min="1"
                     value={gameId}
                     onChange={({ target }) => setGameId(target.value)}
-                    disabled={isLoading || isSaving}
+                    disabled={isLoading || isSaving || isDeleting}
                   />
                 </CCol>
                 <CCol md="auto">
-                  <CButton color="primary" type="submit" disabled={isLoading || isSaving}>
+                  <CButton
+                    color="primary"
+                    type="submit"
+                    disabled={isLoading || isSaving || isDeleting}
+                  >
                     <CIcon icon={cilSearch} className="me-2" />
                     {isLoading ? 'Buscando...' : 'Buscar'}
                   </CButton>
@@ -240,7 +425,7 @@ const SumulasCrud = () => {
                     variant="outline"
                     type="button"
                     onClick={handleReset}
-                    disabled={isLoading || isSaving}
+                    disabled={isLoading || isSaving || isDeleting}
                   >
                     <CIcon icon={cilReload} className="me-2" />
                     Limpar
@@ -272,6 +457,9 @@ const SumulasCrud = () => {
                     {formData.jogo.equipe2 ?? '-'}
                   </div>
                 )}
+                <div className="small text-medium-emphasis">
+                  {isUpdateMode ? 'Modo: atualização de súmula existente' : 'Modo: nova súmula'}
+                </div>
               </CCardHeader>
               <CCardBody>
                 <CRow className="g-3">
@@ -406,19 +594,35 @@ const SumulasCrud = () => {
             </CRow>
 
             <div className="d-flex gap-2 mt-4">
-              <CButton color="primary" type="submit" disabled={isSaving}>
+              <CButton color="primary" type="submit" disabled={isSaving || isDeleting}>
                 <CIcon icon={cilSave} className="me-2" />
-                {isSaving ? 'Salvando...' : 'Salvar súmula'}
+                {isSaving
+                  ? isUpdateMode
+                    ? 'Atualizando...'
+                    : 'Salvando...'
+                  : isUpdateMode
+                    ? 'Atualizar súmula'
+                    : 'Salvar súmula'}
               </CButton>
               <CButton
                 color="secondary"
                 variant="outline"
                 type="button"
-                onClick={() => setPlayerStates(buildPlayerStates(teams))}
-                disabled={isSaving}
+                onClick={() => setPlayerStates(buildDefaultPlayerStates(teams))}
+                disabled={isSaving || isDeleting}
               >
                 <CIcon icon={cilReload} className="me-2" />
-                Restaurar jogadores
+                Marcar todos
+              </CButton>
+              <CButton
+                color="danger"
+                variant="outline"
+                type="button"
+                onClick={handleDelete}
+                disabled={isSaving || isDeleting || !isUpdateMode}
+              >
+                <CIcon icon={cilTrash} className="me-2" />
+                {isDeleting ? 'Excluindo...' : 'Excluir súmula'}
               </CButton>
             </div>
           </CForm>
