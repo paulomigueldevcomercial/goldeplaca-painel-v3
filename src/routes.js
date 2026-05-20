@@ -25,6 +25,7 @@ const SumulaReport = React.lazy(() => import('./views/relatorios/SumulaReport'))
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 const ArtilheirosCrud = React.lazy(() => import('./views/artilheiros/ArtilheirosCrud'))
 const HistoricosCrud = React.lazy(() => import('./views/historicos/HistoricosCrud'))
+const ChangePassword = React.lazy(() => import('./views/pages/change-password/ChangePassword'))
 const Logout = React.lazy(() => import('./views/pages/logout/Logout'))
 
 const legacyItems = getVisibleLegacyMenuSections().flatMap((section) => section.items)
@@ -72,24 +73,26 @@ const routes = [
                                   ? ArtilheirosCrud
                                   : item.route === 'historico/admin'
                                     ? HistoricosCrud
-                                    : item.route === 'gerenciador/acesso/logout'
-                                      ? Logout
-                                      : item.route === 'painel/viewuploadsumula'
-                                        ? UploadSumulaCrud
-                                        : item.route === 'painel/competicoes/pdf/rgc'
-                                          ? () => <CompeticaoPdfUpload variant="rgc" />
-                                          : item.route === 'painel/competicoes/pdf/cde'
-                                            ? () => <CompeticaoPdfUpload variant="cde" />
-                                            : item.route === 'painel/competicoes/pdf/resultado'
-                                              ? () => <CompeticaoPdfUpload variant="resultado" />
-                                              : item.route ===
-                                                  'painel/competicoes/pdf/outros-anexos'
-                                                ? () => (
-                                                    <CompeticaoPdfUpload variant="outrosAnexos" />
-                                                  )
-                                                : item.route === 'sumula/selecao'
-                                                  ? SumulasCrud
-                                                  : buildLegacyRoute(item),
+                                    : item.route === 'user/changepassword'
+                                      ? ChangePassword
+                                      : item.route === 'gerenciador/acesso/logout'
+                                        ? Logout
+                                        : item.route === 'painel/viewuploadsumula'
+                                          ? UploadSumulaCrud
+                                          : item.route === 'painel/competicoes/pdf/rgc'
+                                            ? () => <CompeticaoPdfUpload variant="rgc" />
+                                            : item.route === 'painel/competicoes/pdf/cde'
+                                              ? () => <CompeticaoPdfUpload variant="cde" />
+                                              : item.route === 'painel/competicoes/pdf/resultado'
+                                                ? () => <CompeticaoPdfUpload variant="resultado" />
+                                                : item.route ===
+                                                    'painel/competicoes/pdf/outros-anexos'
+                                                  ? () => (
+                                                      <CompeticaoPdfUpload variant="outrosAnexos" />
+                                                    )
+                                                  : item.route === 'sumula/selecao'
+                                                    ? SumulasCrud
+                                                    : buildLegacyRoute(item),
   })),
 ]
 
