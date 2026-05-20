@@ -24,6 +24,7 @@ export const implementedLegacyMenuRoutes = [
   'painel/julgamento',
   'painel/artilheiros-geral',
   'historico/admin',
+  'user/changepassword',
   'gerenciador/acesso/logout',
 ]
 
@@ -34,7 +35,8 @@ export const shouldShowLegacyMenuItem = (item) =>
 
 export const isAdminOnlyLegacyMenuItem = (item) => item.route === 'user/admin'
 
-export const isAlwaysVisibleLegacyMenuItem = (item) => item.route === 'gerenciador/acesso/logout'
+export const isAlwaysVisibleLegacyMenuItem = (item) =>
+  ['user/changepassword', 'gerenciador/acesso/logout'].includes(item.route)
 
 export const shouldShowLegacyMenuItemForAccess = (item, roles, menusAllowed = []) =>
   shouldShowLegacyMenuItem(item) &&
@@ -166,13 +168,13 @@ const legacyMenuSections = [
         path: '/painel/gerenciamento-pdf/cde',
       },
       {
-        label: 'RESULTADO JULGAMENTO',
+        label: 'Resultado julgamento',
         route: 'painel/competicoes/pdf/resultado',
         visibility: 'Disponível para upload de PDF por competição',
         path: '/painel/gerenciamento-pdf/resultado-julgamento',
       },
       {
-        label: 'OUTROS ANEXOS',
+        label: 'Outros anexos',
         route: 'painel/competicoes/pdf/outros-anexos',
         visibility: 'Disponível para upload de PDF por competição',
         path: '/painel/gerenciamento-pdf/outros-anexos',
