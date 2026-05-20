@@ -16,6 +16,7 @@ const CompeticaoPdfUpload = React.lazy(() => import('./views/competicaoPdf/Compe
 const SumulasCrud = React.lazy(() => import('./views/sumulas/SumulasCrud'))
 const JogadoresCrud = React.lazy(() => import('./views/jogadores/JogadoresCrud'))
 const EquipesCrud = React.lazy(() => import('./views/equipes/EquipesCrud'))
+const EquipeReportLogoUpload = React.lazy(() => import('./views/equipes/EquipeReportLogoUpload'))
 const JogosCrud = React.lazy(() => import('./views/jogos/JogosCrud'))
 const CompeticoesCrud = React.lazy(() => import('./views/competicoes/CompeticoesCrud'))
 const CategoriasCrud = React.lazy(() => import('./views/categorias/CategoriasCrud'))
@@ -90,9 +91,11 @@ const routes = [
                                                   ? () => (
                                                       <CompeticaoPdfUpload variant="outrosAnexos" />
                                                     )
-                                                  : item.route === 'sumula/selecao'
-                                                    ? SumulasCrud
-                                                    : buildLegacyRoute(item),
+                                                  : item.route === 'painel/equipes/reports/logo'
+                                                    ? EquipeReportLogoUpload
+                                                    : item.route === 'sumula/selecao'
+                                                      ? SumulasCrud
+                                                      : buildLegacyRoute(item),
   })),
 ]
 

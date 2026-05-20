@@ -11,6 +11,7 @@ export const implementedLegacyMenuRoutes = [
   'painel/competicoes/pdf/cde',
   'painel/competicoes/pdf/resultado',
   'painel/competicoes/pdf/outros-anexos',
+  'painel/equipes/reports/logo',
   'painel/criarjogadores',
   'painel/criarequipes',
   'painel/categorias',
@@ -153,7 +154,7 @@ const legacyMenuSections = [
     ],
   },
   {
-    title: 'Gerenciamento PDF',
+    title: 'Gerenciamento Arquivos',
     items: [
       {
         label: 'RGC',
@@ -178,6 +179,12 @@ const legacyMenuSections = [
         route: 'painel/competicoes/pdf/outros-anexos',
         visibility: 'Disponível para upload de PDF por competição',
         path: '/painel/gerenciamento-pdf/outros-anexos',
+      },
+      {
+        label: 'Escudo equipe',
+        route: 'painel/equipes/reports/logo',
+        visibility: 'Disponível para upload de escudo de equipe em JPG',
+        path: '/painel/gerenciamento-arquivos/escudo-equipe',
       },
     ],
   },
