@@ -12,6 +12,7 @@ const GaleriaCrud = React.lazy(() => import('./views/galeria/GaleriaCrud'))
 const NoticiasCrud = React.lazy(() => import('./views/noticias/NoticiasCrud'))
 const PatrocinadoresCrud = React.lazy(() => import('./views/patrocinadores/PatrocinadoresCrud'))
 const UploadSumulaCrud = React.lazy(() => import('./views/uploadSumula/UploadSumulaCrud'))
+const CompeticaoPdfUpload = React.lazy(() => import('./views/competicaoPdf/CompeticaoPdfUpload'))
 const SumulasCrud = React.lazy(() => import('./views/sumulas/SumulasCrud'))
 const JogadoresCrud = React.lazy(() => import('./views/jogadores/JogadoresCrud'))
 const EquipesCrud = React.lazy(() => import('./views/equipes/EquipesCrud'))
@@ -75,9 +76,20 @@ const routes = [
                                       ? Logout
                                       : item.route === 'painel/viewuploadsumula'
                                         ? UploadSumulaCrud
-                                        : item.route === 'sumula/selecao'
-                                          ? SumulasCrud
-                                          : buildLegacyRoute(item),
+                                        : item.route === 'painel/competicoes/pdf/rgc'
+                                          ? () => <CompeticaoPdfUpload variant="rgc" />
+                                          : item.route === 'painel/competicoes/pdf/cde'
+                                            ? () => <CompeticaoPdfUpload variant="cde" />
+                                            : item.route === 'painel/competicoes/pdf/resultado'
+                                              ? () => <CompeticaoPdfUpload variant="resultado" />
+                                              : item.route ===
+                                                  'painel/competicoes/pdf/outros-anexos'
+                                                ? () => (
+                                                    <CompeticaoPdfUpload variant="outrosAnexos" />
+                                                  )
+                                                : item.route === 'sumula/selecao'
+                                                  ? SumulasCrud
+                                                  : buildLegacyRoute(item),
   })),
 ]
 
