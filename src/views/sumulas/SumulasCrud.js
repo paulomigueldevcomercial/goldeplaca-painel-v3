@@ -530,13 +530,6 @@ const SumulasCrud = () => {
 
             <CRow className="g-4">
               {teams.map((team, teamIndex) => {
-                const summary = teamSummaries[teamIndex] ?? {
-                  participantes: 0,
-                  gols: 0,
-                  amarelos: 0,
-                  vermelhos: 0,
-                }
-
                 return (
                   <CCol lg={6} key={`${getTeamId(team) ?? teamIndex}-${getTeamName(team)}`}>
                     <CCard className="h-100">
@@ -545,24 +538,6 @@ const SumulasCrud = () => {
                         <div className="small text-medium-emphasis">
                           {(Array.isArray(team?.jogadores) ? team.jogadores : []).length} jogadores
                         </div>
-                        <CRow className="g-2 mt-2">
-                          <CCol xs={6} sm={3}>
-                            <div className="small text-medium-emphasis">Participaram</div>
-                            <div className="fw-semibold">{summary.participantes}</div>
-                          </CCol>
-                          <CCol xs={6} sm={3}>
-                            <div className="small text-medium-emphasis">Gols</div>
-                            <div className="fw-semibold">{summary.gols}</div>
-                          </CCol>
-                          <CCol xs={6} sm={3}>
-                            <div className="small text-medium-emphasis">Amarelos</div>
-                            <div className="fw-semibold">{summary.amarelos}</div>
-                          </CCol>
-                          <CCol xs={6} sm={3}>
-                            <div className="small text-medium-emphasis">Vermelhos</div>
-                            <div className="fw-semibold">{summary.vermelhos}</div>
-                          </CCol>
-                        </CRow>
                       </CCardHeader>
                       <CCardBody className="d-flex flex-column gap-3">
                         {(Array.isArray(team?.jogadores) ? team.jogadores : []).map(
@@ -655,6 +630,48 @@ const SumulasCrud = () => {
                 )
               })}
             </CRow>
+
+            <CCard className="mt-4">
+              <CCardHeader>
+                <strong>Resumo da súmula</strong>
+              </CCardHeader>
+              <CCardBody>
+                <CRow className="g-3">
+                  {teams.map((team, teamIndex) => {
+                    const summary = teamSummaries[teamIndex] ?? {
+                      participantes: 0,
+                      gols: 0,
+                      amarelos: 0,
+                      vermelhos: 0,
+                    }
+
+                    return (
+                      <CCol md={6} key={`summary-${getTeamId(team) ?? teamIndex}`}>
+                        <div className="fw-semibold mb-2">{getTeamName(team)}</div>
+                        <CRow className="g-2">
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Participaram</div>
+                            <div className="fw-semibold">{summary.participantes}</div>
+                          </CCol>
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Gols</div>
+                            <div className="fw-semibold">{summary.gols}</div>
+                          </CCol>
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Amarelos</div>
+                            <div className="fw-semibold">{summary.amarelos}</div>
+                          </CCol>
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Vermelhos</div>
+                            <div className="fw-semibold">{summary.vermelhos}</div>
+                          </CCol>
+                        </CRow>
+                      </CCol>
+                    )
+                  })}
+                </CRow>
+              </CCardBody>
+            </CCard>
 
             <div className="d-flex gap-2 mt-4">
               <CButton color="primary" type="submit" disabled={isSaving || isDeleting}>
