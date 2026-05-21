@@ -146,6 +146,34 @@ const getGameCompetition = (formData) =>
 const getGameCategory = (formData, team, player) =>
   formData?.jogo?.categoria ?? team?.equipe?.categoria ?? player?.categoria ?? ''
 
+const getSummaryNumber = (value) => parseNumber(value) ?? 0
+
+const buildTeamSummary = (team, teamIndex, playerStates) => {
+  const players = Array.isArray(team?.jogadores) ? team.jogadores : []
+
+  return players.reduce(
+    (summary, player, playerIndex) => {
+      const key = getPlayerKey(teamIndex, playerIndex, player)
+      const state = playerStates[key] ?? createPlayerFormState(player)
+
+      if (!state.selected) return summary
+
+      return {
+        participantes: summary.participantes + 1,
+        gols: summary.gols + getSummaryNumber(state.gols),
+        amarelos: summary.amarelos + getSummaryNumber(state.cartaoAmarelo),
+        vermelhos: summary.vermelhos + getSummaryNumber(state.cartaoVermelho),
+      }
+    },
+    {
+      participantes: 0,
+      gols: 0,
+      amarelos: 0,
+      vermelhos: 0,
+    },
+  )
+}
+
 const SumulasCrud = () => {
   const [gameId, setGameId] = useState('')
   const [loadedGameId, setLoadedGameId] = useState('')
@@ -163,6 +191,11 @@ const SumulasCrud = () => {
     if (!Array.isArray(formData?.equipes)) return []
     return formData.equipes.slice(0, 2)
   }, [formData])
+
+  const teamSummaries = useMemo(
+    () => teams.map((team, teamIndex) => buildTeamSummary(team, teamIndex, playerStates)),
+    [teams, playerStates],
+  )
 
   const handleSearch = async (event) => {
     event.preventDefault()
@@ -496,101 +529,131 @@ const SumulasCrud = () => {
             </CCard>
 
             <CRow className="g-4">
-              {teams.map((team, teamIndex) => (
-                <CCol lg={6} key={`${getTeamId(team) ?? teamIndex}-${getTeamName(team)}`}>
-                  <CCard className="h-100">
-                    <CCardHeader>
-                      <strong>{getTeamName(team)}</strong>
-                      <div className="small text-medium-emphasis">
-                        {(Array.isArray(team?.jogadores) ? team.jogadores : []).length} jogadores
-                      </div>
-                    </CCardHeader>
-                    <CCardBody className="d-flex flex-column gap-3">
-                      {(Array.isArray(team?.jogadores) ? team.jogadores : []).map(
-                        (player, playerIndex) => {
-                          const key = getPlayerKey(teamIndex, playerIndex, player)
-                          const state = playerStates[key] ?? createPlayerFormState(player)
+              {teams.map((team, teamIndex) => {
+                const summary = teamSummaries[teamIndex] ?? {
+                  participantes: 0,
+                  gols: 0,
+                  amarelos: 0,
+                  vermelhos: 0,
+                }
 
-                          return (
-                            <div className="border rounded p-3" key={key}>
-                              <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
-                                <div className="fw-semibold">{getPlayerName(player)}</div>
-                                <CFormCheck
-                                  id={`sumula-player-${key}`}
-                                  label="Participou"
-                                  checked={state.selected}
-                                  onChange={({ target }) =>
-                                    handlePlayerChange(key, 'selected', target.checked)
-                                  }
-                                  disabled={isSaving}
-                                />
-                              </div>
-                              <CRow className="g-2 align-items-end">
-                                <CCol xs={6} sm={3}>
-                                  <CFormLabel className="small" htmlFor={`sumula-gols-${key}`}>
-                                    Gols
-                                  </CFormLabel>
-                                  <CFormInput
-                                    id={`sumula-gols-${key}`}
-                                    type="number"
-                                    min="0"
-                                    value={state.gols}
-                                    onChange={({ target }) =>
-                                      handlePlayerChange(key, 'gols', target.value)
-                                    }
-                                    disabled={isSaving || !state.selected}
-                                  />
-                                </CCol>
-                                <CCol xs={6} sm={3}>
-                                  <CFormLabel className="small" htmlFor={`sumula-amarelo-${key}`}>
-                                    Amarelos
-                                  </CFormLabel>
-                                  <CFormInput
-                                    id={`sumula-amarelo-${key}`}
-                                    type="number"
-                                    min="0"
-                                    value={state.cartaoAmarelo}
-                                    onChange={({ target }) =>
-                                      handlePlayerChange(key, 'cartaoAmarelo', target.value)
-                                    }
-                                    disabled={isSaving || !state.selected}
-                                  />
-                                </CCol>
-                                <CCol xs={6} sm={3}>
-                                  <CFormLabel className="small" htmlFor={`sumula-vermelho-${key}`}>
-                                    Vermelhos
-                                  </CFormLabel>
-                                  <CFormInput
-                                    id={`sumula-vermelho-${key}`}
-                                    type="number"
-                                    min="0"
-                                    value={state.cartaoVermelho}
-                                    onChange={({ target }) =>
-                                      handlePlayerChange(key, 'cartaoVermelho', target.value)
-                                    }
-                                    disabled={isSaving || !state.selected}
-                                  />
-                                </CCol>
-                                <CCol xs={6} sm={3}>
+                return (
+                  <CCol lg={6} key={`${getTeamId(team) ?? teamIndex}-${getTeamName(team)}`}>
+                    <CCard className="h-100">
+                      <CCardHeader>
+                        <strong>{getTeamName(team)}</strong>
+                        <div className="small text-medium-emphasis">
+                          {(Array.isArray(team?.jogadores) ? team.jogadores : []).length} jogadores
+                        </div>
+                        <CRow className="g-2 mt-2">
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Participaram</div>
+                            <div className="fw-semibold">{summary.participantes}</div>
+                          </CCol>
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Gols</div>
+                            <div className="fw-semibold">{summary.gols}</div>
+                          </CCol>
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Amarelos</div>
+                            <div className="fw-semibold">{summary.amarelos}</div>
+                          </CCol>
+                          <CCol xs={6} sm={3}>
+                            <div className="small text-medium-emphasis">Vermelhos</div>
+                            <div className="fw-semibold">{summary.vermelhos}</div>
+                          </CCol>
+                        </CRow>
+                      </CCardHeader>
+                      <CCardBody className="d-flex flex-column gap-3">
+                        {(Array.isArray(team?.jogadores) ? team.jogadores : []).map(
+                          (player, playerIndex) => {
+                            const key = getPlayerKey(teamIndex, playerIndex, player)
+                            const state = playerStates[key] ?? createPlayerFormState(player)
+
+                            return (
+                              <div className="border rounded p-3" key={key}>
+                                <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
+                                  <div className="fw-semibold">{getPlayerName(player)}</div>
                                   <CFormCheck
-                                    id={`sumula-capitao-${key}`}
-                                    label="Capitão"
-                                    checked={state.capitao}
+                                    id={`sumula-player-${key}`}
+                                    label="Participou"
+                                    checked={state.selected}
                                     onChange={({ target }) =>
-                                      handlePlayerChange(key, 'capitao', target.checked)
+                                      handlePlayerChange(key, 'selected', target.checked)
                                     }
-                                    disabled={isSaving || !state.selected}
+                                    disabled={isSaving}
                                   />
-                                </CCol>
-                              </CRow>
-                            </div>
-                          )
-                        },
-                      )}
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-              ))}
+                                </div>
+                                <CRow className="g-2 align-items-end">
+                                  <CCol xs={6} sm={3}>
+                                    <CFormLabel className="small" htmlFor={`sumula-gols-${key}`}>
+                                      Gols
+                                    </CFormLabel>
+                                    <CFormInput
+                                      id={`sumula-gols-${key}`}
+                                      type="number"
+                                      min="0"
+                                      value={state.gols}
+                                      onChange={({ target }) =>
+                                        handlePlayerChange(key, 'gols', target.value)
+                                      }
+                                      disabled={isSaving || !state.selected}
+                                    />
+                                  </CCol>
+                                  <CCol xs={6} sm={3}>
+                                    <CFormLabel className="small" htmlFor={`sumula-amarelo-${key}`}>
+                                      Amarelos
+                                    </CFormLabel>
+                                    <CFormInput
+                                      id={`sumula-amarelo-${key}`}
+                                      type="number"
+                                      min="0"
+                                      value={state.cartaoAmarelo}
+                                      onChange={({ target }) =>
+                                        handlePlayerChange(key, 'cartaoAmarelo', target.value)
+                                      }
+                                      disabled={isSaving || !state.selected}
+                                    />
+                                  </CCol>
+                                  <CCol xs={6} sm={3}>
+                                    <CFormLabel
+                                      className="small"
+                                      htmlFor={`sumula-vermelho-${key}`}
+                                    >
+                                      Vermelhos
+                                    </CFormLabel>
+                                    <CFormInput
+                                      id={`sumula-vermelho-${key}`}
+                                      type="number"
+                                      min="0"
+                                      value={state.cartaoVermelho}
+                                      onChange={({ target }) =>
+                                        handlePlayerChange(key, 'cartaoVermelho', target.value)
+                                      }
+                                      disabled={isSaving || !state.selected}
+                                    />
+                                  </CCol>
+                                  <CCol xs={6} sm={3}>
+                                    <CFormCheck
+                                      id={`sumula-capitao-${key}`}
+                                      label="Capitão"
+                                      checked={state.capitao}
+                                      onChange={({ target }) =>
+                                        handlePlayerChange(key, 'capitao', target.checked)
+                                      }
+                                      disabled={isSaving || !state.selected}
+                                    />
+                                  </CCol>
+                                </CRow>
+                              </div>
+                            )
+                          },
+                        )}
+                      </CCardBody>
+                    </CCard>
+                  </CCol>
+                )
+              })}
             </CRow>
 
             <div className="d-flex gap-2 mt-4">
