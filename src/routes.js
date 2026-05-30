@@ -23,6 +23,9 @@ const CategoriasCrud = React.lazy(() => import('./views/categorias/CategoriasCru
 const JulgamentosCrud = React.lazy(() => import('./views/julgamentos/JulgamentosCrud'))
 const RodadaSemanaReport = React.lazy(() => import('./views/relatorios/RodadaSemanaReport'))
 const SumulaReport = React.lazy(() => import('./views/relatorios/SumulaReport'))
+const TabelaJogosCompletoReport = React.lazy(
+  () => import('./views/relatorios/TabelaJogosCompletoReport'),
+)
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 const ArtilheirosCrud = React.lazy(() => import('./views/artilheiros/ArtilheirosCrud'))
 const HistoricosCrud = React.lazy(() => import('./views/historicos/HistoricosCrud'))
@@ -64,38 +67,42 @@ const routes = [
                         ? JulgamentosCrud
                         : item.route === 'painel/tblsemana'
                           ? RodadaSemanaReport
-                          : item.route === 'painel/sumulacampo'
-                            ? () => <SumulaReport variant="campo" />
-                            : item.route === 'painel/sumulafutsal'
-                              ? () => <SumulaReport variant="futsal" />
-                              : item.route === 'user/admin'
-                                ? UsuariosCrud
-                                : item.route === 'painel/artilheiros-geral'
-                                  ? ArtilheirosCrud
-                                  : item.route === 'historico/admin'
-                                    ? HistoricosCrud
-                                    : item.route === 'user/changepassword'
-                                      ? ChangePassword
-                                      : item.route === 'gerenciador/acesso/logout'
-                                        ? Logout
-                                        : item.route === 'painel/viewuploadsumula'
-                                          ? UploadSumulaCrud
-                                          : item.route === 'painel/competicoes/pdf/rgc'
-                                            ? () => <CompeticaoPdfUpload variant="rgc" />
-                                            : item.route === 'painel/competicoes/pdf/cde'
-                                              ? () => <CompeticaoPdfUpload variant="cde" />
-                                              : item.route === 'painel/competicoes/pdf/resultado'
-                                                ? () => <CompeticaoPdfUpload variant="resultado" />
-                                                : item.route ===
-                                                    'painel/competicoes/pdf/outros-anexos'
+                          : item.route === 'painel/tabela_jogos_completo'
+                            ? TabelaJogosCompletoReport
+                            : item.route === 'painel/sumulacampo'
+                              ? () => <SumulaReport variant="campo" />
+                              : item.route === 'painel/sumulafutsal'
+                                ? () => <SumulaReport variant="futsal" />
+                                : item.route === 'user/admin'
+                                  ? UsuariosCrud
+                                  : item.route === 'painel/artilheiros-geral'
+                                    ? ArtilheirosCrud
+                                    : item.route === 'historico/admin'
+                                      ? HistoricosCrud
+                                      : item.route === 'user/changepassword'
+                                        ? ChangePassword
+                                        : item.route === 'gerenciador/acesso/logout'
+                                          ? Logout
+                                          : item.route === 'painel/viewuploadsumula'
+                                            ? UploadSumulaCrud
+                                            : item.route === 'painel/competicoes/pdf/rgc'
+                                              ? () => <CompeticaoPdfUpload variant="rgc" />
+                                              : item.route === 'painel/competicoes/pdf/cde'
+                                                ? () => <CompeticaoPdfUpload variant="cde" />
+                                                : item.route === 'painel/competicoes/pdf/resultado'
                                                   ? () => (
-                                                      <CompeticaoPdfUpload variant="outrosAnexos" />
+                                                      <CompeticaoPdfUpload variant="resultado" />
                                                     )
-                                                  : item.route === 'painel/equipes/reports/logo'
-                                                    ? EquipeReportLogoUpload
-                                                    : item.route === 'sumula/selecao'
-                                                      ? SumulasCrud
-                                                      : buildLegacyRoute(item),
+                                                  : item.route ===
+                                                      'painel/competicoes/pdf/outros-anexos'
+                                                    ? () => (
+                                                        <CompeticaoPdfUpload variant="outrosAnexos" />
+                                                      )
+                                                    : item.route === 'painel/equipes/reports/logo'
+                                                      ? EquipeReportLogoUpload
+                                                      : item.route === 'sumula/selecao'
+                                                        ? SumulasCrud
+                                                        : buildLegacyRoute(item),
   })),
 ]
 

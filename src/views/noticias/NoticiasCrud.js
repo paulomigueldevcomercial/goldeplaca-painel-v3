@@ -45,7 +45,7 @@ const createEmptyArticle = () => ({
   imagePreviewUrl: '',
 })
 
-const NEWS_IMAGE_BASE_URL = 'http://129.121.45.176/images/noticias'
+const NEWS_IMAGE_BASE_URL = 'https://goldeplacama.com.br/images/noticias'
 
 const getNewsImageUrl = (foto) => {
   if (!foto) return ''

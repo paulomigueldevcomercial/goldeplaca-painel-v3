@@ -22,6 +22,7 @@ export const implementedLegacyMenuRoutes = [
   'painel/sumulacampo',
   'painel/sumulafutsal',
   'painel/tblsemana',
+  'painel/tabela_jogos_completo',
   'painel/julgamento',
   'painel/artilheiros-geral',
   'historico/admin',
@@ -233,6 +234,12 @@ const legacyMenuSections = [
         route: 'painel/tblsemana',
         visibility: 'Disponível exceto para competições 53, 32, 29 e 38',
         path: '/painel/relatorios/rodada-da-semana',
+      },
+      {
+        label: 'Tabela de jogos completo',
+        route: 'painel/tabela_jogos_completo',
+        visibility: 'Disponível exceto para competições 53, 32, 29 e 38',
+        path: '/painel/relatorios/tabela-jogos-completo',
       },
       {
         label: 'Scout Final',

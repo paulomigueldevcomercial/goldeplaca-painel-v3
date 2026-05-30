@@ -4,6 +4,16 @@ export const listJogos = (filters = {}) => requestJson('/api/jogos', { params: f
 
 export const createJogo = (payload) => requestJson('/api/jogos', { method: 'POST', body: payload })
 
-export const updateJogo = (id, payload) => requestJson(`/api/jogos/${id}`, { method: 'PUT', body: payload })
+export const updateJogo = (id, payload) =>
+  requestJson(`/api/jogos/${id}`, { method: 'PUT', body: payload })
 
 export const deleteJogo = (id) => requestJson(`/api/jogos/${id}`, { method: 'DELETE' })
+
+export const listRelatoriosCompletosJogos = ({ competicaoId } = {}) =>
+  requestJson('/api/jogos/relatorio-completo', { params: { competicaoId } })
+
+export const gerarRelatorioCompletoJogos = ({ competicaoId } = {}) =>
+  requestJson('/api/jogos/relatorio-completo', {
+    method: 'POST',
+    params: { competicaoId },
+  })
