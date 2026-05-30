@@ -10,7 +10,6 @@ import {
   CHeader,
   CHeaderNav,
   CHeaderToggler,
-  CNavLink,
   CNavItem,
   useColorModes,
 } from '@coreui/react'
@@ -56,9 +55,9 @@ const AppHeader = () => {
         </CHeaderToggler>
         <CHeaderNav className="d-none d-md-flex">
           <CNavItem>
-            <CNavLink to="/painel" as={NavLink}>
+            <NavLink className="nav-link" to="/painel" end>
               Painel de Controle
-            </CNavLink>
+            </NavLink>
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav>

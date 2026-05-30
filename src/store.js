@@ -21,6 +21,10 @@ const initialState = {
 const changeState = (state = initialState, { type, ...rest }) => {
   switch (type) {
     case 'set':
+      if (Object.entries(rest).every(([key, value]) => state[key] === value)) {
+        return state
+      }
+
       return { ...state, ...rest }
     default:
       return state

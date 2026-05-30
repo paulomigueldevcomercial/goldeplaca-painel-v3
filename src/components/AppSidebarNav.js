@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 
-import { CBadge, CNavLink, CSidebarNav } from '@coreui/react'
+import { CBadge, CSidebarNav } from '@coreui/react'
 
 export const AppSidebarNav = ({ items }) => {
   const navLink = (name, icon, badge, indent = false) => {
@@ -31,16 +31,24 @@ export const AppSidebarNav = ({ items }) => {
   const navItem = (item, index, indent = false) => {
     const { component, name, badge, icon, ...rest } = item
     const Component = component
+    const { href, to, ...linkRest } = rest
+
     return (
       <Component as="div" key={index}>
-        {rest.to || rest.href ? (
-          <CNavLink
-            {...(rest.to && { as: NavLink })}
-            {...(rest.href && { target: '_blank', rel: 'noopener noreferrer' })}
-            {...rest}
+        {to ? (
+          <NavLink className="nav-link" to={to} {...linkRest}>
+            {navLink(name, icon, badge, indent)}
+          </NavLink>
+        ) : href ? (
+          <a
+            className="nav-link"
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            {...linkRest}
           >
             {navLink(name, icon, badge, indent)}
-          </CNavLink>
+          </a>
         ) : (
           navLink(name, icon, badge, indent)
         )}

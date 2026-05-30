@@ -47,6 +47,7 @@ const AppSidebar = () => {
       unfoldable={unfoldable}
       visible={sidebarShow}
       onVisibleChange={(visible) => {
+        if (visible === sidebarShow) return
         dispatch({ type: 'set', sidebarShow: visible })
       }}
     >

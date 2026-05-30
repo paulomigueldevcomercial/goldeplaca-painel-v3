@@ -19,10 +19,15 @@ const CompetitionSelect = ({
 }) => {
   const [competitions, setCompetitions] = useState([])
   const errorRef = useRef(onError)
+  const valueChangeRef = useRef(onValueChange)
 
   useEffect(() => {
     errorRef.current = onError
   }, [onError])
+
+  useEffect(() => {
+    valueChangeRef.current = onValueChange
+  }, [onValueChange])
 
   useEffect(() => {
     let isMounted = true
@@ -52,7 +57,8 @@ const CompetitionSelect = ({
     () =>
       competitions.map((competition) => ({
         value: competition.id,
-        label: competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`,
+        label:
+          competition.nomeCompeticao || competition.descricao || `Competição ${competition.id}`,
       })),
     [competitions],
   )
@@ -60,7 +66,9 @@ const CompetitionSelect = ({
   const [filterValue, setFilterValue] = useState('')
 
   useEffect(() => {
-    if (!autoSelectFirst || !onValueChange) return
+    if (!autoSelectFirst || !valueChangeRef.current) return
+    if (competitionOptions.length === 0) return
+
     const currentValue = value ?? ''
     const hasSelection = competitionOptions.some(
       (competition) => String(competition.value) === String(currentValue),
@@ -68,9 +76,9 @@ const CompetitionSelect = ({
     const firstValue = competitionOptions?.[0]?.value ? String(competitionOptions[0].value) : ''
     const nextValue = hasSelection ? currentValue : firstValue
     if (nextValue !== currentValue) {
-      onValueChange(nextValue)
+      valueChangeRef.current(nextValue)
     }
-  }, [autoSelectFirst, competitionOptions, onValueChange, value])
+  }, [autoSelectFirst, competitionOptions, value])
 
   const filteredOptions = useMemo(() => {
     if (!filterValue) return competitionOptions
