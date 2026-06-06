@@ -17,3 +17,9 @@ export const gerarRelatorioCompletoJogos = ({ competicaoId } = {}) =>
     method: 'POST',
     params: { competicaoId },
   })
+
+export const excluirRelatorioCompletoJogos = ({ nomeArquivo } = {}) =>
+  requestJson('/api/jogos/relatorio-completo', {
+    method: 'DELETE',
+    params: { nomeArquivo },
+  })

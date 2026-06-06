@@ -18,10 +18,14 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCloudDownload, cilDescription, cilReload, cilSave } from '@coreui/icons'
+import { cilCloudDownload, cilDescription, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
-import { gerarRelatorioCompletoJogos, listRelatoriosCompletosJogos } from '../../services/jogosApi'
+import {
+  excluirRelatorioCompletoJogos,
+  gerarRelatorioCompletoJogos,
+  listRelatoriosCompletosJogos,
+} from '../../services/jogosApi'
 
 const STATIC_REPORT_FOLDER = 'relatorio-completo-jogos'
 
@@ -60,6 +64,7 @@ const TabelaJogosCompletoReport = () => {
   const [reports, setReports] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [deletingFileName, setDeletingFileName] = useState('')
   const [feedback, setFeedback] = useState(null)
 
   const competitionId = selectedCompetitionId || ''
@@ -167,6 +172,36 @@ const TabelaJogosCompletoReport = () => {
     }
   }
 
+  const handleDeleteReport = async (fileName) => {
+    if (!fileName) {
+      setFeedback({ type: 'danger', message: 'Não foi possível identificar o arquivo.' })
+      return
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      !window.confirm(`Deseja excluir o relatório "${fileName}"?`)
+    ) {
+      return
+    }
+
+    setDeletingFileName(fileName)
+    setFeedback(null)
+
+    try {
+      await excluirRelatorioCompletoJogos({ nomeArquivo: fileName })
+      setFeedback({ type: 'success', message: 'Relatório excluído com sucesso.' })
+      await loadReports()
+    } catch (error) {
+      setFeedback({
+        type: 'danger',
+        message: error?.message || 'Não foi possível excluir o relatório completo de jogos.',
+      })
+    } finally {
+      setDeletingFileName('')
+    }
+  }
+
   return (
     <CRow className="g-4">
       <CCol xs={12}>
@@ -263,23 +298,37 @@ const TabelaJogosCompletoReport = () => {
                   {reports.map((report, index) => {
                     const fileName = getFileName(report)
                     const downloadUrl = buildReportDownloadUrl(fileName)
+                    const isDeletingReport = deletingFileName === fileName
 
                     return (
                       <CTableRow key={`${fileName || 'relatorio'}-${index}`}>
                         <CTableDataCell className="text-break">{fileName || '-'}</CTableDataCell>
                         <CTableDataCell>{formatDateTime(report?.dataHoraGeracao)}</CTableDataCell>
                         <CTableDataCell>
-                          <CButton
-                            color="success"
-                            size="sm"
-                            className="fw-semibold text-white shadow-sm"
-                            href={downloadUrl || undefined}
-                            download={fileName || undefined}
-                            disabled={!downloadUrl}
-                          >
-                            <CIcon icon={cilCloudDownload} className="me-2" />
-                            Baixar
-                          </CButton>
+                          <div className="d-flex flex-wrap gap-2">
+                            <CButton
+                              color="success"
+                              size="sm"
+                              className="fw-semibold text-white shadow-sm"
+                              href={downloadUrl || undefined}
+                              download={fileName || undefined}
+                              disabled={!downloadUrl || isDeletingReport}
+                            >
+                              <CIcon icon={cilCloudDownload} className="me-2" />
+                              Baixar
+                            </CButton>
+                            <CButton
+                              color="danger"
+                              variant="ghost"
+                              size="sm"
+                              type="button"
+                              disabled={!fileName || Boolean(deletingFileName)}
+                              onClick={() => handleDeleteReport(fileName)}
+                            >
+                              <CIcon icon={cilTrash} className="me-2" />
+                              {isDeletingReport ? 'Excluindo...' : 'Excluir'}
+                            </CButton>
+                          </div>
                         </CTableDataCell>
                       </CTableRow>
                     )
