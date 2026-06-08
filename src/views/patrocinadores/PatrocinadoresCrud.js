@@ -33,6 +33,15 @@ const createEmptySponsor = () => ({
   imagePreviewUrl: '',
 })
 
+const SPONSOR_IMAGE_BASE_URL = 'https://goldeplacama.com.br/images/patrocinios'
+
+const getSponsorImageUrl = (imagem) => {
+  if (!imagem) return ''
+
+  const fileName = String(imagem).split('/').filter(Boolean).pop()
+  return fileName ? `${SPONSOR_IMAGE_BASE_URL}/${fileName}` : ''
+}
+
 const PatrocinadoresCrud = () => {
   const [sponsors, setSponsors] = useState([])
   const [selectedSponsorId, setSelectedSponsorId] = useState(null)
@@ -69,7 +78,7 @@ const PatrocinadoresCrud = () => {
     setFormData({
       ...createEmptySponsor(),
       ...sponsor,
-      imagePreviewUrl: sponsor.imagem ?? '',
+      imagePreviewUrl: getSponsorImageUrl(sponsor.imagem),
     })
   }, [selectedSponsorId, sponsors])
 
