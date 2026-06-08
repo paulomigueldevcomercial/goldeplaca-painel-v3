@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import { fetchCompetitionsWithGalleries } from '../../services/competitionApi'
 
 const initialCompetitions = []
@@ -32,12 +33,39 @@ const emptyGallery = {
   updatedAt: '',
 }
 
+const getCompetitionKey = (competitionId) => String(competitionId ?? '')
+
 const GaleriaCrud = () => {
   const [competitions, setCompetitions] = useState(initialCompetitions)
-  const [selectedGalleryId, setSelectedGalleryId] = useState(null)
-  const [formData, setFormData] = useState(emptyGallery)
+  const [selectedGalleryState, setSelectedGalleryState] = useState({
+    competitionId: '',
+    galleryId: null,
+  })
+  const [formState, setFormState] = useState({
+    competitionId: '',
+    data: emptyGallery,
+  })
   const [feedback, setFeedback] = useState(null)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
+  const currentCompetitionKey = getCompetitionKey(selectedCompetitionId)
+  const selectedGalleryId =
+    selectedGalleryState.competitionId === currentCompetitionKey
+      ? selectedGalleryState.galleryId
+      : null
+  const formData = formState.competitionId === currentCompetitionKey ? formState.data : emptyGallery
+
+  const setFormData = (updater) => {
+    setFormState((previous) => {
+      const previousData =
+        previous.competitionId === currentCompetitionKey ? previous.data : emptyGallery
+      const nextData = typeof updater === 'function' ? updater(previousData) : updater
+
+      return {
+        competitionId: currentCompetitionKey,
+        data: nextData,
+      }
+    })
+  }
 
   const selectedCompetition = useMemo(
     () =>
@@ -46,30 +74,21 @@ const GaleriaCrud = () => {
   )
 
   useEffect(() => {
-    setSelectedGalleryId(null)
-    setFormData(emptyGallery)
-  }, [selectedCompetitionId])
-
-  useEffect(() => {
-    if (!selectedGalleryId) {
-      setFormData(emptyGallery)
-      return
-    }
-
-    const gallery = selectedCompetition?.galleries.find((item) => item.id === selectedGalleryId)
-    if (gallery) {
-      setFormData({ ...emptyGallery, ...gallery, coverFileName: gallery.coverFileName ?? '' })
-    }
-  }, [selectedCompetition, selectedGalleryId])
-
-  useEffect(() => {
     fetchCompetitionsWithGalleries().then((data) => {
       setCompetitions(data)
     })
   }, [])
 
   const handleGallerySelect = (galleryId) => {
-    setSelectedGalleryId(galleryId)
+    const gallery = selectedCompetition?.galleries.find((item) => item.id === galleryId)
+
+    setSelectedGalleryState({
+      competitionId: currentCompetitionKey,
+      galleryId,
+    })
+    if (gallery) {
+      setFormData({ ...emptyGallery, ...gallery, coverFileName: gallery.coverFileName ?? '' })
+    }
     setFeedback(null)
   }
 
@@ -122,7 +141,10 @@ const GaleriaCrud = () => {
         : [...previous, nextCompetition]
     })
 
-    setSelectedGalleryId(galleryId)
+    setSelectedGalleryState({
+      competitionId: currentCompetitionKey,
+      galleryId,
+    })
     setFeedback(
       selectedGalleryId
         ? 'Galeria atualizada com sucesso.'
@@ -144,7 +166,10 @@ const GaleriaCrud = () => {
       }),
     )
 
-    setSelectedGalleryId(null)
+    setSelectedGalleryState({
+      competitionId: currentCompetitionKey,
+      galleryId: null,
+    })
     setFormData(emptyGallery)
     setFeedback('Galeria removida da competição.')
   }
@@ -207,7 +232,10 @@ const GaleriaCrud = () => {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setSelectedGalleryId(null)
+                    setSelectedGalleryState({
+                      competitionId: currentCompetitionKey,
+                      galleryId: null,
+                    })
                     setFormData(emptyGallery)
                     setFeedback(null)
                   }}
@@ -221,36 +249,40 @@ const GaleriaCrud = () => {
                     Nenhuma galeria cadastrada para esta competição.
                   </div>
                 ) : (
-                  <CListGroup flush>
-                    {galleries.map((gallery) => (
-                      <CListGroupItem
-                        key={gallery.id}
-                        action
-                        active={gallery.id === selectedGalleryId}
-                        onClick={() => handleGallerySelect(gallery.id)}
-                      >
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <div className="fw-semibold">{gallery.title}</div>
-                            <small className="text-medium-emphasis">
-                              Atualizado em {gallery.updatedAt}
-                            </small>
-                          </div>
-                          <CBadge
-                            color={
-                              gallery.status === 'ativa'
-                                ? 'success'
-                                : gallery.status === 'rascunho'
-                                  ? 'warning'
-                                  : 'secondary'
-                            }
+                  <ListPagination items={galleries} summaryLabel="galerias">
+                    {(paginatedGalleries) => (
+                      <CListGroup flush>
+                        {paginatedGalleries.map((gallery) => (
+                          <CListGroupItem
+                            key={gallery.id}
+                            action
+                            active={gallery.id === selectedGalleryId}
+                            onClick={() => handleGallerySelect(gallery.id)}
                           >
-                            {gallery.status}
-                          </CBadge>
-                        </div>
-                      </CListGroupItem>
-                    ))}
-                  </CListGroup>
+                            <div className="d-flex justify-content-between align-items-start">
+                              <div>
+                                <div className="fw-semibold">{gallery.title}</div>
+                                <small className="text-medium-emphasis">
+                                  Atualizado em {gallery.updatedAt}
+                                </small>
+                              </div>
+                              <CBadge
+                                color={
+                                  gallery.status === 'ativa'
+                                    ? 'success'
+                                    : gallery.status === 'rascunho'
+                                      ? 'warning'
+                                      : 'secondary'
+                                }
+                              >
+                                {gallery.status}
+                              </CBadge>
+                            </div>
+                          </CListGroupItem>
+                        ))}
+                      </CListGroup>
+                    )}
+                  </ListPagination>
                 )}
               </CCardBody>
             </CCard>
@@ -350,7 +382,10 @@ const GaleriaCrud = () => {
                       variant="outline"
                       type="button"
                       onClick={() => {
-                        setSelectedGalleryId(null)
+                        setSelectedGalleryState({
+                          competitionId: currentCompetitionKey,
+                          galleryId: null,
+                        })
                         setFormData(emptyGallery)
                         setFeedback(null)
                       }}

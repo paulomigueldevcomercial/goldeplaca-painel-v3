@@ -18,8 +18,14 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilList, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
-import { createCategoria, deleteCategoria, listCategorias, updateCategoria } from '../../services/categoriaApi'
+import {
+  createCategoria,
+  deleteCategoria,
+  listCategorias,
+  updateCategoria,
+} from '../../services/categoriaApi'
 import { listEquipes } from '../../services/equipeApi'
 
 const createEmptyCategory = () => ({
@@ -195,7 +201,8 @@ const CategoriasCrud = () => {
             <div>
               <h4 className="mb-1">Categorias</h4>
               <div className="text-medium-emphasis">
-                Utilize os endpoints de categorias para criar, editar ou remover categorias disponíveis.
+                Utilize os endpoints de categorias para criar, editar ou remover categorias
+                disponíveis.
               </div>
               <SelectedCompetitionBadge className="mt-2" />
             </div>
@@ -216,21 +223,28 @@ const CategoriasCrud = () => {
             ) : categories.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhuma categoria cadastrada.</div>
             ) : (
-              <CListGroup flush>
-                {categories.map((category) => (
-                  <CListGroupItem
-                    key={category.chave ?? category.valor}
-                    action
-                    active={
-                      (category.chave ?? category.valor) === (selectedCategory?.chave ?? selectedCategory?.valor)
-                    }
-                    onClick={() => handleCategorySelect(category)}
-                  >
-                    <div className="fw-semibold">{category.valor ?? category.chave}</div>
-                    <small className="text-medium-emphasis">Chave: {category.chave ?? category.valor}</small>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={categories} summaryLabel="categorias">
+                {(paginatedCategories) => (
+                  <CListGroup flush>
+                    {paginatedCategories.map((category) => (
+                      <CListGroupItem
+                        key={category.chave ?? category.valor}
+                        action
+                        active={
+                          (category.chave ?? category.valor) ===
+                          (selectedCategory?.chave ?? selectedCategory?.valor)
+                        }
+                        onClick={() => handleCategorySelect(category)}
+                      >
+                        <div className="fw-semibold">{category.valor ?? category.chave}</div>
+                        <small className="text-medium-emphasis">
+                          Chave: {category.chave ?? category.valor}
+                        </small>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>
@@ -246,7 +260,9 @@ const CategoriasCrud = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <div>
               <strong>{selectedCategory ? 'Editar categoria' : 'Nova categoria'}</strong>
-              <div className="small text-medium-emphasis">Cadastre ou atualize categorias para uso nas competições.</div>
+              <div className="small text-medium-emphasis">
+                Cadastre ou atualize categorias para uso nas competições.
+              </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={handleReset}>
               <CIcon icon={cilPlus} className="me-2" /> Novo
@@ -288,7 +304,13 @@ const CategoriasCrud = () => {
                 <CButton color="primary" type="submit" disabled={isLoading}>
                   <CIcon icon={cilSave} className="me-2" /> Criar
                 </CButton>
-                <CButton color="secondary" variant="outline" type="button" onClick={handleReset} disabled={isLoading}>
+                <CButton
+                  color="secondary"
+                  variant="outline"
+                  type="button"
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
                   <CIcon icon={cilReload} className="me-2" /> Limpar
                 </CButton>
               </div>

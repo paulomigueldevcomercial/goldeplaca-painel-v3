@@ -20,6 +20,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilGroup, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listCategorias } from '../../services/categoriaApi'
@@ -573,33 +574,37 @@ const EquipesCrud = () => {
                 Nenhuma equipe encontrada para o termo buscado.
               </div>
             ) : (
-              <CListGroup flush>
-                {visibleTeams.map((team) => (
-                  <CListGroupItem
-                    key={team.id}
-                    action
-                    active={String(team.id) === String(selectedTeamId)}
-                    onClick={() => handleTeamSelect(team.id)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-2">
-                      <div>
-                        <div className="fw-semibold">{team.equipe}</div>
-                        <small className="text-medium-emphasis">
-                          Representante: {team.representante1 || 'não informado'}
-                        </small>
-                      </div>
-                      <div className="d-flex flex-column align-items-end gap-1">
-                        <CBadge color="secondary" shape="rounded-pill">
-                          {getCategoryName(team)}
-                        </CBadge>
-                        <CBadge color="info" shape="rounded-pill">
-                          {team.pontos ? `${team.pontos} pts` : 'Pontuação não informada'}
-                        </CBadge>
-                      </div>
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={visibleTeams} summaryLabel="equipes">
+                {(paginatedTeams) => (
+                  <CListGroup flush>
+                    {paginatedTeams.map((team) => (
+                      <CListGroupItem
+                        key={team.id}
+                        action
+                        active={String(team.id) === String(selectedTeamId)}
+                        onClick={() => handleTeamSelect(team.id)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <div className="fw-semibold">{team.equipe}</div>
+                            <small className="text-medium-emphasis">
+                              Representante: {team.representante1 || 'não informado'}
+                            </small>
+                          </div>
+                          <div className="d-flex flex-column align-items-end gap-1">
+                            <CBadge color="secondary" shape="rounded-pill">
+                              {getCategoryName(team)}
+                            </CBadge>
+                            <CBadge color="info" shape="rounded-pill">
+                              {team.pontos ? `${team.pontos} pts` : 'Pontuação não informada'}
+                            </CBadge>
+                          </div>
+                        </div>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

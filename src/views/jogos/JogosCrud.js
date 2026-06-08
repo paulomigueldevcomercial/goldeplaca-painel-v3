@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilSoccer, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listEquipes } from '../../services/equipeApi'
@@ -374,33 +375,37 @@ const JogosCrud = () => {
                 Nenhum jogo encontrado para o termo buscado.
               </div>
             ) : (
-              <CListGroup flush>
-                {visibleGames.map((game) => (
-                  <CListGroupItem
-                    key={game.codigo}
-                    action
-                    active={String(game.codigo) === String(selectedGameId)}
-                    onClick={() => handleGameSelect(game.codigo)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-2">
-                      <div>
-                        <div className="fw-semibold">
-                          {game.equipe1 || 'Equipe 1'} x {game.equipe2 || 'Equipe 2'}
+              <ListPagination items={visibleGames} summaryLabel="jogos">
+                {(paginatedGames) => (
+                  <CListGroup flush>
+                    {paginatedGames.map((game) => (
+                      <CListGroupItem
+                        key={game.codigo}
+                        action
+                        active={String(game.codigo) === String(selectedGameId)}
+                        onClick={() => handleGameSelect(game.codigo)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <div className="fw-semibold">
+                              {game.equipe1 || 'Equipe 1'} x {game.equipe2 || 'Equipe 2'}
+                            </div>
+                            <small className="text-medium-emphasis">Código {game.codigo}</small>
+                          </div>
+                          <div className="d-flex flex-column align-items-end gap-1">
+                            <CBadge color="secondary" shape="rounded-pill">
+                              {game.categoria || 'Categoria'}
+                            </CBadge>
+                            <CBadge color="info" shape="rounded-pill">
+                              {formatGameDate(game.dataJogo)}
+                            </CBadge>
+                          </div>
                         </div>
-                        <small className="text-medium-emphasis">Código {game.codigo}</small>
-                      </div>
-                      <div className="d-flex flex-column align-items-end gap-1">
-                        <CBadge color="secondary" shape="rounded-pill">
-                          {game.categoria || 'Categoria'}
-                        </CBadge>
-                        <CBadge color="info" shape="rounded-pill">
-                          {formatGameDate(game.dataJogo)}
-                        </CBadge>
-                      </div>
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

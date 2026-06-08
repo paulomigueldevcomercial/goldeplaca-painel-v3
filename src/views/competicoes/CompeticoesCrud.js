@@ -18,6 +18,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createCompeticao,
@@ -282,42 +283,46 @@ const CompeticoesCrud = () => {
                 Nenhuma competição encontrada para o termo buscado.
               </div>
             ) : (
-              <CListGroup flush>
-                {visibleCompetitions.map((competition) => (
-                  <CListGroupItem
-                    key={competition.id}
-                    action
-                    active={String(competition.id) === String(selectedCompetitionId)}
-                    onClick={() => handleCompetitionSelect(competition.id)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-2">
-                      <div>
-                        <div className="fw-semibold">
-                          {competition.nomeCompeticao ||
-                            competition.descricao ||
-                            `Competição ${competition.id}`}
+              <ListPagination items={visibleCompetitions} summaryLabel="competições">
+                {(paginatedCompetitions) => (
+                  <CListGroup flush>
+                    {paginatedCompetitions.map((competition) => (
+                      <CListGroupItem
+                        key={competition.id}
+                        action
+                        active={String(competition.id) === String(selectedCompetitionId)}
+                        onClick={() => handleCompetitionSelect(competition.id)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <div className="fw-semibold">
+                              {competition.nomeCompeticao ||
+                                competition.descricao ||
+                                `Competição ${competition.id}`}
+                            </div>
+                            <small className="text-medium-emphasis">
+                              Temporada {competition.temporada || 'não informada'}
+                            </small>
+                          </div>
+                          <div className="d-flex flex-column align-items-end gap-1">
+                            <CBadge
+                              color={competition.ativo ? 'success' : 'secondary'}
+                              shape="rounded-pill"
+                            >
+                              {competition.ativo ? 'Ativa' : 'Inativa'}
+                            </CBadge>
+                            <CBadge color="info" shape="rounded-pill">
+                              {competition.modalidadeId
+                                ? `Modalidade ${competition.modalidadeId}`
+                                : 'Sem modalidade'}
+                            </CBadge>
+                          </div>
                         </div>
-                        <small className="text-medium-emphasis">
-                          Temporada {competition.temporada || 'não informada'}
-                        </small>
-                      </div>
-                      <div className="d-flex flex-column align-items-end gap-1">
-                        <CBadge
-                          color={competition.ativo ? 'success' : 'secondary'}
-                          shape="rounded-pill"
-                        >
-                          {competition.ativo ? 'Ativa' : 'Inativa'}
-                        </CBadge>
-                        <CBadge color="info" shape="rounded-pill">
-                          {competition.modalidadeId
-                            ? `Modalidade ${competition.modalidadeId}`
-                            : 'Sem modalidade'}
-                        </CBadge>
-                      </div>
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

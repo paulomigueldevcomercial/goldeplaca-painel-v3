@@ -23,6 +23,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload, cilPencil, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
@@ -336,88 +337,92 @@ const JulgamentosCrud = () => {
             ) : visibleJulgamentos.length === 0 ? (
               <div className="text-medium-emphasis">Nenhum julgamento encontrado.</div>
             ) : (
-              <CTable hover responsive align="middle">
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>Processo</CTableHeaderCell>
-                    <CTableHeaderCell>Jogador</CTableHeaderCell>
-                    <CTableHeaderCell>Equipe</CTableHeaderCell>
-                    <CTableHeaderCell>Análise</CTableHeaderCell>
-                    <CTableHeaderCell>Convocado</CTableHeaderCell>
-                    <CTableHeaderCell>Ações</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {visibleJulgamentos.map((julgamento) => (
-                    <CTableRow key={julgamento.id ?? julgamento.numeroProcesso}>
-                      <CTableDataCell>{julgamento.numeroProcesso || '-'}</CTableDataCell>
-                      <CTableDataCell>{julgamento.nomeJogador || '-'}</CTableDataCell>
-                      <CTableDataCell>{julgamento.equipe || '-'}</CTableDataCell>
-                      <CTableDataCell>{formatDate(julgamento.dataAnalise)}</CTableDataCell>
-                      <CTableDataCell>{julgamento.convocado || '-'}</CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex flex-wrap gap-2">
-                          <CButton
-                            color="primary"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSelectJulgamento(julgamento.id)}
-                          >
-                            <CIcon icon={cilPencil} />
-                          </CButton>
-                          <CButton
-                            color="success"
-                            size="sm"
-                            className="fw-semibold text-white shadow-sm"
-                            disabled={
-                              !String(julgamento.numeroProcesso || '').trim() ||
-                              reportLoadingKey === `report-${julgamento.id}`
-                            }
-                            onClick={async () => {
-                              const currentReportKey = `report-${julgamento.id}`
-                              setReportLoadingKey(currentReportKey)
-                              try {
-                                const reportBlob = await downloadJulgamentoReport({
-                                  numeroProcesso: julgamento.numeroProcesso,
-                                })
-                                const url = window.URL.createObjectURL(reportBlob)
-                                const link = document.createElement('a')
-                                link.href = url
-                                link.download = `relatorio-julgamento-${julgamento.numeroProcesso}.pdf`
-                                document.body.appendChild(link)
-                                link.click()
-                                link.remove()
-                                window.URL.revokeObjectURL(url)
-                              } catch (error) {
-                                setFeedback({
-                                  type: 'danger',
-                                  message: 'Não foi possível baixar o relatório de julgamento.',
-                                })
-                              } finally {
-                                setReportLoadingKey(null)
-                              }
-                            }}
-                          >
-                            {reportLoadingKey === `report-${julgamento.id}` ? (
-                              <CSpinner size="sm" />
-                            ) : (
-                              <CIcon icon={cilCloudDownload} />
-                            )}
-                          </CButton>
-                          <CButton
-                            color="danger"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(julgamento.id)}
-                          >
-                            <CIcon icon={cilTrash} />
-                          </CButton>
-                        </div>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
+              <ListPagination items={visibleJulgamentos} summaryLabel="julgamentos">
+                {(paginatedJulgamentos) => (
+                  <CTable hover responsive align="middle">
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>Processo</CTableHeaderCell>
+                        <CTableHeaderCell>Jogador</CTableHeaderCell>
+                        <CTableHeaderCell>Equipe</CTableHeaderCell>
+                        <CTableHeaderCell>Análise</CTableHeaderCell>
+                        <CTableHeaderCell>Convocado</CTableHeaderCell>
+                        <CTableHeaderCell>Ações</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      {paginatedJulgamentos.map((julgamento) => (
+                        <CTableRow key={julgamento.id ?? julgamento.numeroProcesso}>
+                          <CTableDataCell>{julgamento.numeroProcesso || '-'}</CTableDataCell>
+                          <CTableDataCell>{julgamento.nomeJogador || '-'}</CTableDataCell>
+                          <CTableDataCell>{julgamento.equipe || '-'}</CTableDataCell>
+                          <CTableDataCell>{formatDate(julgamento.dataAnalise)}</CTableDataCell>
+                          <CTableDataCell>{julgamento.convocado || '-'}</CTableDataCell>
+                          <CTableDataCell>
+                            <div className="d-flex flex-wrap gap-2">
+                              <CButton
+                                color="primary"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleSelectJulgamento(julgamento.id)}
+                              >
+                                <CIcon icon={cilPencil} />
+                              </CButton>
+                              <CButton
+                                color="success"
+                                size="sm"
+                                className="fw-semibold text-white shadow-sm"
+                                disabled={
+                                  !String(julgamento.numeroProcesso || '').trim() ||
+                                  reportLoadingKey === `report-${julgamento.id}`
+                                }
+                                onClick={async () => {
+                                  const currentReportKey = `report-${julgamento.id}`
+                                  setReportLoadingKey(currentReportKey)
+                                  try {
+                                    const reportBlob = await downloadJulgamentoReport({
+                                      numeroProcesso: julgamento.numeroProcesso,
+                                    })
+                                    const url = window.URL.createObjectURL(reportBlob)
+                                    const link = document.createElement('a')
+                                    link.href = url
+                                    link.download = `relatorio-julgamento-${julgamento.numeroProcesso}.pdf`
+                                    document.body.appendChild(link)
+                                    link.click()
+                                    link.remove()
+                                    window.URL.revokeObjectURL(url)
+                                  } catch (error) {
+                                    setFeedback({
+                                      type: 'danger',
+                                      message: 'Não foi possível baixar o relatório de julgamento.',
+                                    })
+                                  } finally {
+                                    setReportLoadingKey(null)
+                                  }
+                                }}
+                              >
+                                {reportLoadingKey === `report-${julgamento.id}` ? (
+                                  <CSpinner size="sm" />
+                                ) : (
+                                  <CIcon icon={cilCloudDownload} />
+                                )}
+                              </CButton>
+                              <CButton
+                                color="danger"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDelete(julgamento.id)}
+                              >
+                                <CIcon icon={cilTrash} />
+                              </CButton>
+                            </div>
+                          </CTableDataCell>
+                        </CTableRow>
+                      ))}
+                    </CTableBody>
+                  </CTable>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

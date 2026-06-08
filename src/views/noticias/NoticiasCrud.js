@@ -23,6 +23,7 @@ import CIcon from '@coreui/icons-react'
 import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createNoticia,
@@ -432,39 +433,43 @@ const NoticiasCrud = () => {
                   Nenhuma notícia cadastrada para esta competição.
                 </div>
               ) : (
-                <CListGroup flush>
-                  {articles.map((article) => {
-                    const isSelected = String(article.id) === String(selectedNewsId)
+                <ListPagination items={articles} summaryLabel="notícias">
+                  {(paginatedArticles) => (
+                    <CListGroup flush>
+                      {paginatedArticles.map((article) => {
+                        const isSelected = String(article.id) === String(selectedNewsId)
 
-                    return (
-                      <CListGroupItem
-                        key={article.id}
-                        action
-                        active={isSelected}
-                        onClick={() => handleNewsSelect(article.id)}
-                      >
-                        <div className="d-flex justify-content-between align-items-start gap-2">
-                          <div className="me-2">
-                            <div className="fw-semibold">{article.titulo}</div>
-                            <small className={isSelected ? 'text-white' : 'text-dark'}>
-                              Publicada em {formatPublishedAt(article.data)}
-                            </small>
-                          </div>
-                          <div className="d-flex flex-column align-items-end gap-1">
-                            {article.destaque && (
-                              <CBadge color="info" shape="rounded-pill">
-                                Destaque
-                              </CBadge>
-                            )}
-                            <CBadge color={article.ativo ? 'success' : 'secondary'}>
-                              {article.ativo ? 'Ativa' : 'Inativa'}
-                            </CBadge>
-                          </div>
-                        </div>
-                      </CListGroupItem>
-                    )
-                  })}
-                </CListGroup>
+                        return (
+                          <CListGroupItem
+                            key={article.id}
+                            action
+                            active={isSelected}
+                            onClick={() => handleNewsSelect(article.id)}
+                          >
+                            <div className="d-flex justify-content-between align-items-start gap-2">
+                              <div className="me-2">
+                                <div className="fw-semibold">{article.titulo}</div>
+                                <small className={isSelected ? 'text-white' : 'text-dark'}>
+                                  Publicada em {formatPublishedAt(article.data)}
+                                </small>
+                              </div>
+                              <div className="d-flex flex-column align-items-end gap-1">
+                                {article.destaque && (
+                                  <CBadge color="info" shape="rounded-pill">
+                                    Destaque
+                                  </CBadge>
+                                )}
+                                <CBadge color={article.ativo ? 'success' : 'secondary'}>
+                                  {article.ativo ? 'Ativa' : 'Inativa'}
+                                </CBadge>
+                              </div>
+                            </div>
+                          </CListGroupItem>
+                        )
+                      })}
+                    </CListGroup>
+                  )}
+                </ListPagination>
               )}
             </CCardBody>
           </CCard>

@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload, cilDescription, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import {
@@ -286,55 +287,63 @@ const TabelaJogosCompletoReport = () => {
             ) : reports.length === 0 ? (
               <div className="text-medium-emphasis">Nenhum relatório encontrado.</div>
             ) : (
-              <CTable hover responsive align="middle">
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>Arquivo</CTableHeaderCell>
-                    <CTableHeaderCell>Gerado em</CTableHeaderCell>
-                    <CTableHeaderCell>Ações</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {reports.map((report, index) => {
-                    const fileName = getFileName(report)
-                    const downloadUrl = buildReportDownloadUrl(fileName)
-                    const isDeletingReport = deletingFileName === fileName
-
-                    return (
-                      <CTableRow key={`${fileName || 'relatorio'}-${index}`}>
-                        <CTableDataCell className="text-break">{fileName || '-'}</CTableDataCell>
-                        <CTableDataCell>{formatDateTime(report?.dataHoraGeracao)}</CTableDataCell>
-                        <CTableDataCell>
-                          <div className="d-flex flex-wrap gap-2">
-                            <CButton
-                              color="success"
-                              size="sm"
-                              className="fw-semibold text-white shadow-sm"
-                              href={downloadUrl || undefined}
-                              download={fileName || undefined}
-                              disabled={!downloadUrl || isDeletingReport}
-                            >
-                              <CIcon icon={cilCloudDownload} className="me-2" />
-                              Baixar
-                            </CButton>
-                            <CButton
-                              color="danger"
-                              variant="ghost"
-                              size="sm"
-                              type="button"
-                              disabled={!fileName || Boolean(deletingFileName)}
-                              onClick={() => handleDeleteReport(fileName)}
-                            >
-                              <CIcon icon={cilTrash} className="me-2" />
-                              {isDeletingReport ? 'Excluindo...' : 'Excluir'}
-                            </CButton>
-                          </div>
-                        </CTableDataCell>
+              <ListPagination items={reports} summaryLabel="relatórios">
+                {(paginatedReports) => (
+                  <CTable hover responsive align="middle">
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>Arquivo</CTableHeaderCell>
+                        <CTableHeaderCell>Gerado em</CTableHeaderCell>
+                        <CTableHeaderCell>Ações</CTableHeaderCell>
                       </CTableRow>
-                    )
-                  })}
-                </CTableBody>
-              </CTable>
+                    </CTableHead>
+                    <CTableBody>
+                      {paginatedReports.map((report, index) => {
+                        const fileName = getFileName(report)
+                        const downloadUrl = buildReportDownloadUrl(fileName)
+                        const isDeletingReport = deletingFileName === fileName
+
+                        return (
+                          <CTableRow key={`${fileName || 'relatorio'}-${index}`}>
+                            <CTableDataCell className="text-break">
+                              {fileName || '-'}
+                            </CTableDataCell>
+                            <CTableDataCell>
+                              {formatDateTime(report?.dataHoraGeracao)}
+                            </CTableDataCell>
+                            <CTableDataCell>
+                              <div className="d-flex flex-wrap gap-2">
+                                <CButton
+                                  color="success"
+                                  size="sm"
+                                  className="fw-semibold text-white shadow-sm"
+                                  href={downloadUrl || undefined}
+                                  download={fileName || undefined}
+                                  disabled={!downloadUrl || isDeletingReport}
+                                >
+                                  <CIcon icon={cilCloudDownload} className="me-2" />
+                                  Baixar
+                                </CButton>
+                                <CButton
+                                  color="danger"
+                                  variant="ghost"
+                                  size="sm"
+                                  type="button"
+                                  disabled={!fileName || Boolean(deletingFileName)}
+                                  onClick={() => handleDeleteReport(fileName)}
+                                >
+                                  <CIcon icon={cilTrash} className="me-2" />
+                                  {isDeletingReport ? 'Excluindo...' : 'Excluir'}
+                                </CButton>
+                              </div>
+                            </CTableDataCell>
+                          </CTableRow>
+                        )
+                      })}
+                    </CTableBody>
+                  </CTable>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

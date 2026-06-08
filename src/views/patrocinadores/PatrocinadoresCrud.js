@@ -16,6 +16,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createPatrocinio,
@@ -236,26 +237,32 @@ const PatrocinadoresCrud = () => {
             ) : orderedSponsors.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhum patrocinador cadastrado.</div>
             ) : (
-              <CListGroup flush>
-                {orderedSponsors.map((sponsor) => (
-                  <CListGroupItem
-                    key={sponsor.id}
-                    action
-                    active={String(sponsor.id) === String(selectedSponsorId)}
-                    onClick={() => {
-                      setSelectedSponsorId(sponsor.id)
-                      setFeedback(null)
-                    }}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-3">
-                      <div>
-                        <div className="fw-semibold">{sponsor.descricao || 'Sem descrição'}</div>
-                        <small className="text-medium-emphasis">ID #{sponsor.id}</small>
-                      </div>
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={orderedSponsors} summaryLabel="patrocinadores">
+                {(paginatedSponsors) => (
+                  <CListGroup flush>
+                    {paginatedSponsors.map((sponsor) => (
+                      <CListGroupItem
+                        key={sponsor.id}
+                        action
+                        active={String(sponsor.id) === String(selectedSponsorId)}
+                        onClick={() => {
+                          setSelectedSponsorId(sponsor.id)
+                          setFeedback(null)
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-3">
+                          <div>
+                            <div className="fw-semibold">
+                              {sponsor.descricao || 'Sem descrição'}
+                            </div>
+                            <small className="text-medium-emphasis">ID #{sponsor.id}</small>
+                          </div>
+                        </div>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

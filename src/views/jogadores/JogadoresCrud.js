@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilArrowRight, cilPlus, cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CategorySelect from '../../components/forms/CategorySelect'
 import { listEquipes } from '../../services/equipeApi'
@@ -604,33 +605,37 @@ const JogadoresCrud = () => {
                 Nenhum jogador encontrado para o termo buscado.
               </div>
             ) : (
-              <CListGroup flush>
-                {visiblePlayers.map((player) => (
-                  <CListGroupItem
-                    key={player.id}
-                    action
-                    active={String(player.id) === String(selectedPlayerId)}
-                    onClick={() => handlePlayerSelect(player.id)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-2">
-                      <div>
-                        <div className="fw-semibold">{player.nomeJogador}</div>
-                        <small className="text-medium-emphasis">
-                          Matrícula {player.matricula || 'não informada'}
-                        </small>
-                      </div>
-                      <div className="d-flex flex-column align-items-end gap-1">
-                        <CBadge color="secondary" shape="rounded-pill">
-                          {player.time || 'Equipe não informada'}
-                        </CBadge>
-                        <CBadge color="info" shape="rounded-pill">
-                          {player.categoria || 'Categoria não informada'}
-                        </CBadge>
-                      </div>
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={visiblePlayers} summaryLabel="jogadores">
+                {(paginatedPlayers) => (
+                  <CListGroup flush>
+                    {paginatedPlayers.map((player) => (
+                      <CListGroupItem
+                        key={player.id}
+                        action
+                        active={String(player.id) === String(selectedPlayerId)}
+                        onClick={() => handlePlayerSelect(player.id)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <div className="fw-semibold">{player.nomeJogador}</div>
+                            <small className="text-medium-emphasis">
+                              Matrícula {player.matricula || 'não informada'}
+                            </small>
+                          </div>
+                          <div className="d-flex flex-column align-items-end gap-1">
+                            <CBadge color="secondary" shape="rounded-pill">
+                              {player.time || 'Equipe não informada'}
+                            </CBadge>
+                            <CBadge color="info" shape="rounded-pill">
+                              {player.categoria || 'Categoria não informada'}
+                            </CBadge>
+                          </div>
+                        </div>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

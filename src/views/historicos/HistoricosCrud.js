@@ -17,6 +17,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createHistorico,
@@ -390,26 +391,30 @@ const HistoricosCrud = () => {
             ) : visibleHistoricos.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhum histórico cadastrado.</div>
             ) : (
-              <CListGroup flush>
-                {visibleHistoricos.map((historico) => (
-                  <CListGroupItem
-                    key={historico.id}
-                    action
-                    active={String(historico.id) === String(selectedHistoricoId)}
-                    onClick={() => handleSelectHistorico(historico)}
-                  >
-                    <div className="d-flex justify-content-between gap-2">
-                      <div className="text-truncate">
-                        {historico.categoria || 'Categoria não informada'}
-                      </div>
-                      <span className="small text-medium-emphasis">{historico.ano ?? '-'}</span>
-                    </div>
-                    <div className="small text-medium-emphasis">
-                      Campeão: {historico.campeao || '-'}
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={visibleHistoricos} summaryLabel="históricos">
+                {(paginatedHistoricos) => (
+                  <CListGroup flush>
+                    {paginatedHistoricos.map((historico) => (
+                      <CListGroupItem
+                        key={historico.id}
+                        action
+                        active={String(historico.id) === String(selectedHistoricoId)}
+                        onClick={() => handleSelectHistorico(historico)}
+                      >
+                        <div className="d-flex justify-content-between gap-2">
+                          <div className="text-truncate">
+                            {historico.categoria || 'Categoria não informada'}
+                          </div>
+                          <span className="small text-medium-emphasis">{historico.ano ?? '-'}</span>
+                        </div>
+                        <div className="small text-medium-emphasis">
+                          Campeão: {historico.campeao || '-'}
+                        </div>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

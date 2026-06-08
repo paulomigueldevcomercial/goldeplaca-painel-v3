@@ -17,6 +17,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPeople, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createArtilheiroGeral,
@@ -302,26 +303,30 @@ const ArtilheirosCrud = () => {
             ) : visibleArtilheiros.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhum artilheiro cadastrado.</div>
             ) : (
-              <CListGroup flush>
-                {visibleArtilheiros.map((artilheiro) => (
-                  <CListGroupItem
-                    key={artilheiro.id}
-                    action
-                    active={String(artilheiro.id) === String(selectedArtilheiroId)}
-                    onClick={() => handleSelectArtilheiro(artilheiro)}
-                  >
-                    <div className="d-flex justify-content-between gap-2">
-                      <div className="text-truncate">{artilheiro.nome || 'Sem nome'}</div>
-                      <span className="small text-medium-emphasis">
-                        {artilheiro.gols ?? 0} gols
-                      </span>
-                    </div>
-                    <div className="small text-medium-emphasis">
-                      {artilheiro.equipe || '-'} - {artilheiro.ano || '-'}
-                    </div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={visibleArtilheiros} summaryLabel="artilheiros">
+                {(paginatedArtilheiros) => (
+                  <CListGroup flush>
+                    {paginatedArtilheiros.map((artilheiro) => (
+                      <CListGroupItem
+                        key={artilheiro.id}
+                        action
+                        active={String(artilheiro.id) === String(selectedArtilheiroId)}
+                        onClick={() => handleSelectArtilheiro(artilheiro)}
+                      >
+                        <div className="d-flex justify-content-between gap-2">
+                          <div className="text-truncate">{artilheiro.nome || 'Sem nome'}</div>
+                          <span className="small text-medium-emphasis">
+                            {artilheiro.gols ?? 0} gols
+                          </span>
+                        </div>
+                        <div className="small text-medium-emphasis">
+                          {artilheiro.equipe || '-'} - {artilheiro.ano || '-'}
+                        </div>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>

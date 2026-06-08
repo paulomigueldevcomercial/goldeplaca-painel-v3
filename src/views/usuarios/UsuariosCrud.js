@@ -18,6 +18,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilReload, cilSave, cilTrash, cilUser } from '@coreui/icons'
+import ListPagination from '../../components/ListPagination'
 import {
   createUsuario,
   deleteUsuario,
@@ -264,24 +265,28 @@ const UsuariosCrud = () => {
             ) : visibleUsers.length === 0 ? (
               <div className="p-3 text-medium-emphasis">Nenhum usuário cadastrado.</div>
             ) : (
-              <CListGroup flush>
-                {visibleUsers.map((user) => (
-                  <CListGroupItem
-                    key={user.id}
-                    action
-                    active={String(user.id) === String(selectedUserId)}
-                    onClick={() => handleSelectUser(user.id)}
-                  >
-                    <div className="d-flex justify-content-between align-items-center gap-2">
-                      <div className="text-truncate">
-                        {user.name || user.username || `Usuário ${user.id}`}
-                      </div>
-                      <span className="small text-medium-emphasis">#{user.id ?? '-'}</span>
-                    </div>
-                    <div className="small text-medium-emphasis">{user.username ?? '-'}</div>
-                  </CListGroupItem>
-                ))}
-              </CListGroup>
+              <ListPagination items={visibleUsers} summaryLabel="usuários">
+                {(paginatedUsers) => (
+                  <CListGroup flush>
+                    {paginatedUsers.map((user) => (
+                      <CListGroupItem
+                        key={user.id}
+                        action
+                        active={String(user.id) === String(selectedUserId)}
+                        onClick={() => handleSelectUser(user.id)}
+                      >
+                        <div className="d-flex justify-content-between align-items-center gap-2">
+                          <div className="text-truncate">
+                            {user.name || user.username || `Usuário ${user.id}`}
+                          </div>
+                          <span className="small text-medium-emphasis">#{user.id ?? '-'}</span>
+                        </div>
+                        <div className="small text-medium-emphasis">{user.username ?? '-'}</div>
+                      </CListGroupItem>
+                    ))}
+                  </CListGroup>
+                )}
+              </ListPagination>
             )}
           </CCardBody>
         </CCard>
