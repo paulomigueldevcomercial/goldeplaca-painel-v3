@@ -19,6 +19,7 @@ const CategorySelect = ({
   onError,
 }) => {
   const [categories, setCategories] = useState([])
+  const [loadedCompetitionId, setLoadedCompetitionId] = useState('')
   const errorRef = useRef(onError)
 
   useEffect(() => {
@@ -31,16 +32,22 @@ const CategorySelect = ({
     const loadCategories = async () => {
       if (!competitionId) {
         setCategories([])
+        setLoadedCompetitionId('')
         return
       }
+
+      setCategories([])
+      setLoadedCompetitionId('')
 
       try {
         const categoryData = await listCategorias({ competicao: competitionId })
         if (!isMounted) return
         setCategories(Array.isArray(categoryData) ? categoryData : [])
+        setLoadedCompetitionId(String(competitionId))
       } catch (error) {
         if (!isMounted) return
         setCategories([])
+        setLoadedCompetitionId('')
         if (errorRef.current) {
           errorRef.current('Não foi possível carregar categorias da competição.')
         }
@@ -54,14 +61,14 @@ const CategorySelect = ({
     }
   }, [competitionId])
 
-  const categoryOptions = useMemo(
-    () =>
-      categories.map((category) => ({
-        value: category.chave ?? category.valor,
-        label: category.valor ?? category.chave,
-      })),
-    [categories],
-  )
+  const categoryOptions = useMemo(() => {
+    if (String(competitionId || '') !== loadedCompetitionId) return []
+
+    return categories.map((category) => ({
+      value: category.chave ?? category.valor,
+      label: category.valor ?? category.chave,
+    }))
+  }, [categories, competitionId, loadedCompetitionId])
 
   useEffect(() => {
     if (!onValueChange) return
@@ -76,7 +83,9 @@ const CategorySelect = ({
     if (!autoSelectFirst || categoryOptions.length === 0) return
 
     const currentValue = value ?? ''
-    const hasSelection = categoryOptions.some((category) => String(category.value) === String(currentValue))
+    const hasSelection = categoryOptions.some(
+      (category) => String(category.value) === String(currentValue),
+    )
     const firstValue = categoryOptions?.[0]?.value ? String(categoryOptions[0].value) : ''
     const nextValue = hasSelection ? currentValue : firstValue
     if (nextValue !== currentValue) {

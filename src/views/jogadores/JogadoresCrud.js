@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
   CAlert,
@@ -182,6 +182,7 @@ const JogadoresCrud = () => {
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [playerSearch, setPlayerSearch] = useState('')
+  const filterTeamsRequestIdRef = useRef(0)
   const selectedCompetitionId = useSelector((state) => state.selectedCompetitionId)
 
   const loadPlayers = useCallback(async () => {
@@ -224,6 +225,9 @@ const JogadoresCrud = () => {
   }, [formData.categoria, selectedCompetitionId])
 
   const loadFilterTeams = useCallback(async () => {
+    const requestId = filterTeamsRequestIdRef.current + 1
+    filterTeamsRequestIdRef.current = requestId
+
     if (!selectedCompetitionId || !selectedCategoryId) {
       setFilterTeams([])
       return
@@ -234,8 +238,10 @@ const JogadoresCrud = () => {
         competicaoId: selectedCompetitionId,
         categoria: selectedCategoryId,
       })
+      if (filterTeamsRequestIdRef.current !== requestId) return
       setFilterTeams(Array.isArray(teamData) ? teamData : [])
     } catch (error) {
+      if (filterTeamsRequestIdRef.current !== requestId) return
       setFilterTeams([])
       setFeedback({ type: 'danger', message: 'Não foi possível carregar as equipes da categoria.' })
     }
