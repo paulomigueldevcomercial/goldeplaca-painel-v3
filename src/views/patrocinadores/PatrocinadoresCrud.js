@@ -33,13 +33,30 @@ const createEmptySponsor = () => ({
   imagePreviewUrl: '',
 })
 
-const SPONSOR_IMAGE_BASE_URL = 'https://goldeplacama.com.br/images/patrocinios'
+const SPONSOR_IMAGE_BASE_PATH = '/images/patrocinios'
 
 const getSponsorImageUrl = (imagem) => {
   if (!imagem) return ''
 
-  const fileName = String(imagem).split('/').filter(Boolean).pop()
-  return fileName ? `${SPONSOR_IMAGE_BASE_URL}/${fileName}` : ''
+  const normalizedPath = String(imagem).trim()
+  if (!normalizedPath || normalizedPath.startsWith('data:') || normalizedPath.startsWith('blob:')) {
+    return normalizedPath
+  }
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    try {
+      const url = new URL(normalizedPath)
+      return url.pathname.replace('/painel/images/', '/images/')
+    } catch (error) {
+      return normalizedPath.replace('/painel/images/', '/images/')
+    }
+  }
+
+  const relativePath = normalizedPath.replace(/^\/+/, '').replace(/^painel\/images\//, 'images/')
+  if (relativePath.startsWith('images/')) return `/${relativePath}`
+
+  const fileName = relativePath.split('?')[0].split('#')[0].split('/').filter(Boolean).pop()
+  return fileName ? `${SPONSOR_IMAGE_BASE_PATH}/${fileName}` : ''
 }
 
 const PatrocinadoresCrud = () => {

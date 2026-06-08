@@ -52,6 +52,27 @@ const createEmptyCompetition = () => ({
   imagemEmpresaFileName: '',
 })
 
+const getCompetitionImagePreviewUrl = (imagePath) => {
+  if (!imagePath) return ''
+
+  const normalizedPath = String(imagePath).trim()
+  if (!normalizedPath || normalizedPath.startsWith('data:') || normalizedPath.startsWith('blob:')) {
+    return normalizedPath
+  }
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    try {
+      const url = new URL(normalizedPath)
+      return url.pathname.replace('/painel/images/', '/images/')
+    } catch (error) {
+      return normalizedPath.replace('/painel/images/', '/images/')
+    }
+  }
+
+  const relativePath = normalizedPath.replace(/^\/+/, '').replace(/^painel\/images\//, 'images/')
+  return relativePath ? `/${relativePath}` : ''
+}
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -585,7 +606,7 @@ const CompeticoesCrud = () => {
                   {formData.foto && (
                     <div className="d-flex align-items-center gap-2">
                       <img
-                        src={formData.foto}
+                        src={getCompetitionImagePreviewUrl(formData.foto)}
                         alt="Foto da competição"
                         width={96}
                         height={64}
@@ -599,7 +620,7 @@ const CompeticoesCrud = () => {
                   {formData.imagemEmpresa && (
                     <div className="d-flex align-items-center gap-2">
                       <img
-                        src={formData.imagemEmpresa}
+                        src={getCompetitionImagePreviewUrl(formData.imagemEmpresa)}
                         alt="Imagem da empresa"
                         width={96}
                         height={64}
