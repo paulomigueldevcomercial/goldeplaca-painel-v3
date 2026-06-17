@@ -280,6 +280,7 @@ const EquipesCrud = () => {
         team.competicao ?? team.competicaoId ?? team.id_competicao ?? selectedCompetitionId,
       ),
       categoria: team.categoria ?? selectedCategoryId,
+      rebaixamento: team.rebaixamento ?? '',
       logoFile: null,
       logoFileName: '',
       logoPreviewUrl: resolveTeamLogoUrl(team),
@@ -374,6 +375,7 @@ const EquipesCrud = () => {
         ...submittedValues,
         id: teamData.id ? parseNumber(teamData.id) : undefined,
         competicao: parseNumber(selectedCompetitionId),
+        rebaixamento: submittedValues.rebaixamento ?? teamData.rebaixamento ?? '',
         vitorias: parseNumber(submittedValues.vitorias ?? teamData.vitorias),
         derrotas: parseNumber(submittedValues.derrotas ?? teamData.derrotas),
         empates: parseNumber(submittedValues.empates ?? teamData.empates),
@@ -685,9 +687,8 @@ const EquipesCrud = () => {
                     name="rebaixamento"
                     value={formData.rebaixamento}
                     onChange={handleInputChange}
-                    required
                   >
-                    <option value="">Selecione</option>
+                    <option value="">Não informado</option>
                     <option value="Sim">Sim</option>
                     <option value="Não">Não</option>
                   </CFormSelect>

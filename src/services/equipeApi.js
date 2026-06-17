@@ -13,10 +13,14 @@ const getAuthToken = () => {
 }
 
 const requestMultipart = async (path, { method = 'POST', equipe, logoFile, fotoFile } = {}) => {
-  const url = buildUrl(path, equipe)
+  const url = new URL(buildUrl(path, equipe))
   const formData = new FormData()
   const token = getAuthToken()
   const headers = {}
+
+  if (equipe && Object.prototype.hasOwnProperty.call(equipe, 'rebaixamento')) {
+    url.searchParams.set('rebaixamento', equipe.rebaixamento ?? '')
+  }
 
   if (logoFile) {
     formData.append('logo', logoFile)
