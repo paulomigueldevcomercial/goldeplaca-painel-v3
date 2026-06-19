@@ -10,6 +10,7 @@ const PainelWelcome = React.lazy(() => import('./views/painel/PainelWelcome'))
 const LegacyMenuItem = React.lazy(() => import('./views/painel/LegacyMenuItem'))
 const GaleriaCrud = React.lazy(() => import('./views/galeria/GaleriaCrud'))
 const NoticiasCrud = React.lazy(() => import('./views/noticias/NoticiasCrud'))
+const VideosCrud = React.lazy(() => import('./views/videos/VideosCrud'))
 const PatrocinadoresCrud = React.lazy(() => import('./views/patrocinadores/PatrocinadoresCrud'))
 const UploadSumulaCrud = React.lazy(() => import('./views/uploadSumula/UploadSumulaCrud'))
 const CompeticaoPdfUpload = React.lazy(() => import('./views/competicaoPdf/CompeticaoPdfUpload'))
@@ -36,6 +37,35 @@ const legacyItems = getVisibleLegacyMenuSections().flatMap((section) => section.
 
 const buildLegacyRoute = (item) => () => <LegacyMenuItem item={item} />
 
+const componentByLegacyRoute = {
+  'painel/albuns': GaleriaCrud,
+  'painel/noticiascompeticao': NoticiasCrud,
+  'painel/videos': VideosCrud,
+  'painel/patrocinadores': PatrocinadoresCrud,
+  'painel/criarjogadores': JogadoresCrud,
+  'painel/criarequipes': EquipesCrud,
+  'painel/viewjogos': JogosCrud,
+  'gerenciador/competicao/admin': CompeticoesCrud,
+  'painel/categorias': CategoriasCrud,
+  'painel/julgamento': JulgamentosCrud,
+  'painel/tblsemana': RodadaSemanaReport,
+  'painel/tabela_jogos_completo': TabelaJogosCompletoReport,
+  'painel/sumulacampo': () => <SumulaReport variant="campo" />,
+  'painel/sumulafutsal': () => <SumulaReport variant="futsal" />,
+  'user/admin': UsuariosCrud,
+  'painel/artilheiros-geral': ArtilheirosCrud,
+  'historico/admin': HistoricosCrud,
+  'user/changepassword': ChangePassword,
+  'gerenciador/acesso/logout': Logout,
+  'painel/viewuploadsumula': UploadSumulaCrud,
+  'painel/competicoes/pdf/rgc': () => <CompeticaoPdfUpload variant="rgc" />,
+  'painel/competicoes/pdf/cde': () => <CompeticaoPdfUpload variant="cde" />,
+  'painel/competicoes/pdf/resultado': () => <CompeticaoPdfUpload variant="resultado" />,
+  'painel/competicoes/pdf/outros-anexos': () => <CompeticaoPdfUpload variant="outrosAnexos" />,
+  'painel/equipes/reports/logo': EquipeReportLogoUpload,
+  'sumula/selecao': SumulasCrud,
+}
+
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/painel', exact: true, name: 'Painel', element: PainelWelcome },
@@ -46,63 +76,7 @@ const routes = [
     adminOnly: isAdminOnlyLegacyMenuItem(item),
     alwaysAllowed: isAlwaysVisibleLegacyMenuItem(item),
     menuAlias: item.menuAlias,
-    element:
-      item.route === 'painel/albuns'
-        ? GaleriaCrud
-        : item.route === 'painel/noticiascompeticao'
-          ? NoticiasCrud
-          : item.route === 'painel/patrocinadores'
-            ? PatrocinadoresCrud
-            : item.route === 'painel/criarjogadores'
-              ? JogadoresCrud
-              : item.route === 'painel/criarequipes'
-                ? EquipesCrud
-                : item.route === 'painel/viewjogos'
-                  ? JogosCrud
-                  : item.route === 'gerenciador/competicao/admin'
-                    ? CompeticoesCrud
-                    : item.route === 'painel/categorias'
-                      ? CategoriasCrud
-                      : item.route === 'painel/julgamento'
-                        ? JulgamentosCrud
-                        : item.route === 'painel/tblsemana'
-                          ? RodadaSemanaReport
-                          : item.route === 'painel/tabela_jogos_completo'
-                            ? TabelaJogosCompletoReport
-                            : item.route === 'painel/sumulacampo'
-                              ? () => <SumulaReport variant="campo" />
-                              : item.route === 'painel/sumulafutsal'
-                                ? () => <SumulaReport variant="futsal" />
-                                : item.route === 'user/admin'
-                                  ? UsuariosCrud
-                                  : item.route === 'painel/artilheiros-geral'
-                                    ? ArtilheirosCrud
-                                    : item.route === 'historico/admin'
-                                      ? HistoricosCrud
-                                      : item.route === 'user/changepassword'
-                                        ? ChangePassword
-                                        : item.route === 'gerenciador/acesso/logout'
-                                          ? Logout
-                                          : item.route === 'painel/viewuploadsumula'
-                                            ? UploadSumulaCrud
-                                            : item.route === 'painel/competicoes/pdf/rgc'
-                                              ? () => <CompeticaoPdfUpload variant="rgc" />
-                                              : item.route === 'painel/competicoes/pdf/cde'
-                                                ? () => <CompeticaoPdfUpload variant="cde" />
-                                                : item.route === 'painel/competicoes/pdf/resultado'
-                                                  ? () => (
-                                                      <CompeticaoPdfUpload variant="resultado" />
-                                                    )
-                                                  : item.route ===
-                                                      'painel/competicoes/pdf/outros-anexos'
-                                                    ? () => (
-                                                        <CompeticaoPdfUpload variant="outrosAnexos" />
-                                                      )
-                                                    : item.route === 'painel/equipes/reports/logo'
-                                                      ? EquipeReportLogoUpload
-                                                      : item.route === 'sumula/selecao'
-                                                        ? SumulasCrud
-                                                        : buildLegacyRoute(item),
+    element: componentByLegacyRoute[item.route] ?? buildLegacyRoute(item),
   })),
 ]
 

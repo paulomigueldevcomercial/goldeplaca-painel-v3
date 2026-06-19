@@ -1,5 +1,6 @@
 export const MENU_ALLOWED_OPTIONS = [
   { menu: 'Notícias', alias: 'noticias' },
+  { menu: 'Video', alias: 'video' },
   { menu: 'Patrocinadores', alias: 'patrocinadores' },
   { menu: 'Upload Súmula', alias: 'upload_sumula' },
   { menu: 'RGC', alias: 'pdf_rgc' },
@@ -25,6 +26,7 @@ export const MENU_ALLOWED_OPTIONS = [
 
 export const MENU_ALIAS_BY_ROUTE = {
   'painel/noticiascompeticao': 'noticias',
+  'painel/videos': 'video',
   'painel/patrocinadores': 'patrocinadores',
   'painel/viewuploadsumula': 'upload_sumula',
   'painel/competicoes/pdf/rgc': 'pdf_rgc',

@@ -5,6 +5,7 @@ export const hidePendingLegacyMenuItems = true
 
 export const implementedLegacyMenuRoutes = [
   'painel/noticiascompeticao',
+  'painel/videos',
   'painel/patrocinadores',
   'painel/viewuploadsumula',
   'painel/competicoes/pdf/rgc',
@@ -79,6 +80,12 @@ const legacyMenuSections = [
         route: 'painel/noticiascompeticao',
         visibility: 'Disponível exceto para competição 32',
         path: '/painel/gerenciamento/noticias',
+      },
+      {
+        label: 'Video',
+        route: 'painel/videos',
+        visibility: 'Disponível para cadastro de vídeos por competição',
+        path: '/painel/gerenciamento/videos',
       },
       {
         label: 'Patrocinadores',
