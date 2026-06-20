@@ -1,4 +1,6 @@
-export const API_BASE_URL = ''
+import { getBackendBaseUrl } from '../config/runtimeConfig'
+
+export const API_BASE_URL = getBackendBaseUrl()
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
