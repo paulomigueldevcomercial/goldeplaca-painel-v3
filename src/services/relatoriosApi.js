@@ -79,3 +79,10 @@ export const downloadSumulaFutsalReport = async ({ id } = {}) =>
     { id },
     'Não foi possível gerar o relatório de súmula futsal.',
   )
+
+export const downloadScoutFinalReport = async ({ competicao, categoria } = {}) =>
+  fetchReportBlob(
+    '/reports/scoutfinal',
+    { competicao, categoria },
+    'Não foi possível gerar o relatório de scout final.',
+  )

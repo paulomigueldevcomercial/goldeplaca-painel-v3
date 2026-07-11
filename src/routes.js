@@ -27,6 +27,7 @@ const SumulaReport = React.lazy(() => import('./views/relatorios/SumulaReport'))
 const TabelaJogosCompletoReport = React.lazy(
   () => import('./views/relatorios/TabelaJogosCompletoReport'),
 )
+const ScoutFinalReport = React.lazy(() => import('./views/relatorios/ScoutFinalReport'))
 const UsuariosCrud = React.lazy(() => import('./views/usuarios/UsuariosCrud'))
 const ArtilheirosCrud = React.lazy(() => import('./views/artilheiros/ArtilheirosCrud'))
 const HistoricosCrud = React.lazy(() => import('./views/historicos/HistoricosCrud'))
@@ -50,6 +51,7 @@ const componentByLegacyRoute = {
   'painel/julgamento': JulgamentosCrud,
   'painel/tblsemana': RodadaSemanaReport,
   'painel/tabela_jogos_completo': TabelaJogosCompletoReport,
+  'painel/scoutfinal': ScoutFinalReport,
   'painel/sumulacampo': () => <SumulaReport variant="campo" />,
   'painel/sumulafutsal': () => <SumulaReport variant="futsal" />,
   'user/admin': UsuariosCrud,

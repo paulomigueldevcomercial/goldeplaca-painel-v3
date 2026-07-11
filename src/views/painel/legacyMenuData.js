@@ -24,6 +24,7 @@ export const implementedLegacyMenuRoutes = [
   'painel/sumulafutsal',
   'painel/tblsemana',
   'painel/tabela_jogos_completo',
+  'painel/scoutfinal',
   'painel/julgamento',
   'painel/artilheiros-geral',
   'historico/admin',
