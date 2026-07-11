@@ -28,7 +28,6 @@ const createEmptyVideo = () => ({
   id: '',
   descricao: '',
   url: '',
-  data: '',
   ativo: true,
   competicao: '',
 })
@@ -65,26 +64,6 @@ const formatVideoDate = (value) => {
   })
     .format(date)
     .replace(',', ' às')
-}
-
-const toDateTimeInputValue = (value) => {
-  if (!value) return ''
-
-  const match = String(value).match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/)
-  if (match) return match[1]
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-
-  const pad = (entry) => String(entry).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}`
-}
-
-const normalizeDateTimeForApi = (value) => {
-  if (!value) return null
-  return value.length === 16 ? `${value}:00` : value
 }
 
 const getEmbeddableVideoUrl = (value) => {
@@ -141,9 +120,9 @@ const VideosCrud = () => {
     if (!video) return
 
     setFormData({
-      ...createEmptyVideo(),
-      ...video,
-      data: toDateTimeInputValue(video.data),
+      id: video.id ?? '',
+      descricao: video.descricao ?? '',
+      url: video.url ?? '',
       ativo: video.ativo ?? true,
       competicao: video.competicao ?? selectedCompetitionId ?? '',
     })
@@ -231,7 +210,6 @@ const VideosCrud = () => {
       const payload = {
         descricao: formData.descricao,
         url: formData.url,
-        data: normalizeDateTimeForApi(formData.data),
         ativo: Boolean(formData.ativo),
         competicao: parseNumber(selectedCompetitionId),
       }
@@ -432,30 +410,18 @@ const VideosCrud = () => {
                   />
                 </div>
 
-                <CRow className="g-3">
-                  <CCol md={7}>
-                    <CFormLabel htmlFor="video-date">Data</CFormLabel>
-                    <CFormInput
-                      id="video-date"
-                      name="data"
-                      type="datetime-local"
-                      value={formData.data}
-                      onChange={handleInputChange}
-                    />
-                  </CCol>
-                  <CCol md={5}>
-                    <CFormLabel htmlFor="video-status">Status</CFormLabel>
-                    <CFormSelect
-                      id="video-status"
-                      name="ativo"
-                      value={String(formData.ativo)}
-                      onChange={handleInputChange}
-                    >
-                      <option value="true">Ativo</option>
-                      <option value="false">Inativo</option>
-                    </CFormSelect>
-                  </CCol>
-                </CRow>
+                <div>
+                  <CFormLabel htmlFor="video-status">Status</CFormLabel>
+                  <CFormSelect
+                    id="video-status"
+                    name="ativo"
+                    value={String(formData.ativo)}
+                    onChange={handleInputChange}
+                  >
+                    <option value="true">Ativo</option>
+                    <option value="false">Inativo</option>
+                  </CFormSelect>
+                </div>
 
                 {formData.url && (
                   <div>
