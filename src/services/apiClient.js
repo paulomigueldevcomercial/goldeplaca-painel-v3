@@ -53,8 +53,21 @@ export const requestJson = async (path, { method = 'GET', params, body } = {}) =
       window.localStorage.removeItem('authSession')
     }
 
-    const message = await response.text()
-    throw new Error(message || 'Falha ao processar a requisição.')
+    const text = await response.text()
+    let message = text
+
+    if (text) {
+      try {
+        const data = JSON.parse(text)
+        message = data.message || data.error || text
+      } catch (error) {
+        message = text
+      }
+    }
+
+    const error = new Error(message || 'Falha ao processar a requisição.')
+    error.status = response.status
+    throw error
   }
 
   if (response.status === 204) return null

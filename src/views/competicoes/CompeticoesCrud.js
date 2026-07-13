@@ -11,21 +11,24 @@ import {
   CFormInput,
   CFormLabel,
   CFormSelect,
+  CFormTextarea,
   CListGroup,
   CListGroupItem,
   CRow,
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@coreui/icons'
+import { cilCheck, cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@coreui/icons'
 import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createCompeticao,
   deleteCompeticao,
+  finishCompeticao,
   listCompeticoes,
   updateCompeticao,
 } from '../../services/competicaoApi'
+import { listModalidades } from '../../services/modalidadeApi'
 
 const createEmptyCompetition = () => ({
   id: '',
@@ -88,12 +91,25 @@ const parseNumber = (value) => {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+const getErrorMessage = (error, fallback) => error?.message || fallback
+
+const mapCompetitionToFormData = (competition) => ({
+  ...createEmptyCompetition(),
+  ...competition,
+  id: competition.id ?? '',
+  finalizado: Boolean(competition.finalizado),
+  ativo: competition.ativo ?? true,
+  fotoFileName: '',
+  imagemEmpresaFileName: '',
+})
+
 const CompeticoesCrud = () => {
   const [competitions, setCompetitions] = useState([])
+  const [modalidades, setModalidades] = useState([])
   const [selectedCompetitionId, setSelectedCompetitionId] = useState(null)
   const [formData, setFormData] = useState(createEmptyCompetition())
   const [feedback, setFeedback] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [competitionSearch, setCompetitionSearch] = useState('')
 
   const loadCompetitions = useCallback(async () => {
@@ -103,35 +119,67 @@ const CompeticoesCrud = () => {
       setCompetitions(Array.isArray(competitionData) ? competitionData : [])
     } catch (error) {
       setCompetitions([])
-      setFeedback({ type: 'danger', message: 'Não foi possível carregar as competições.' })
+      setFeedback({
+        type: 'danger',
+        message: getErrorMessage(error, 'Não foi possível carregar as competições.'),
+      })
     } finally {
       setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    loadCompetitions()
-  }, [loadCompetitions])
+    let isMounted = true
 
-  useEffect(() => {
-    if (!selectedCompetitionId) return
+    Promise.allSettled([listCompeticoes(), listModalidades()])
+      .then(([competitionResult, modalidadeResult]) => {
+        if (!isMounted) return
 
-    const competition = competitions.find(
-      (item) => String(item.id) === String(selectedCompetitionId),
-    )
-    if (!competition) return
+        if (competitionResult.status === 'fulfilled') {
+          setCompetitions(Array.isArray(competitionResult.value) ? competitionResult.value : [])
+        } else {
+          setCompetitions([])
+          setFeedback({
+            type: 'danger',
+            message: getErrorMessage(
+              competitionResult.reason,
+              'Não foi possível carregar as competições.',
+            ),
+          })
+        }
 
-    setFormData({
-      ...createEmptyCompetition(),
-      ...competition,
-      id: competition.id ?? '',
-      finalizado: Boolean(competition.finalizado),
-      ativo: competition.ativo ?? true,
-      fotoFileName: '',
-      imagemEmpresaFileName: '',
-    })
-  }, [selectedCompetitionId, competitions])
+        if (modalidadeResult.status === 'fulfilled') {
+          setModalidades(Array.isArray(modalidadeResult.value) ? modalidadeResult.value : [])
+        } else {
+          setModalidades([])
+          setFeedback({
+            type: 'danger',
+            message: getErrorMessage(
+              modalidadeResult.reason,
+              'Não foi possível carregar as modalidades.',
+            ),
+          })
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
 
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const modalidadeById = useMemo(
+    () =>
+      modalidades.reduce((accumulator, modalidade) => {
+        accumulator[String(modalidade.id)] = modalidade
+        return accumulator
+      }, {}),
+    [modalidades],
+  )
   const filteredCompetitions = useMemo(() => competitions, [competitions])
   const visibleCompetitions = useMemo(() => {
     const searchTerm = competitionSearch.trim().toLowerCase()
@@ -146,6 +194,11 @@ const CompeticoesCrud = () => {
   }, [filteredCompetitions, competitionSearch])
 
   const handleCompetitionSelect = (competitionId) => {
+    const competition = competitions.find((item) => String(item.id) === String(competitionId))
+    if (competition) {
+      setFormData(mapCompetitionToFormData(competition))
+    }
+
     setSelectedCompetitionId(competitionId)
     setFeedback(null)
   }
@@ -185,13 +238,25 @@ const CompeticoesCrud = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.nomeCompeticao) return
+    const requiredFields = [
+      ['id', 'Informe o ID da competição.'],
+      ['nomeCompeticao', 'Informe o nome da competição.'],
+      ['descricao', 'Informe a descrição da competição.'],
+      ['dataInicio', 'Informe a data de início da competição.'],
+      ['dataFim', 'Informe a data de fim da competição.'],
+    ]
+    const missingField = requiredFields.find(([field]) => !String(formData[field] ?? '').trim())
+
+    if (missingField) {
+      setFeedback({ type: 'danger', message: missingField[1] })
+      return
+    }
 
     setIsLoading(true)
     try {
       const payload = {
         ...formData,
-        id: formData.id ? parseNumber(formData.id) : undefined,
+        id: parseNumber(formData.id),
         modalidadeId: parseNumber(formData.modalidadeId),
         maxInscricoes: parseNumber(formData.maxInscricoes),
         empresaId: parseNumber(formData.empresaId),
@@ -210,7 +275,30 @@ const CompeticoesCrud = () => {
 
       await loadCompetitions()
     } catch (error) {
-      setFeedback({ type: 'danger', message: 'Não foi possível salvar a competição.' })
+      setFeedback({
+        type: 'danger',
+        message: getErrorMessage(error, 'Não foi possível salvar a competição.'),
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleFinish = async () => {
+    if (!selectedCompetitionId) return
+
+    setIsLoading(true)
+    try {
+      await finishCompeticao(selectedCompetitionId)
+      setSelectedCompetitionId(null)
+      setFormData(createEmptyCompetition())
+      setFeedback({ type: 'success', message: 'Competição finalizada com sucesso.' })
+      await loadCompetitions()
+    } catch (error) {
+      setFeedback({
+        type: 'danger',
+        message: getErrorMessage(error, 'Não foi possível finalizar a competição.'),
+      })
     } finally {
       setIsLoading(false)
     }
@@ -227,7 +315,10 @@ const CompeticoesCrud = () => {
       setFeedback({ type: 'success', message: 'Competição removida do cadastro.' })
       await loadCompetitions()
     } catch (error) {
-      setFeedback({ type: 'danger', message: 'Não foi possível remover a competição.' })
+      setFeedback({
+        type: 'danger',
+        message: getErrorMessage(error, 'Não foi possível remover a competição.'),
+      })
     } finally {
       setIsLoading(false)
     }
@@ -313,7 +404,8 @@ const CompeticoesCrud = () => {
                             </CBadge>
                             <CBadge color="info" shape="rounded-pill">
                               {competition.modalidadeId
-                                ? `Modalidade ${competition.modalidadeId}`
+                                ? modalidadeById[String(competition.modalidadeId)]?.descricao ||
+                                  `Modalidade ${competition.modalidadeId}`
                                 : 'Sem modalidade'}
                             </CBadge>
                           </div>
@@ -358,6 +450,7 @@ const CompeticoesCrud = () => {
                     value={formData.id}
                     onChange={handleInputChange}
                     readOnly={Boolean(selectedCompetitionId)}
+                    required
                   />
                 </CCol>
                 <CCol md={8}>
@@ -374,11 +467,12 @@ const CompeticoesCrud = () => {
 
               <div>
                 <CFormLabel htmlFor="competition-description">Descrição</CFormLabel>
-                <CFormInput
+                <CFormTextarea
                   id="competition-description"
                   name="descricao"
                   value={formData.descricao}
                   onChange={handleInputChange}
+                  required
                 />
               </div>
 
@@ -394,13 +488,24 @@ const CompeticoesCrud = () => {
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="competition-modalidade">Modalidade</CFormLabel>
-                  <CFormInput
+                  <CFormSelect
                     id="competition-modalidade"
                     name="modalidadeId"
-                    type="number"
                     value={formData.modalidadeId}
                     onChange={handleInputChange}
-                  />
+                  >
+                    <option value="">Selecione uma modalidade</option>
+                    {formData.modalidadeId && !modalidadeById[String(formData.modalidadeId)] && (
+                      <option value={formData.modalidadeId}>
+                        Modalidade {formData.modalidadeId}
+                      </option>
+                    )}
+                    {modalidades.map((modalidade) => (
+                      <option key={modalidade.id} value={modalidade.id}>
+                        {modalidade.id} - {modalidade.descricao || 'Sem descrição'}
+                      </option>
+                    ))}
+                  </CFormSelect>
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="competition-max">Máx. inscrições</CFormLabel>
@@ -423,6 +528,7 @@ const CompeticoesCrud = () => {
                     name="dataInicio"
                     value={formData.dataInicio}
                     onChange={handleInputChange}
+                    required
                   />
                 </CCol>
                 <CCol md={4}>
@@ -433,6 +539,7 @@ const CompeticoesCrud = () => {
                     name="dataFim"
                     value={formData.dataFim}
                     onChange={handleInputChange}
+                    required
                   />
                 </CCol>
                 <CCol md={4}>
@@ -455,6 +562,7 @@ const CompeticoesCrud = () => {
                     name="ativo"
                     value={formData.ativo ? 'true' : 'false'}
                     onChange={handleBooleanChange}
+                    required
                   >
                     <option value="true">Sim</option>
                     <option value="false">Não</option>
@@ -467,6 +575,7 @@ const CompeticoesCrud = () => {
                     name="finalizado"
                     value={formData.finalizado ? 'true' : 'false'}
                     onChange={handleBooleanChange}
+                    required
                   >
                     <option value="false">Não</option>
                     <option value="true">Sim</option>
@@ -594,6 +703,15 @@ const CompeticoesCrud = () => {
                   disabled={isLoading}
                 >
                   <CIcon icon={cilReload} className="me-2" /> Limpar
+                </CButton>
+                <CButton
+                  color="warning"
+                  variant="outline"
+                  type="button"
+                  disabled={!selectedCompetitionId || formData.finalizado || isLoading}
+                  onClick={handleFinish}
+                >
+                  <CIcon icon={cilCheck} className="me-2" /> Finalizar
                 </CButton>
                 <CButton
                   color="danger"
