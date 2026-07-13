@@ -8,6 +8,7 @@ import {
   CCardHeader,
   CCol,
   CForm,
+  CFormCheck,
   CFormInput,
   CFormLabel,
   CFormSelect,
@@ -26,6 +27,7 @@ import {
   deleteCompeticao,
   finishCompeticao,
   listCompeticoes,
+  listCompeticoesFinalizadas,
   updateCompeticao,
 } from '../../services/competicaoApi'
 import { listModalidades } from '../../services/modalidadeApi'
@@ -111,22 +113,27 @@ const CompeticoesCrud = () => {
   const [feedback, setFeedback] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [competitionSearch, setCompetitionSearch] = useState('')
+  const [showFinishedCompetitions, setShowFinishedCompetitions] = useState(false)
 
-  const loadCompetitions = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const competitionData = await listCompeticoes()
-      setCompetitions(Array.isArray(competitionData) ? competitionData : [])
-    } catch (error) {
-      setCompetitions([])
-      setFeedback({
-        type: 'danger',
-        message: getErrorMessage(error, 'Não foi possível carregar as competições.'),
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const loadCompetitions = useCallback(
+    async (showFinished = showFinishedCompetitions) => {
+      setIsLoading(true)
+      try {
+        const listFn = showFinished ? listCompeticoesFinalizadas : listCompeticoes
+        const competitionData = await listFn()
+        setCompetitions(Array.isArray(competitionData) ? competitionData : [])
+      } catch (error) {
+        setCompetitions([])
+        setFeedback({
+          type: 'danger',
+          message: getErrorMessage(error, 'Não foi possível carregar as competições.'),
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [showFinishedCompetitions],
+  )
 
   useEffect(() => {
     let isMounted = true
@@ -201,6 +208,16 @@ const CompeticoesCrud = () => {
 
     setSelectedCompetitionId(competitionId)
     setFeedback(null)
+  }
+
+  const handleFinishedFilterChange = async ({ target }) => {
+    const checked = target.checked
+
+    setShowFinishedCompetitions(checked)
+    setSelectedCompetitionId(null)
+    setFormData(createEmptyCompetition())
+    setFeedback(null)
+    await loadCompetitions(checked)
   }
 
   const handleInputChange = ({ target }) => {
@@ -361,6 +378,13 @@ const CompeticoesCrud = () => {
                 onChange={({ target }) => setCompetitionSearch(target.value)}
                 placeholder="Pesquisar por competição"
                 aria-label="Pesquisar competições"
+              />
+              <CFormCheck
+                id="competition-finished-filter"
+                className="mt-3"
+                checked={showFinishedCompetitions}
+                onChange={handleFinishedFilterChange}
+                label="Buscar competições finalizadas"
               />
             </div>
             {isLoading ? (
