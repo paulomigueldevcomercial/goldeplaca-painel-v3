@@ -13,4 +13,7 @@ export const updateCompeticao = (id, payload) =>
 export const finishCompeticao = (id) =>
   requestJson(`/api/competicoes/${id}/finalizar`, { method: 'PATCH' })
 
+export const activateCompeticao = (id) =>
+  requestJson(`/api/competicoes/${id}/ativar`, { method: 'PATCH' })
+
 export const deleteCompeticao = (id) => requestJson(`/api/competicoes/${id}`, { method: 'DELETE' })

@@ -23,6 +23,7 @@ import { cilCheck, cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@c
 import ListPagination from '../../components/ListPagination'
 import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
+  activateCompeticao,
   createCompeticao,
   deleteCompeticao,
   finishCompeticao,
@@ -315,6 +316,26 @@ const CompeticoesCrud = () => {
       setFeedback({
         type: 'danger',
         message: getErrorMessage(error, 'Não foi possível finalizar a competição.'),
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleActivate = async () => {
+    if (!selectedCompetitionId) return
+
+    setIsLoading(true)
+    try {
+      await activateCompeticao(selectedCompetitionId)
+      setSelectedCompetitionId(null)
+      setFormData(createEmptyCompetition())
+      setFeedback({ type: 'success', message: 'Competição ativada com sucesso.' })
+      await loadCompetitions(showFinishedCompetitions)
+    } catch (error) {
+      setFeedback({
+        type: 'danger',
+        message: getErrorMessage(error, 'Não foi possível ativar a competição.'),
       })
     } finally {
       setIsLoading(false)
@@ -736,6 +757,20 @@ const CompeticoesCrud = () => {
                   onClick={handleFinish}
                 >
                   <CIcon icon={cilCheck} className="me-2" /> Finalizar
+                </CButton>
+                <CButton
+                  color="success"
+                  variant="outline"
+                  type="button"
+                  disabled={
+                    !selectedCompetitionId ||
+                    !showFinishedCompetitions ||
+                    !formData.finalizado ||
+                    isLoading
+                  }
+                  onClick={handleActivate}
+                >
+                  <CIcon icon={cilReload} className="me-2" /> Ativar
                 </CButton>
                 <CButton
                   color="danger"
