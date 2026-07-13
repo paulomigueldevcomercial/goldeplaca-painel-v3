@@ -21,7 +21,6 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilCheck, cilPlus, cilReload, cilSave, cilSettings, cilTrash } from '@coreui/icons'
 import ListPagination from '../../components/ListPagination'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   activateCompeticao,
   createCompeticao,
@@ -380,7 +379,6 @@ const CompeticoesCrud = () => {
                 Cadastre competições e envie imagens pelo formulário para o endpoint de competições
                 do painel.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>
@@ -450,7 +448,7 @@ const CompeticoesCrud = () => {
                             <CBadge color="info" shape="rounded-pill">
                               {competition.modalidadeId
                                 ? modalidadeById[String(competition.modalidadeId)]?.descricao ||
-                                  `Modalidade ${competition.modalidadeId}`
+                                `Modalidade ${competition.modalidadeId}`
                                 : 'Sem modalidade'}
                             </CBadge>
                           </div>
