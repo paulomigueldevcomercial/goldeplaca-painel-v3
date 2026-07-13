@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CAlert, CButton, CCard, CCardBody, CCardHeader, CCol, CRow, CSpinner } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilDescription } from '@coreui/icons'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import { downloadTabelaSemanaReport } from '../../services/relatoriosApi'
 
@@ -73,7 +72,6 @@ const RodadaSemanaReport = () => {
               <div className="text-medium-emphasis">
                 Gere o PDF da rodada da semana para o campeonato selecionado.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

@@ -20,7 +20,6 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload, cilDescription, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import ListPagination from '../../components/ListPagination'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import CompetitionSelect from '../../components/forms/CompetitionSelect'
 import {
   excluirRelatorioCompletoJogos,
@@ -214,7 +213,6 @@ const TabelaJogosCompletoReport = () => {
               <div className="text-medium-emphasis">
                 Gere e baixe os PDFs completos de jogos da competição selecionada.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

@@ -16,7 +16,6 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheck, cilReload, cilSave, cilSearch, cilTrash } from '@coreui/icons'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createSumulas,
   deleteSumula,
@@ -411,7 +410,6 @@ const SumulasCrud = () => {
               <div className="text-medium-emphasis">
                 Busque um jogo e informe os dados de participação, cartões, gols e capitão.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>

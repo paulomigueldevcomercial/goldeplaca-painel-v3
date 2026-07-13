@@ -17,7 +17,6 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import ListPagination from '../../components/ListPagination'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createPatrocinio,
   deletePatrocinio,
@@ -208,9 +207,8 @@ const PatrocinadoresCrud = () => {
             <div>
               <h4 className="mb-1">Patrocinadores</h4>
               <div className="text-medium-emphasis">
-                Cadastre e edite patrocinadores exibidos no painel.
+                Cadastre e edite patrocinadores exibidos no site.
               </div>
-              <SelectedCompetitionBadge className="mt-2" />
             </div>
           </CCardBody>
         </CCard>
@@ -222,7 +220,7 @@ const PatrocinadoresCrud = () => {
             <div>
               <strong>Patrocinadores</strong>
               <div className="small text-medium-emphasis">
-                Cadastro global via `patrocinio-controller`.
+                Cadastro global de patrocinadores.
               </div>
             </div>
             <CButton color="primary" size="sm" variant="outline" onClick={resetForm}>
