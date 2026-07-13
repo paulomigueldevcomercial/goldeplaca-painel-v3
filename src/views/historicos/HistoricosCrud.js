@@ -18,7 +18,6 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import ListPagination from '../../components/ListPagination'
-import SelectedCompetitionBadge from '../../components/SelectedCompetitionBadge'
 import {
   createHistorico,
   deleteHistorico,
