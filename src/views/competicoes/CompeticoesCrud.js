@@ -94,6 +94,11 @@ const parseNumber = (value) => {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+const parseOptionalText = (value) => {
+  const normalizedValue = String(value ?? '').trim()
+  return normalizedValue || null
+}
+
 const getErrorMessage = (error, fallback) => error?.message || fallback
 
 const COMPETITION_REQUIRED_FIELDS = [
@@ -108,6 +113,7 @@ const mapCompetitionToFormData = (competition) => ({
   ...createEmptyCompetition(),
   ...competition,
   id: competition.id ?? '',
+  abrev: competition.abrev ?? '',
   finalizado: Boolean(competition.finalizado),
   ativo: competition.ativo ?? true,
   fotoFileName: '',
@@ -302,6 +308,7 @@ const CompeticoesCrud = () => {
         maxInscricoes: parseNumber(formData.maxInscricoes),
         empresaId: null,
         chaves: parseNumber(formData.chaves),
+        abrev: parseOptionalText(formData.abrev),
         nova: parseNumber(formData.nova),
       }
 
@@ -476,7 +483,7 @@ const CompeticoesCrud = () => {
                             <CBadge color="info" shape="rounded-pill">
                               {competition.modalidadeId
                                 ? modalidadeById[String(competition.modalidadeId)]?.descricao ||
-                                `Modalidade ${competition.modalidadeId}`
+                                  `Modalidade ${competition.modalidadeId}`
                                 : 'Sem modalidade'}
                             </CBadge>
                           </div>
@@ -565,6 +572,16 @@ const CompeticoesCrud = () => {
                   />
                 </CCol>
                 <CCol md={4}>
+                  <CFormLabel htmlFor="competition-abrev">Abreviação</CFormLabel>
+                  <CFormInput
+                    id="competition-abrev"
+                    name="abrev"
+                    value={formData.abrev}
+                    onChange={handleInputChange}
+                    maxLength={20}
+                  />
+                </CCol>
+                <CCol md={4}>
                   <CFormLabel htmlFor="competition-modalidade">Modalidade</CFormLabel>
                   <CFormSelect
                     id="competition-modalidade"
@@ -585,6 +602,9 @@ const CompeticoesCrud = () => {
                     ))}
                   </CFormSelect>
                 </CCol>
+              </CRow>
+
+              <CRow className="g-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="competition-max">Máx. inscrições</CFormLabel>
                   <CFormInput
