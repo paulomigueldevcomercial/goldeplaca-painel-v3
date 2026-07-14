@@ -37,7 +37,7 @@ const createEmptyCompetition = () => ({
   id: '',
   descricao: '',
   nomeCompeticao: '',
-  modalidadeId: '',
+  modalidadeId: '1',
   maxInscricoes: '',
   dataInicio: '',
   dataFim: '',

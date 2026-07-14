@@ -25,7 +25,7 @@ import {
   listHistoricos,
   updateHistorico,
 } from '../../services/historicoApi'
-import { listCompeticoesFinalizadas } from '../../services/competicaoApi'
+import { listCompeticoesHistorico } from '../../services/competicoesHistoricoApi'
 
 const ACCEPTED_IMAGE_TYPES = '.png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif'
 
@@ -143,10 +143,7 @@ const normalizeNonNegativeFormValue = (value) => {
 }
 
 const getCompetitionLabel = (competition) =>
-  competition?.nomeCompeticao ||
-  competition?.descricao ||
-  competition?.temporada ||
-  `Competição ${competition?.id ?? ''}`.trim()
+  competition?.nome || `Competição ${competition?.id ?? ''}`.trim()
 
 const normalizeHistoricoImageUrl = (value) => {
   const url = String(value ?? '').trim()
@@ -185,12 +182,11 @@ const buildPayload = (formData, selectedId) => ({
 
 const HistoricosCrud = () => {
   const [historicos, setHistoricos] = useState([])
-  const [finishedCompetitions, setFinishedCompetitions] = useState([])
+  const [historicalCompetitions, setHistoricalCompetitions] = useState([])
   const [selectedHistoricoId, setSelectedHistoricoId] = useState(null)
   const [formData, setFormData] = useState(createEmptyHistorico())
   const [imageFiles, setImageFiles] = useState({})
   const [search, setSearch] = useState('')
-  const [competitionSearch, setCompetitionSearch] = useState('')
   const [feedback, setFeedback] = useState(null)
   const [formErrors, setFormErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -209,16 +205,16 @@ const HistoricosCrud = () => {
     }
   }, [])
 
-  const loadFinishedCompetitions = useCallback(async () => {
+  const loadHistoricalCompetitions = useCallback(async () => {
     setIsLoadingCompetitions(true)
     try {
-      const data = await listCompeticoesFinalizadas()
-      setFinishedCompetitions(Array.isArray(data) ? data : [])
+      const data = await listCompeticoesHistorico()
+      setHistoricalCompetitions(Array.isArray(data) ? data : [])
     } catch (error) {
-      setFinishedCompetitions([])
+      setHistoricalCompetitions([])
       setFeedback({
         type: 'danger',
-        message: 'Não foi possível carregar as competições finalizadas.',
+        message: 'Não foi possível carregar as competições histórico.',
       })
     } finally {
       setIsLoadingCompetitions(false)
@@ -230,8 +226,8 @@ const HistoricosCrud = () => {
   }, [loadHistoricos])
 
   useEffect(() => {
-    loadFinishedCompetitions()
-  }, [loadFinishedCompetitions])
+    loadHistoricalCompetitions()
+  }, [loadHistoricalCompetitions])
 
   const visibleHistoricos = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -281,27 +277,7 @@ const HistoricosCrud = () => {
     setFeedback(null)
   }
 
-  const hasSelectedFinishedCompetition = finishedCompetitions.some(
-    (competition) => String(competition.id) === String(formData.competicaoHistorico),
-  )
-
-  const visibleFinishedCompetitions = useMemo(() => {
-    const term = competitionSearch.trim().toLowerCase()
-    if (!term) return finishedCompetitions
-
-    return finishedCompetitions.filter((competition) =>
-      [competition.id, getCompetitionLabel(competition)].some((field) =>
-        String(field ?? '')
-          .toLowerCase()
-          .includes(term),
-      ),
-    )
-  }, [finishedCompetitions, competitionSearch])
-
-  const selectedFinishedCompetition = finishedCompetitions.find(
-    (competition) => String(competition.id) === String(formData.competicaoHistorico),
-  )
-  const isSelectedCompetitionVisible = visibleFinishedCompetitions.some(
+  const hasSelectedHistoricalCompetition = historicalCompetitions.some(
     (competition) => String(competition.id) === String(formData.competicaoHistorico),
   )
 
@@ -509,16 +485,6 @@ const HistoricosCrud = () => {
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="historico-competicao">Competição histórico</CFormLabel>
-                  <CFormInput
-                    id="historico-competicao-search"
-                    type="search"
-                    value={competitionSearch}
-                    onChange={({ target }) => setCompetitionSearch(target.value)}
-                    placeholder="Buscar competição"
-                    aria-label="Buscar competição histórico"
-                    className="mb-2"
-                    disabled={isLoadingCompetitions}
-                  />
                   <CFormSelect
                     id="historico-competicao"
                     name="competicaoHistorico"
@@ -530,19 +496,12 @@ const HistoricosCrud = () => {
                     <option value="">
                       {isLoadingCompetitions ? 'Carregando competições...' : 'Selecione'}
                     </option>
-                    {formData.competicaoHistorico && !hasSelectedFinishedCompetition && (
+                    {formData.competicaoHistorico && !hasSelectedHistoricalCompetition && (
                       <option value={formData.competicaoHistorico}>
                         Competição #{formData.competicaoHistorico}
                       </option>
                     )}
-                    {formData.competicaoHistorico &&
-                      hasSelectedFinishedCompetition &&
-                      !isSelectedCompetitionVisible && (
-                        <option value={formData.competicaoHistorico}>
-                          {getCompetitionLabel(selectedFinishedCompetition)}
-                        </option>
-                      )}
-                    {visibleFinishedCompetitions.map((competition) => (
+                    {historicalCompetitions.map((competition) => (
                       <option key={competition.id} value={competition.id}>
                         {getCompetitionLabel(competition)}
                       </option>
