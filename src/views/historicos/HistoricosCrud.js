@@ -145,6 +145,9 @@ const normalizeNonNegativeFormValue = (value) => {
 const getCompetitionLabel = (competition) =>
   competition?.nome || `Competição ${competition?.id ?? ''}`.trim()
 
+const getHistoricoCompetitionLabel = (historico) =>
+  historico?.competicaoHistoricoNome || `Competição #${historico?.competicaoHistorico ?? ''}`.trim()
+
 const normalizeHistoricoImageUrl = (value) => {
   const url = String(value ?? '').trim()
   if (!url) return ''
@@ -240,7 +243,13 @@ const HistoricosCrud = () => {
     if (!term) return ordered
 
     return ordered.filter((historico) =>
-      [historico.ano, historico.categoria, historico.campeao, historico.artilheiro].some((field) =>
+      [
+        historico.ano,
+        historico.categoria,
+        historico.competicaoHistoricoNome,
+        historico.campeao,
+        historico.artilheiro,
+      ].some((field) =>
         String(field ?? '')
           .toLowerCase()
           .includes(term),
@@ -398,9 +407,9 @@ const HistoricosCrud = () => {
       <CCol lg={4}>
         <CCard className="h-100">
           <CCardHeader className="d-flex justify-content-between align-items-center">
-            <strong>Registros</strong>
+            <strong>Históricos</strong>
             <CButton color="primary" size="sm" variant="outline" onClick={resetForm}>
-              <CIcon icon={cilPlus} className="me-2" /> Novo
+              <CIcon icon={cilPlus} className="me-2" /> Novo histórico
             </CButton>
           </CCardHeader>
           <CCardBody className="p-0">
@@ -433,12 +442,12 @@ const HistoricosCrud = () => {
                       >
                         <div className="d-flex justify-content-between gap-2">
                           <div className="text-truncate">
-                            {historico.categoria || 'Categoria não informada'}
+                            {getHistoricoCompetitionLabel(historico)}
                           </div>
                           <span className="small text-medium-emphasis">{historico.ano ?? '-'}</span>
                         </div>
                         <div className="small text-medium-emphasis">
-                          Campeão: {historico.campeao || '-'}
+                          Categoria: {historico.categoria || 'não informada'}
                         </div>
                       </CListGroupItem>
                     ))}
