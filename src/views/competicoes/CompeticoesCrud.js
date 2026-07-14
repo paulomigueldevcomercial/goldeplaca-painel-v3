@@ -8,6 +8,7 @@ import {
   CCardHeader,
   CCol,
   CForm,
+  CFormFeedback,
   CFormCheck,
   CFormInput,
   CFormLabel,
@@ -95,6 +96,14 @@ const parseNumber = (value) => {
 
 const getErrorMessage = (error, fallback) => error?.message || fallback
 
+const COMPETITION_REQUIRED_FIELDS = [
+  ['id', 'Informe o ID da competição.'],
+  ['nomeCompeticao', 'Informe o nome da competição.'],
+  ['descricao', 'Informe a descrição da competição.'],
+  ['dataInicio', 'Informe a data de início da competição.'],
+  ['dataFim', 'Informe a data de fim da competição.'],
+]
+
 const mapCompetitionToFormData = (competition) => ({
   ...createEmptyCompetition(),
   ...competition,
@@ -111,6 +120,7 @@ const CompeticoesCrud = () => {
   const [selectedCompetitionId, setSelectedCompetitionId] = useState(null)
   const [formData, setFormData] = useState(createEmptyCompetition())
   const [feedback, setFeedback] = useState(null)
+  const [formErrors, setFormErrors] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [competitionSearch, setCompetitionSearch] = useState('')
   const [showFinishedCompetitions, setShowFinishedCompetitions] = useState(false)
@@ -207,6 +217,7 @@ const CompeticoesCrud = () => {
     }
 
     setSelectedCompetitionId(competitionId)
+    setFormErrors({})
     setFeedback(null)
   }
 
@@ -216,6 +227,7 @@ const CompeticoesCrud = () => {
     setShowFinishedCompetitions(checked)
     setSelectedCompetitionId(null)
     setFormData(createEmptyCompetition())
+    setFormErrors({})
     setFeedback(null)
     await loadCompetitions(checked)
   }
@@ -226,6 +238,12 @@ const CompeticoesCrud = () => {
       ...previous,
       [name]: value,
     }))
+    setFormErrors((previous) => {
+      if (!previous[name]) return previous
+      const next = { ...previous }
+      delete next[name]
+      return next
+    })
   }
 
   const handleBooleanChange = ({ target }) => {
@@ -234,6 +252,12 @@ const CompeticoesCrud = () => {
       ...previous,
       [name]: value === 'true',
     }))
+    setFormErrors((previous) => {
+      if (!previous[name]) return previous
+      const next = { ...previous }
+      delete next[name]
+      return next
+    })
   }
 
   const handleImageChange = async ({ target }, field, fileField) => {
@@ -255,20 +279,20 @@ const CompeticoesCrud = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const requiredFields = [
-      ['id', 'Informe o ID da competição.'],
-      ['nomeCompeticao', 'Informe o nome da competição.'],
-      ['descricao', 'Informe a descrição da competição.'],
-      ['dataInicio', 'Informe a data de início da competição.'],
-      ['dataFim', 'Informe a data de fim da competição.'],
-    ]
-    const missingField = requiredFields.find(([field]) => !String(formData[field] ?? '').trim())
+    const nextErrors = COMPETITION_REQUIRED_FIELDS.reduce((errors, [field, message]) => {
+      if (!String(formData[field] ?? '').trim()) {
+        errors[field] = message
+      }
+      return errors
+    }, {})
 
-    if (missingField) {
-      setFeedback({ type: 'danger', message: missingField[1] })
+    if (Object.keys(nextErrors).length > 0) {
+      setFormErrors(nextErrors)
+      setFeedback({ type: 'danger', message: 'Revise os campos obrigatórios sinalizados.' })
       return
     }
 
+    setFormErrors({})
     setIsLoading(true)
     try {
       const payload = {
@@ -276,7 +300,7 @@ const CompeticoesCrud = () => {
         id: parseNumber(formData.id),
         modalidadeId: parseNumber(formData.modalidadeId),
         maxInscricoes: parseNumber(formData.maxInscricoes),
-        empresaId: parseNumber(formData.empresaId),
+        empresaId: null,
         chaves: parseNumber(formData.chaves),
         nova: parseNumber(formData.nova),
       }
@@ -309,6 +333,7 @@ const CompeticoesCrud = () => {
       await finishCompeticao(selectedCompetitionId)
       setSelectedCompetitionId(null)
       setFormData(createEmptyCompetition())
+      setFormErrors({})
       setFeedback({ type: 'success', message: 'Competição finalizada com sucesso.' })
       await loadCompetitions()
     } catch (error) {
@@ -329,6 +354,7 @@ const CompeticoesCrud = () => {
       await activateCompeticao(selectedCompetitionId)
       setSelectedCompetitionId(null)
       setFormData(createEmptyCompetition())
+      setFormErrors({})
       setFeedback({ type: 'success', message: 'Competição ativada com sucesso.' })
       await loadCompetitions(showFinishedCompetitions)
     } catch (error) {
@@ -349,6 +375,7 @@ const CompeticoesCrud = () => {
       await deleteCompeticao(selectedCompetitionId)
       setSelectedCompetitionId(null)
       setFormData(createEmptyCompetition())
+      setFormErrors({})
       setFeedback({ type: 'success', message: 'Competição removida do cadastro.' })
       await loadCompetitions()
     } catch (error) {
@@ -364,6 +391,7 @@ const CompeticoesCrud = () => {
   const handleReset = () => {
     setSelectedCompetitionId(null)
     setFormData(createEmptyCompetition())
+    setFormErrors({})
     setFeedback(null)
   }
 
@@ -482,7 +510,7 @@ const CompeticoesCrud = () => {
             </CButton>
           </CCardHeader>
           <CCardBody>
-            <CForm onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+            <CForm noValidate onSubmit={handleSubmit} className="d-flex flex-column gap-3">
               <CRow className="g-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="competition-id">ID</CFormLabel>
@@ -493,8 +521,9 @@ const CompeticoesCrud = () => {
                     value={formData.id}
                     onChange={handleInputChange}
                     readOnly={Boolean(selectedCompetitionId)}
-                    required
+                    invalid={Boolean(formErrors.id)}
                   />
+                  {formErrors.id && <CFormFeedback invalid>{formErrors.id}</CFormFeedback>}
                 </CCol>
                 <CCol md={8}>
                   <CFormLabel htmlFor="competition-name">Nome da competição</CFormLabel>
@@ -503,8 +532,11 @@ const CompeticoesCrud = () => {
                     name="nomeCompeticao"
                     value={formData.nomeCompeticao}
                     onChange={handleInputChange}
-                    required
+                    invalid={Boolean(formErrors.nomeCompeticao)}
                   />
+                  {formErrors.nomeCompeticao && (
+                    <CFormFeedback invalid>{formErrors.nomeCompeticao}</CFormFeedback>
+                  )}
                 </CCol>
               </CRow>
 
@@ -515,8 +547,11 @@ const CompeticoesCrud = () => {
                   name="descricao"
                   value={formData.descricao}
                   onChange={handleInputChange}
-                  required
+                  invalid={Boolean(formErrors.descricao)}
                 />
+                {formErrors.descricao && (
+                  <CFormFeedback invalid>{formErrors.descricao}</CFormFeedback>
+                )}
               </div>
 
               <CRow className="g-3">
@@ -571,8 +606,11 @@ const CompeticoesCrud = () => {
                     name="dataInicio"
                     value={formData.dataInicio}
                     onChange={handleInputChange}
-                    required
+                    invalid={Boolean(formErrors.dataInicio)}
                   />
+                  {formErrors.dataInicio && (
+                    <CFormFeedback invalid>{formErrors.dataInicio}</CFormFeedback>
+                  )}
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="competition-end">Data fim</CFormLabel>
@@ -582,18 +620,11 @@ const CompeticoesCrud = () => {
                     name="dataFim"
                     value={formData.dataFim}
                     onChange={handleInputChange}
-                    required
+                    invalid={Boolean(formErrors.dataFim)}
                   />
-                </CCol>
-                <CCol md={4}>
-                  <CFormLabel htmlFor="competition-company">Empresa</CFormLabel>
-                  <CFormInput
-                    id="competition-company"
-                    name="empresaId"
-                    type="number"
-                    value={formData.empresaId}
-                    onChange={handleInputChange}
-                  />
+                  {formErrors.dataFim && (
+                    <CFormFeedback invalid>{formErrors.dataFim}</CFormFeedback>
+                  )}
                 </CCol>
               </CRow>
 
