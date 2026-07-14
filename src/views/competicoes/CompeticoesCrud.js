@@ -55,7 +55,9 @@ const createEmptyCompetition = () => ({
   roles: '',
   abrev: '',
   nova: '',
+  fotoFile: null,
   fotoFileName: '',
+  imagemEmpresaFile: null,
   imagemEmpresaFileName: '',
 })
 
@@ -116,7 +118,9 @@ const mapCompetitionToFormData = (competition) => ({
   abrev: competition.abrev ?? '',
   finalizado: Boolean(competition.finalizado),
   ativo: competition.ativo ?? true,
+  fotoFile: null,
   fotoFileName: '',
+  imagemEmpresaFile: null,
   imagemEmpresaFileName: '',
 })
 
@@ -275,6 +279,7 @@ const CompeticoesCrud = () => {
       setFormData((previous) => ({
         ...previous,
         [field]: dataUrl,
+        [`${field}File`]: file,
         [fileField]: file.name,
       }))
     } catch (error) {
@@ -311,12 +316,27 @@ const CompeticoesCrud = () => {
         abrev: parseOptionalText(formData.abrev),
         nova: parseNumber(formData.nova),
       }
+      delete payload.foto
+      delete payload.fotoFile
+      delete payload.fotoFileName
+      delete payload.imagemEmpresa
+      delete payload.imagemEmpresaFile
+      delete payload.imagemEmpresaFileName
 
       if (selectedCompetitionId) {
-        await updateCompeticao(selectedCompetitionId, payload)
+        await updateCompeticao(
+          selectedCompetitionId,
+          payload,
+          formData.fotoFile,
+          formData.imagemEmpresaFile,
+        )
         setFeedback({ type: 'success', message: 'Dados da competição atualizados com sucesso.' })
       } else {
-        const created = await createCompeticao(payload)
+        const created = await createCompeticao(
+          payload,
+          formData.fotoFile,
+          formData.imagemEmpresaFile,
+        )
         setSelectedCompetitionId(created?.id ?? payload.id ?? null)
         setFeedback({ type: 'success', message: 'Competição cadastrada com sucesso.' })
       }
@@ -735,7 +755,7 @@ const CompeticoesCrud = () => {
                   <CFormInput
                     id="competition-foto"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png"
                     onChange={(event) => handleImageChange(event, 'foto', 'fotoFileName')}
                   />
                   {formData.fotoFileName && (
@@ -747,7 +767,7 @@ const CompeticoesCrud = () => {
                   <CFormInput
                     id="competition-imagem-empresa"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png"
                     onChange={(event) =>
                       handleImageChange(event, 'imagemEmpresa', 'imagemEmpresaFileName')
                     }
@@ -759,30 +779,6 @@ const CompeticoesCrud = () => {
                   )}
                 </CCol>
               </CRow>
-
-              <div>
-                <CFormLabel htmlFor="competition-foto-url">URL da foto (opcional)</CFormLabel>
-                <CFormInput
-                  id="competition-foto-url"
-                  name="foto"
-                  value={formData.foto}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div>
-                <CFormLabel htmlFor="competition-imagem-url">
-                  URL da imagem da empresa (opcional)
-                </CFormLabel>
-                <CFormInput
-                  id="competition-imagem-url"
-                  name="imagemEmpresa"
-                  value={formData.imagemEmpresa}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
-                />
-              </div>
 
               <div className="d-flex flex-wrap gap-2">
                 <CButton color="primary" type="submit" disabled={isLoading}>
