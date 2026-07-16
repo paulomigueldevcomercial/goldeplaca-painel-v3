@@ -27,6 +27,12 @@ import {
 } from '../../services/artilheiroGeralApi'
 
 const ACCEPTED_IMAGE_TYPES = '.png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif'
+const FIRST_YEAR_OPTION = 2012
+const CURRENT_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = Array.from(
+  { length: Math.max(0, CURRENT_YEAR - FIRST_YEAR_OPTION + 1) },
+  (_, index) => String(CURRENT_YEAR - index),
+)
 
 const createEmptyArtilheiro = () => ({
   id: '',
@@ -35,7 +41,7 @@ const createEmptyArtilheiro = () => ({
   categoria: '',
   equipe: '',
   competicao: '',
-  ano: '',
+  ano: String(CURRENT_YEAR),
   imagem: '',
   imageFile: null,
   imageFileName: '',
@@ -50,6 +56,13 @@ const parseNumber = (value) => {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+const parseYear = (value) => {
+  const normalized = String(value ?? '').trim()
+  if (!/^\d{4}$/.test(normalized)) return null
+  const parsed = Number(normalized)
+  return parsed > 0 ? parsed : null
+}
+
 const parseNonNegativeNumber = (value) => {
   const parsed = parseNumber(value)
   if (parsed === null) return null
@@ -62,6 +75,11 @@ const normalizeNonNegativeInputValue = (value) => {
   if (Number.isNaN(parsed)) return value
   return parsed < 0 ? '0' : value
 }
+
+const normalizeYearInputValue = (value) =>
+  String(value ?? '')
+    .replace(/\D/g, '')
+    .slice(0, 4)
 
 const getCompetitionLabel = (competition) =>
   competition?.nomeCompeticao ||
@@ -159,6 +177,7 @@ const ArtilheirosCrud = () => {
         artilheiro.competicao === null || artilheiro.competicao === undefined
           ? ''
           : String(artilheiro.competicao),
+      ano: artilheiro.ano === null || artilheiro.ano === undefined ? '' : String(artilheiro.ano),
       imagePreviewUrl: normalizeImagePreviewUrl(artilheiro.imagem),
     })
     setFeedback(null)
@@ -172,7 +191,12 @@ const ArtilheirosCrud = () => {
     const { name, value } = target
     setFormData((previous) => ({
       ...previous,
-      [name]: NON_NEGATIVE_NUMBER_FIELDS.has(name) ? normalizeNonNegativeInputValue(value) : value,
+      [name]:
+        name === 'ano'
+          ? normalizeYearInputValue(value)
+          : NON_NEGATIVE_NUMBER_FIELDS.has(name)
+            ? normalizeNonNegativeInputValue(value)
+            : value,
     }))
   }
 
@@ -197,18 +221,21 @@ const ArtilheirosCrud = () => {
       return
     }
 
+    const ano = parseYear(formData.ano)
+    if (ano === null) {
+      setFeedback({ type: 'danger', message: 'Informe um ano válido com 4 dígitos.' })
+      return
+    }
+
     setIsLoading(true)
     try {
       const payload = {
-        id: selectedArtilheiroId
-          ? parseNumber(selectedArtilheiroId)
-          : (parseNumber(formData.id) ?? undefined),
         nome: formData.nome.trim(),
         gols: parseNonNegativeNumber(formData.gols),
         categoria: formData.categoria.trim(),
         equipe: formData.equipe.trim(),
         competicao: parseNumber(formData.competicao),
-        ano: parseNumber(formData.ano),
+        ano,
         imagem: formData.imagem || undefined,
       }
 
@@ -410,13 +437,18 @@ const ArtilheirosCrud = () => {
                 </CCol>
                 <CCol md={6}>
                   <CFormLabel htmlFor="artilheiro-ano">Ano</CFormLabel>
-                  <CFormInput
+                  <CFormSelect
                     id="artilheiro-ano"
                     name="ano"
-                    type="number"
                     value={formData.ano}
                     onChange={handleInputChange}
-                  />
+                  >
+                    {YEAR_OPTIONS.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </CFormSelect>
                 </CCol>
               </CRow>
 
