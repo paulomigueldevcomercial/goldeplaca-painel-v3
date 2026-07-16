@@ -22,9 +22,9 @@ import {
   createArtilheiroGeral,
   deleteArtilheiroGeral,
   listArtilheirosGerais,
+  listMenuArtilheiroGeral,
   updateArtilheiroGeral,
 } from '../../services/artilheiroGeralApi'
-import { listCompeticoesHistorico } from '../../services/competicoesHistoricoApi'
 
 const ACCEPTED_IMAGE_TYPES = '.png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif'
 
@@ -64,6 +64,8 @@ const normalizeNonNegativeInputValue = (value) => {
 }
 
 const getCompetitionLabel = (competition) =>
+  competition?.nomeCompeticao ||
+  competition?.nome_competicao ||
   competition?.nome ||
   `Competição ${competition?.id ?? ''}`.trim()
 
@@ -77,7 +79,7 @@ const normalizeImagePreviewUrl = (value) => {
 
 const ArtilheirosCrud = () => {
   const [artilheiros, setArtilheiros] = useState([])
-  const [historicalCompetitions, setHistoricalCompetitions] = useState([])
+  const [artilheiroCompetitions, setArtilheiroCompetitions] = useState([])
   const [selectedArtilheiroId, setSelectedArtilheiroId] = useState(null)
   const [formData, setFormData] = useState(createEmptyArtilheiro())
   const [search, setSearch] = useState('')
@@ -98,16 +100,16 @@ const ArtilheirosCrud = () => {
     }
   }, [])
 
-  const loadHistoricalCompetitions = useCallback(async () => {
+  const loadArtilheiroCompetitions = useCallback(async () => {
     setIsLoadingCompetitions(true)
     try {
-      const data = await listCompeticoesHistorico()
-      setHistoricalCompetitions(Array.isArray(data) ? data : [])
+      const data = await listMenuArtilheiroGeral()
+      setArtilheiroCompetitions(Array.isArray(data) ? data : [])
     } catch (error) {
-      setHistoricalCompetitions([])
+      setArtilheiroCompetitions([])
       setFeedback({
         type: 'danger',
-        message: 'Não foi possível carregar as competições histórico.',
+        message: 'Não foi possível carregar as competições de artilheiros.',
       })
     } finally {
       setIsLoadingCompetitions(false)
@@ -119,8 +121,8 @@ const ArtilheirosCrud = () => {
   }, [loadArtilheiros])
 
   useEffect(() => {
-    loadHistoricalCompetitions()
-  }, [loadHistoricalCompetitions])
+    loadArtilheiroCompetitions()
+  }, [loadArtilheiroCompetitions])
 
   const visibleArtilheiros = useMemo(() => {
     const ordered = [...artilheiros].sort((left, right) => {
@@ -162,7 +164,7 @@ const ArtilheirosCrud = () => {
     setFeedback(null)
   }
 
-  const hasSelectedHistoricalCompetition = historicalCompetitions.some(
+  const hasSelectedArtilheiroCompetition = artilheiroCompetitions.some(
     (competition) => String(competition.id) === String(formData.competicao),
   )
 
@@ -396,10 +398,10 @@ const ArtilheirosCrud = () => {
                     <option value="">
                       {isLoadingCompetitions ? 'Carregando competições...' : 'Selecione'}
                     </option>
-                    {formData.competicao && !hasSelectedHistoricalCompetition && (
+                    {formData.competicao && !hasSelectedArtilheiroCompetition && (
                       <option value={formData.competicao}>Competição #{formData.competicao}</option>
                     )}
-                    {historicalCompetitions.map((competition) => (
+                    {artilheiroCompetitions.map((competition) => (
                       <option key={competition.id} value={competition.id}>
                         {getCompetitionLabel(competition)}
                       </option>
