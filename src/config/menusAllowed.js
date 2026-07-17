@@ -23,6 +23,8 @@ export const MENU_ALLOWED_OPTIONS = [
   { menu: 'Julgamento', alias: 'relatorios_julgamento' },
   { menu: 'Artilheiros', alias: 'artilheiros' },
   { menu: 'Histórico', alias: 'historico' },
+  { menu: 'Competições do histórico', alias: 'competicoes_historico' },
+  { menu: 'Menu Artilheiro', alias: 'menu_artilheiro' },
 ]
 
 export const MENU_ALIAS_BY_ROUTE = {
@@ -48,6 +50,8 @@ export const MENU_ALIAS_BY_ROUTE = {
   'painel/tabela_jogos_completo': 'tabela_jogos_completo',
   'painel/scoutfinal': 'scout_final',
   'painel/julgamento': 'relatorios_julgamento',
+  'competicoesHistorico/admin': 'competicoes_historico',
+  'menuArtilheiro/admin': 'menu_artilheiro',
   'painel/artilheiros-geral': 'artilheiros',
   'historico/admin': 'historico',
 }

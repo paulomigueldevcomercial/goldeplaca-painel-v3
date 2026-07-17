@@ -26,6 +26,8 @@ export const implementedLegacyMenuRoutes = [
   'painel/tabela_jogos_completo',
   'painel/scoutfinal',
   'painel/julgamento',
+  'competicoesHistorico/admin',
+  'menuArtilheiro/admin',
   'painel/artilheiros-geral',
   'historico/admin',
   'user/changepassword',
@@ -272,6 +274,12 @@ const legacyMenuSections = [
         route: 'competicoesHistorico/admin',
         visibility: 'Disponível apenas para administradores',
         path: '/painel/historico/competicoes',
+      },
+      {
+        label: 'Menu Artilheiro',
+        route: 'menuArtilheiro/admin',
+        visibility: 'Disponível para cadastro das competições do menu de artilheiros',
+        path: '/painel/historico/menu-artilheiro',
       },
       {
         label: 'Histórico',

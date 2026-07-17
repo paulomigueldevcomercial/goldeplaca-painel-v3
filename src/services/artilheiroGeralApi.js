@@ -56,7 +56,7 @@ export const listArtilheirosGerais = () => requestJson('/api/artilheiros-geral')
 
 export const getArtilheiroGeral = (id) => requestJson(`/api/artilheiros-geral/${id}`)
 
-export const listMenuArtilheiroGeral = () => requestJson('/api/service/menu-artilheiro-geral')
+export const listMenuArtilheiroGeral = () => requestJson('/api/menu-artilheiro')
 
 export const createArtilheiroGeral = (payload, imageFile) =>
   requestMultipart('/api/artilheiros-geral', { method: 'POST', artilheiro: payload, imageFile })
