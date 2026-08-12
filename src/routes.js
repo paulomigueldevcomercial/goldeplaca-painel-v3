@@ -35,6 +35,8 @@ const HistoricosCrud = React.lazy(() => import('./views/historicos/HistoricosCru
 const CompeticoesHistoricoCrud = React.lazy(
   () => import('./views/historicos/CompeticoesHistoricoCrud'),
 )
+const ApcefNoticiasCrud = React.lazy(() => import('./views/apcef/ApcefNoticiasCrud'))
+const ApcefAssetUpload = React.lazy(() => import('./views/apcef/ApcefAssetUpload'))
 const ChangePassword = React.lazy(() => import('./views/pages/change-password/ChangePassword'))
 const Logout = React.lazy(() => import('./views/pages/logout/Logout'))
 
@@ -63,6 +65,11 @@ const componentByLegacyRoute = {
   'menuArtilheiro/admin': MenuArtilheiroCrud,
   'painel/artilheiros-geral': ArtilheirosCrud,
   'historico/admin': HistoricosCrud,
+  'painel/apcef/noticias': ApcefNoticiasCrud,
+  'painel/apcef/imagem-competicao': () => <ApcefAssetUpload variant="imagemCompeticao" />,
+  'painel/apcef/logo-equipe': () => <ApcefAssetUpload variant="logoEquipe" />,
+  'painel/apcef/foto-equipe': () => <ApcefAssetUpload variant="fotoEquipe" />,
+  'painel/apcef/pdfs-regulamento': () => <ApcefAssetUpload variant="pdfRegulamento" />,
   'user/changepassword': ChangePassword,
   'gerenciador/acesso/logout': Logout,
   'painel/viewuploadsumula': UploadSumulaCrud,

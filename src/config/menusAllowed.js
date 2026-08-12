@@ -25,6 +25,11 @@ export const MENU_ALLOWED_OPTIONS = [
   { menu: 'Histórico', alias: 'historico' },
   { menu: 'Competições do histórico', alias: 'competicoes_historico' },
   { menu: 'Menu Artilheiro', alias: 'menu_artilheiro' },
+  { menu: 'APCEF Notícias', alias: 'apcef_noticias' },
+  { menu: 'APCEF Imagem da competição', alias: 'apcef_imagem_competicao' },
+  { menu: 'APCEF Logo de equipe', alias: 'apcef_logo_equipe' },
+  { menu: 'APCEF Foto de equipe', alias: 'apcef_foto_equipe' },
+  { menu: 'APCEF PDFs do regulamento', alias: 'apcef_pdfs_regulamento' },
 ]
 
 export const MENU_ALIAS_BY_ROUTE = {
@@ -54,4 +59,9 @@ export const MENU_ALIAS_BY_ROUTE = {
   'menuArtilheiro/admin': 'menu_artilheiro',
   'painel/artilheiros-geral': 'artilheiros',
   'historico/admin': 'historico',
+  'painel/apcef/noticias': 'apcef_noticias',
+  'painel/apcef/imagem-competicao': 'apcef_imagem_competicao',
+  'painel/apcef/logo-equipe': 'apcef_logo_equipe',
+  'painel/apcef/foto-equipe': 'apcef_foto_equipe',
+  'painel/apcef/pdfs-regulamento': 'apcef_pdfs_regulamento',
 }
