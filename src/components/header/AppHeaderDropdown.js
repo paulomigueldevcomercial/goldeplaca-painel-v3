@@ -12,6 +12,7 @@ import {
 import { cilAccountLogout, cilSettings, cilUser } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 
+import { logout } from '../../services/authApi'
 import { clearStoredSession } from '../../utils/authSession'
 
 const AppHeaderDropdown = () => {
@@ -21,18 +22,24 @@ const AppHeaderDropdown = () => {
   const displayName = user?.name || user?.username || 'Usuário'
   const userInitial = displayName.trim().charAt(0).toUpperCase()
 
-  const handleLogout = () => {
-    clearStoredSession()
-    dispatch({
-      type: 'set',
-      auth: {
-        isAuthenticated: false,
-        token: '',
-        user: null,
-      },
-      selectedCompetitionId: '',
-    })
-    navigate('/login', { replace: true })
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch {
+      // Local cleanup still matters if the server session is already gone.
+    } finally {
+      clearStoredSession()
+      dispatch({
+        type: 'set',
+        auth: {
+          isAuthenticated: false,
+          token: '',
+          user: null,
+        },
+        selectedCompetitionId: '',
+      })
+      navigate('/login', { replace: true })
+    }
   }
 
   return (

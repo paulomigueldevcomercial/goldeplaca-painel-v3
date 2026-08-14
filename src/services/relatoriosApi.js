@@ -1,4 +1,4 @@
-import { buildUrl, requestJson } from './apiClient'
+import { buildUrl, requestJson, throwResponseError } from './apiClient'
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -27,8 +27,7 @@ const fetchReportBlob = async (path, params, defaultErrorMessage) => {
   })
 
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || defaultErrorMessage)
+    await throwResponseError(response, defaultErrorMessage)
   }
 
   return response.blob()

@@ -1,4 +1,4 @@
-import { buildUrl } from './apiClient'
+import { buildUrl, throwResponseError } from './apiClient'
 
 const endpointsByType = {
   rgc: '/api/painel/competicoes/pdf/rgc',
@@ -46,8 +46,7 @@ export const uploadCompeticaoPdf = async (type, competicaoId, file) => {
   })
 
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Falha ao processar a requisição.')
+    await throwResponseError(response)
   }
 
   if (response.status === 204) return null

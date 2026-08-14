@@ -1,4 +1,5 @@
 const AUTH_STORAGE_KEY = 'authSession'
+export const AUTH_SESSION_EXPIRED_EVENT = 'goldeplaca:auth-session-expired'
 
 const parseStoredSession = (value) => {
   if (!value) return null
@@ -71,6 +72,11 @@ export const saveSession = (session) => {
 export const clearStoredSession = () => {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(AUTH_STORAGE_KEY)
+}
+
+export const notifySessionExpired = () => {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT))
 }
 
 export const getStoredToken = () => getStoredSession()?.token ?? ''

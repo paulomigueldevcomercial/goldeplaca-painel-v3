@@ -1,4 +1,5 @@
 import { getBackendBaseUrl } from '../config/runtimeConfig'
+import { clearStoredSession, notifySessionExpired } from '../utils/authSession'
 
 export const API_BASE_URL = getBackendBaseUrl()
 
@@ -28,18 +29,48 @@ export const buildUrl = (path, params) => {
   return url.toString()
 }
 
+export const handleUnauthorizedResponse = (response) => {
+  if (response.status !== 401 || typeof window === 'undefined') return
+
+  clearStoredSession()
+  notifySessionExpired()
+}
+
+export const parseErrorMessage = async (
+  response,
+  defaultMessage = 'Falha ao processar a requisição.',
+) => {
+  const text = await response.text()
+  if (!text) return defaultMessage
+
+  try {
+    const data = JSON.parse(text)
+    return data.message || data.error || text
+  } catch (error) {
+    return text
+  }
+}
+
+export const throwResponseError = async (
+  response,
+  defaultMessage = 'Falha ao processar a requisição.',
+) => {
+  handleUnauthorizedResponse(response)
+
+  const message = await parseErrorMessage(response, defaultMessage)
+  const error = new Error(message || defaultMessage)
+  error.status = response.status
+  throw error
+}
+
+export const buildAuthHeaders = (headers = {}) => {
+  const token = getAuthToken()
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers
+}
+
 export const requestJson = async (path, { method = 'GET', params, body } = {}) => {
   const url = params ? buildUrl(path, params) : `${API_BASE_URL}${path}`
-  const token = getAuthToken()
-  const headers = {}
-
-  if (body !== undefined) {
-    headers['Content-Type'] = 'application/json'
-  }
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`
-  }
+  const headers = buildAuthHeaders(body !== undefined ? { 'Content-Type': 'application/json' } : {})
 
   const response = await fetch(url, {
     method,
@@ -49,25 +80,7 @@ export const requestJson = async (path, { method = 'GET', params, body } = {}) =
   })
 
   if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
-      window.localStorage.removeItem('authSession')
-    }
-
-    const text = await response.text()
-    let message = text
-
-    if (text) {
-      try {
-        const data = JSON.parse(text)
-        message = data.message || data.error || text
-      } catch (error) {
-        message = text
-      }
-    }
-
-    const error = new Error(message || 'Falha ao processar a requisição.')
-    error.status = response.status
-    throw error
+    await throwResponseError(response)
   }
 
   if (response.status === 204) return null

@@ -1,4 +1,4 @@
-import { API_BASE_URL, buildUrl, requestJson } from './apiClient'
+import { API_BASE_URL, buildUrl, requestJson, throwResponseError } from './apiClient'
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -9,18 +9,6 @@ const getAuthToken = () => {
     return JSON.parse(stored)?.token ?? ''
   } catch (error) {
     return ''
-  }
-}
-
-const parseErrorMessage = async (response) => {
-  const text = await response.text()
-  if (!text) return 'Falha ao processar a requisição.'
-
-  try {
-    const data = JSON.parse(text)
-    return data.message || data.error || text
-  } catch (error) {
-    return text
   }
 }
 
@@ -58,7 +46,7 @@ const requestMultipart = async (path, { method = 'POST', params, fields, files, 
   })
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response))
+    await throwResponseError(response)
   }
 
   if (response.status === 204) return null

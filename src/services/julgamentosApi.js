@@ -1,4 +1,4 @@
-import { buildUrl, requestJson } from './apiClient'
+import { buildUrl, requestJson, throwResponseError } from './apiClient'
 
 export const listJulgamentos = ({ competicaoId, convocado } = {}) =>
   requestJson('/api/julgamentos', { params: { competicaoId, convocado } })
@@ -18,12 +18,12 @@ export const downloadJulgamentoReport = async ({ numeroProcesso } = {}) => {
     buildUrl('/reports/julgamento', { numero_processo: numeroProcesso }),
     {
       method: 'GET',
+      credentials: 'include',
     },
   )
 
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Não foi possível gerar o relatório de julgamento.')
+    await throwResponseError(response, 'Não foi possível gerar o relatório de julgamento.')
   }
 
   return response.blob()

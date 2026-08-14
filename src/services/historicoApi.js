@@ -1,4 +1,4 @@
-import { API_BASE_URL, requestJson } from './apiClient'
+import { API_BASE_URL, requestJson, throwResponseError } from './apiClient'
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -43,8 +43,7 @@ const requestMultipart = async (path, { method = 'POST', historico, files = {} }
   })
 
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Falha ao processar a requisição.')
+    await throwResponseError(response)
   }
 
   if (response.status === 204) return null

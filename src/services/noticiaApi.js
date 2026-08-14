@@ -1,4 +1,4 @@
-import { API_BASE_URL, buildUrl, requestJson } from './apiClient'
+import { API_BASE_URL, requestJson, throwResponseError } from './apiClient'
 
 const requestMultipart = async (path, { method = 'POST', noticia, file } = {}) => {
   const url = `${API_BASE_URL}${path}`
@@ -16,12 +16,12 @@ const requestMultipart = async (path, { method = 'POST', noticia, file } = {}) =
 
   const response = await fetch(url, {
     method,
+    credentials: 'include',
     body: formData,
   })
 
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Falha ao processar a requisição.')
+    await throwResponseError(response)
   }
 
   if (response.status === 204) return null

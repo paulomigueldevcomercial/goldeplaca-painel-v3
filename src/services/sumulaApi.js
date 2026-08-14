@@ -1,4 +1,4 @@
-import { API_BASE_URL, buildUrl } from './apiClient'
+import { buildUrl, throwResponseError } from './apiClient'
 
 export const uploadSumula = async (codigo, pdfFile) => {
   const url = buildUrl('/api/painel/sumulas/upload', { codigo })
@@ -15,8 +15,7 @@ export const uploadSumula = async (codigo, pdfFile) => {
   })
 
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Falha ao processar a requisição.')
+    await throwResponseError(response)
   }
 
   if (response.status === 204) return null
