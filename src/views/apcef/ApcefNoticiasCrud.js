@@ -36,7 +36,6 @@ const createEmptyArticle = () => ({
   titulo: '',
   noticia: '',
   categoria: '',
-  data: '',
   imagens: [],
   imageFiles: [],
   imageFileNames: [],
@@ -67,12 +66,6 @@ const formatPublishedAt = (value) => {
   }
 
   return value
-}
-
-const toDateTimeLocal = (value) => {
-  if (!value) return ''
-  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/)
-  return match ? `${match[1]}T${match[2]}` : ''
 }
 
 const getGalleryImageUrl = (src) => {
@@ -175,7 +168,6 @@ const ApcefNoticiasCrud = () => {
       ...createEmptyArticle(),
       ...article,
       categoria: article.categoria ?? '',
-      data: toDateTimeLocal(article.data),
       imagens: article.imagens ?? [],
     })
     setFileInputKey((previous) => previous + 1)
@@ -225,7 +217,6 @@ const ApcefNoticiasCrud = () => {
         titulo: formData.titulo,
         noticia: formData.noticia,
         categoria: formData.categoria,
-        data: formData.data || undefined,
       }
 
       const response = selectedNewsId
@@ -406,7 +397,7 @@ const ApcefNoticiasCrud = () => {
               </div>
 
               <CRow className="g-3">
-                <CCol sm={6}>
+                <CCol sm={12}>
                   <CFormLabel htmlFor="apcef-news-category">Categoria</CFormLabel>
                   <CFormSelect
                     id="apcef-news-category"
@@ -422,16 +413,6 @@ const ApcefNoticiasCrud = () => {
                       </option>
                     ))}
                   </CFormSelect>
-                </CCol>
-                <CCol sm={6}>
-                  <CFormLabel htmlFor="apcef-news-date">Data</CFormLabel>
-                  <CFormInput
-                    id="apcef-news-date"
-                    name="data"
-                    type="datetime-local"
-                    value={formData.data}
-                    onChange={handleInputChange}
-                  />
                 </CCol>
               </CRow>
 
