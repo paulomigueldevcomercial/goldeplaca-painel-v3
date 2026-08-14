@@ -21,7 +21,7 @@ import { cilNotes, cilPlus, cilReload, cilSave, cilTrash } from '@coreui/icons'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
 import ListPagination from '../../components/ListPagination'
-import { API_BASE_URL } from '../../services/apiClient'
+import { getApcefPublicBaseUrl } from '../../config/runtimeConfig'
 import {
   createApcefNoticia,
   deleteApcefNoticia,
@@ -71,7 +71,7 @@ const formatPublishedAt = (value) => {
 const getGalleryImageUrl = (src) => {
   if (!src) return ''
   const fileName = String(src).split('/').filter(Boolean).pop()
-  return fileName ? `${API_BASE_URL}/images/gallery/${fileName}` : ''
+  return fileName ? `${getApcefPublicBaseUrl()}/images/gallery/${fileName}` : ''
 }
 
 const ApcefNoticiasCrud = () => {
