@@ -29,7 +29,7 @@ export const MENU_ALLOWED_OPTIONS = [
   { menu: 'APCEF Imagem da competição', alias: 'apcef_imagem_competicao' },
   { menu: 'APCEF Logo de equipe', alias: 'apcef_logo_equipe' },
   { menu: 'APCEF Foto de equipe', alias: 'apcef_foto_equipe' },
-  { menu: 'APCEF PDFs do regulamento', alias: 'apcef_pdfs_regulamento' },
+  { menu: 'APCEF Atualização de PDFs', alias: 'apcef_pdfs_regulamento' },
 ]
 
 export const MENU_ALIAS_BY_ROUTE = {

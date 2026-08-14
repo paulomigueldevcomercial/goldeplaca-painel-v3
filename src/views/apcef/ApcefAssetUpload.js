@@ -50,7 +50,7 @@ const configs = {
     successMessage: 'Foto de equipe enviada com sucesso.',
   },
   pdfRegulamento: {
-    title: 'PDFs do regulamento APCEF',
+    title: 'Atualização de PDFs APCEF',
     fileLabel: 'Arquivo PDF',
     accept: '.pdf,application/pdf',
     requiresTeam: false,
@@ -64,6 +64,7 @@ const pdfTypes = [
   { value: 'anexo1', label: 'Anexo-1 Futsal', path: '/pdf/ANEXO1.pdf' },
   { value: 'anexo2', label: 'Anexo-2 Society', path: '/pdf/ANEXO2.pdf' },
   { value: 'cde', label: 'CDE', path: '/pdf/CDE.pdf' },
+  { value: 'tbgeral', label: 'Tabela Geral', path: '/pdf/tbgeral.pdf' },
 ]
 
 const emptyUpload = {

@@ -328,9 +328,9 @@ const legacyMenuSections = [
         path: '/painel/apcef/foto-equipe',
       },
       {
-        label: 'PDFs regulamento',
+        label: 'Atualização de PDFs',
         route: 'painel/apcef/pdfs-regulamento',
-        visibility: 'Disponivel para substituir RGC, ANEXO1, ANEXO2 e CDE',
+        visibility: 'Disponivel para substituir RGC, ANEXO1, ANEXO2, CDE e Tabela Geral',
         path: '/painel/apcef/pdfs-regulamento',
       },
     ],
