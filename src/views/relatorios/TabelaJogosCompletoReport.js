@@ -26,6 +26,7 @@ import {
   gerarRelatorioCompletoJogos,
   listRelatoriosCompletosJogos,
 } from '../../services/jogosApi'
+import { buildNoCacheUrl } from '../../services/apiClient'
 
 const STATIC_REPORT_FOLDER = 'relatorio-completo-jogos'
 
@@ -44,7 +45,7 @@ const getFileName = (report) => {
 }
 
 const buildReportDownloadUrl = (fileName) =>
-  fileName ? `/${STATIC_REPORT_FOLDER}/${encodeURIComponent(fileName)}` : ''
+  fileName ? buildNoCacheUrl(`/${STATIC_REPORT_FOLDER}/${encodeURIComponent(fileName)}`) : ''
 
 const formatDateTime = (value) => {
   if (!value) return '-'

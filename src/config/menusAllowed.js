@@ -32,6 +32,50 @@ export const MENU_ALLOWED_OPTIONS = [
   { menu: 'APCEF Atualização de PDFs', alias: 'apcef_pdfs_regulamento' },
 ]
 
+export const MENU_ALLOWED_GROUPS = [
+  {
+    label: 'Permissões - Gol de Placa MA',
+    aliases: [
+      'noticias',
+      'video',
+      'patrocinadores',
+      'upload_sumula',
+      'pdf_rgc',
+      'pdf_cde',
+      'pdf_resultado_julgamento',
+      'pdf_outros_anexos',
+      'escudo_equipe',
+      'jogadores',
+      'equipes',
+      'categorias',
+      'sumula',
+      'jogos',
+      'usuarios',
+      'competicao',
+      'sumula_campo',
+      'sumula_futsal',
+      'rodada_da_semana',
+      'tabela_jogos_completo',
+      'scout_final',
+      'relatorios_julgamento',
+      'artilheiros',
+      'historico',
+      'competicoes_historico',
+      'menu_artilheiro',
+    ],
+  },
+  {
+    label: 'Permissões - Campeonato APCEF',
+    aliases: [
+      'apcef_noticias',
+      'apcef_imagem_competicao',
+      'apcef_logo_equipe',
+      'apcef_foto_equipe',
+      'apcef_pdfs_regulamento',
+    ],
+  },
+]
+
 export const MENU_ALIAS_BY_ROUTE = {
   'painel/noticiascompeticao': 'noticias',
   'painel/videos': 'video',

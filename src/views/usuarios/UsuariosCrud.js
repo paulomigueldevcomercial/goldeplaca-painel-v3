@@ -26,7 +26,7 @@ import {
   listUsuarios,
   updateUsuario,
 } from '../../services/usuariosApi'
-import { MENU_ALLOWED_OPTIONS } from '../../config/menusAllowed'
+import { MENU_ALLOWED_GROUPS, MENU_ALLOWED_OPTIONS } from '../../config/menusAllowed'
 import { normalizeMenusAllowed } from '../../utils/authSession'
 
 const ROLE_OPTIONS = ['admin', 'user', 'apcef', 'oab', 'bancarios']
@@ -69,7 +69,7 @@ const UsuariosCrud = () => {
   }, [])
 
   useEffect(() => {
-    loadUsers()
+    void Promise.resolve().then(loadUsers)
   }, [loadUsers])
 
   const visibleUsers = useMemo(() => {
@@ -84,6 +84,20 @@ const UsuariosCrud = () => {
       ),
     )
   }, [search, users])
+
+  const selectedMenuAliases = useMemo(
+    () => normalizeMenusAllowed(formData.menusAllowed),
+    [formData.menusAllowed],
+  )
+
+  const menuOptionsByAlias = useMemo(
+    () =>
+      MENU_ALLOWED_OPTIONS.reduce((optionsByAlias, option) => {
+        optionsByAlias[option.alias] = option
+        return optionsByAlias
+      }, {}),
+    [],
+  )
 
   const handleSelectUser = async (id) => {
     if (!id) return
@@ -359,21 +373,31 @@ const UsuariosCrud = () => {
               <CRow className="g-3">
                 <CCol xs={12}>
                   <CFormLabel>Menus permitidos</CFormLabel>
-                  <CRow className="g-2">
-                    {MENU_ALLOWED_OPTIONS.map((option) => (
-                      <CCol sm={6} lg={4} key={option.alias}>
-                        <CFormCheck
-                          id={`usuario-menu-${option.alias}`}
-                          label={option.menu}
-                          value={option.alias}
-                          checked={normalizeMenusAllowed(formData.menusAllowed).includes(
-                            option.alias,
-                          )}
-                          onChange={handleMenuAllowedChange}
-                        />
-                      </CCol>
+                  <div className="d-flex flex-column gap-3">
+                    {MENU_ALLOWED_GROUPS.map((group) => (
+                      <div key={group.label}>
+                        <div className="fw-semibold mb-2">{group.label}</div>
+                        <CRow className="g-2">
+                          {group.aliases.map((alias) => {
+                            const option = menuOptionsByAlias[alias]
+                            if (!option) return null
+
+                            return (
+                              <CCol sm={6} lg={4} key={option.alias}>
+                                <CFormCheck
+                                  id={`usuario-menu-${option.alias}`}
+                                  label={option.menu}
+                                  value={option.alias}
+                                  checked={selectedMenuAliases.includes(option.alias)}
+                                  onChange={handleMenuAllowedChange}
+                                />
+                              </CCol>
+                            )
+                          })}
+                        </CRow>
+                      </div>
                     ))}
-                  </CRow>
+                  </div>
                 </CCol>
               </CRow>
 

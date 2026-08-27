@@ -1,4 +1,4 @@
-import { buildUrl, requestJson, throwResponseError } from './apiClient'
+import { buildNoCacheUrl, requestJson, throwResponseError } from './apiClient'
 
 export const listJulgamentos = ({ competicaoId, convocado } = {}) =>
   requestJson('/api/julgamentos', { params: { competicaoId, convocado } })
@@ -15,9 +15,10 @@ export const deleteJulgamento = (id) => requestJson(`/api/julgamentos/${id}`, { 
 
 export const downloadJulgamentoReport = async ({ numeroProcesso } = {}) => {
   const response = await fetch(
-    buildUrl('/reports/julgamento', { numero_processo: numeroProcesso }),
+    buildNoCacheUrl('/reports/julgamento', { numero_processo: numeroProcesso }),
     {
       method: 'GET',
+      cache: 'no-store',
       credentials: 'include',
     },
   )

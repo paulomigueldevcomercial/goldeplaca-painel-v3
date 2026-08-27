@@ -29,6 +29,12 @@ export const buildUrl = (path, params) => {
   return url.toString()
 }
 
+export const buildNoCacheUrl = (path, params) =>
+  buildUrl(path, {
+    ...params,
+    v: Date.now(),
+  })
+
 export const handleUnauthorizedResponse = (response) => {
   if (response.status !== 401 || typeof window === 'undefined') return
 

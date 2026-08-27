@@ -1,4 +1,4 @@
-import { buildUrl, requestJson, throwResponseError } from './apiClient'
+import { buildNoCacheUrl, requestJson, throwResponseError } from './apiClient'
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return ''
@@ -20,8 +20,9 @@ const fetchReportBlob = async (path, params, defaultErrorMessage) => {
     headers.Authorization = `Bearer ${token}`
   }
 
-  const response = await fetch(buildUrl(path, params), {
+  const response = await fetch(buildNoCacheUrl(path, params), {
     method: 'GET',
+    cache: 'no-store',
     credentials: 'include',
     headers,
   })
